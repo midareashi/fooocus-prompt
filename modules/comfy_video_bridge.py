@@ -19,6 +19,10 @@ WAN_API_WORKFLOW_PATH = Path(os.getenv(
     'FOOOCUS_WAN_API_WORKFLOW',
     str(COMFY_ROOT / 'user' / 'default' / 'workflows' / 'DasiwaWan.api.json')
 ))
+COMFY_UNET_DIR = COMFY_ROOT / 'models' / 'unet'
+COMFY_LORA_DIR = COMFY_ROOT / 'models' / 'loras'
+DEFAULT_WAN_HIGH_MODEL = 'DasiwaWAN22I2V14BLightspeed_snatchkissHighV11.safetensors'
+DEFAULT_WAN_LOW_MODEL = 'DasiwaWAN22I2V14BLightspeed_snatchkissLowV11.safetensors'
 
 
 def _save_numpy_image(image, prefix):
@@ -58,6 +62,42 @@ def _set_lora_enabled(workflow, node_id, enabled):
                     widget['on'] = bool(enabled)
 
 
+def _set_lora_selections(workflow, node_id, selected_loras):
+    selected_loras = set(selected_loras or [])
+    for node in workflow.get('nodes', []):
+        if node.get('id') == node_id:
+            for widget in node.get('widgets_values', []):
+                if isinstance(widget, dict) and 'lora' in widget:
+                    widget['on'] = widget.get('lora') in selected_loras
+
+
+def _list_relative_model_files(root):
+    if not root.exists():
+        return []
+    extensions = {'.safetensors', '.gguf', '.ckpt', '.pt'}
+    files = []
+    for path in root.rglob('*'):
+        if path.is_file() and path.suffix.lower() in extensions:
+            files.append(str(path.relative_to(root)).replace('/', '\\'))
+    return sorted(files, key=str.lower)
+
+
+def list_wan_high_low_models():
+    files = _list_relative_model_files(COMFY_UNET_DIR)
+    wan_files = [x for x in files if 'wan' in x.lower()]
+    return wan_files or files
+
+
+def list_wan_high_loras():
+    files = _list_relative_model_files(COMFY_LORA_DIR)
+    return [x for x in files if x.lower().startswith('img2vid\\high\\')]
+
+
+def list_wan_low_loras():
+    files = _list_relative_model_files(COMFY_LORA_DIR)
+    return [x for x in files if x.lower().startswith('img2vid\\low\\')]
+
+
 def _sync_subgraph_defaults(workflow, seconds, fps, steps, headroom, resolution):
     for subgraph in workflow.get('definitions', {}).get('subgraphs', []):
         if subgraph.get('id') != 'e0940f57-80b2-480e-8a38-36968dc1763d':
@@ -91,7 +131,7 @@ def _comfy_server_available():
 
 
 def prepare_wan_img2vid(first_frame, last_frame, prompt, negative_prompt, seconds, fps,
-                        resolution, headroom, use_loras):
+                        resolution, headroom, high_model, low_model, high_loras, low_loras):
     if first_frame is None:
         return None, '<div class="error">Add a first frame image before generating video.</div>'
     if not WAN_WORKFLOW_PATH.exists():
@@ -100,7 +140,7 @@ def prepare_wan_img2vid(first_frame, last_frame, prompt, negative_prompt, second
     first_filename = _save_numpy_image(first_frame, 'first')
     last_filename = _save_numpy_image(last_frame, 'last') if last_frame is not None else first_filename
 
-    with open(WAN_WORKFLOW_PATH, 'r', encoding='utf-8') as f:
+    with open(WAN_WORKFLOW_PATH, 'r', encoding='utf-8-sig') as f:
         workflow = json.load(f)
 
     _set_node_widgets(workflow, 23, {0: first_filename})
@@ -110,6 +150,8 @@ def prepare_wan_img2vid(first_frame, last_frame, prompt, negative_prompt, second
 
     steps = 4
     _set_node_widgets(workflow, 1512, {
+        2: high_model or DEFAULT_WAN_HIGH_MODEL,
+        3: low_model or DEFAULT_WAN_LOW_MODEL,
         15: int(headroom),
         28: int(seconds),
         29: float(fps),
@@ -121,8 +163,8 @@ def prepare_wan_img2vid(first_frame, last_frame, prompt, negative_prompt, second
         35: resolution,
         36: False,
     })
-    _set_lora_enabled(workflow, 18, use_loras)
-    _set_lora_enabled(workflow, 26, use_loras)
+    _set_lora_selections(workflow, 26, high_loras)
+    _set_lora_selections(workflow, 18, low_loras)
     _sync_subgraph_defaults(workflow, seconds, fps, steps, headroom, resolution)
 
     with open(WAN_WORKFLOW_PATH, 'w', encoding='utf-8') as f:
@@ -141,7 +183,9 @@ def prepare_wan_img2vid(first_frame, last_frame, prompt, negative_prompt, second
         f'First frame: {first_filename}<br>'
         f'Last frame: {last_filename}<br>'
         f'Settings: {seconds}s, {fps} FPS, {resolution}, headroom {headroom}, '
-        f'LoRAs {"on" if use_loras else "off"}.<br>'
+        f'high model {high_model or DEFAULT_WAN_HIGH_MODEL}, low model {low_model or DEFAULT_WAN_LOW_MODEL}.<br>'
+        f'High LoRAs: {", ".join(high_loras or []) or "none"}<br>'
+        f'Low LoRAs: {", ".join(low_loras or []) or "none"}<br>'
         f'{server_note}<br>'
         f'{api_note}<br>'
         'Open ComfyUI, reload DasiwaWan.json, and queue the workflow.'

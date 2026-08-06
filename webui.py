@@ -1497,7 +1497,31 @@ with shared.gradio_root:
                     with gr.Row():
                         video_resolution = gr.Dropdown(label='Resolution', choices=['0.52 MP - SD', '540p', '720p'], value='0.52 MP - SD')
                         video_headroom = gr.Slider(label='VRAM Headroom', minimum=2, maximum=4, step=1, value=4)
-                    video_use_loras = gr.Checkbox(label='Enable Wan LoRAs', value=False)
+                    with gr.Row():
+                        wan_model_choices = modules.comfy_video_bridge.list_wan_high_low_models()
+                        video_high_model = gr.Dropdown(
+                            label='High Model',
+                            choices=wan_model_choices,
+                            value=modules.comfy_video_bridge.DEFAULT_WAN_HIGH_MODEL
+                            if modules.comfy_video_bridge.DEFAULT_WAN_HIGH_MODEL in wan_model_choices else None
+                        )
+                        video_low_model = gr.Dropdown(
+                            label='Low Model',
+                            choices=wan_model_choices,
+                            value=modules.comfy_video_bridge.DEFAULT_WAN_LOW_MODEL
+                            if modules.comfy_video_bridge.DEFAULT_WAN_LOW_MODEL in wan_model_choices else None
+                        )
+                    with gr.Row():
+                        video_high_loras = gr.CheckboxGroup(
+                            label='High LoRAs',
+                            choices=modules.comfy_video_bridge.list_wan_high_loras(),
+                            value=[]
+                        )
+                        video_low_loras = gr.CheckboxGroup(
+                            label='Low LoRAs',
+                            choices=modules.comfy_video_bridge.list_wan_low_loras(),
+                            value=[]
+                        )
                     video_generate_button = gr.Button(value='Prepare Wan Video', variant='primary')
             video_output = gr.Video(label='Video', visible=False)
             video_status = gr.HTML() 
@@ -1505,7 +1529,8 @@ with shared.gradio_root:
             video_generate_button.click(
                 fn=modules.comfy_video_bridge.prepare_wan_img2vid,
                 inputs=[video_first_frame, video_last_frame, video_prompt, video_negative_prompt,
-                        video_seconds, video_fps, video_resolution, video_headroom, video_use_loras],
+                        video_seconds, video_fps, video_resolution, video_headroom,
+                        video_high_model, video_low_model, video_high_loras, video_low_loras],
                 outputs=[video_output, video_status],
                 queue=True,
                 show_progress=True
