@@ -215,8 +215,14 @@ def patch_model(model, tasks):
             v = [value_attn2]
             b, _, _ = q.shape
 
-            for (cs, ucs), cn_stop, cn_weight in tasks:
-                if current_step < cn_stop:
+            for task in tasks:
+                (cs, ucs), cn_stop, cn_weight = task[:3]
+                cn_start = task[3] if len(task) > 3 else 0.0
+                if cn_start <= current_step < cn_stop:
+                    effective_weight = cn_weight
+                    if len(task) > 4 and task[4]:
+                        ramp = (current_step - cn_start) / max(cn_stop - cn_start, 1e-5)
+                        effective_weight = cn_weight * max(0.0, min(1.0, ramp))
                     ip_k_c = cs[ip_index * 2].to(q)
                     ip_v_c = cs[ip_index * 2 + 1].to(q)
                     ip_k_uc = ucs[ip_index * 2].to(q)
@@ -238,7 +244,7 @@ def patch_model(model, tasks):
 
                     B, F, C = ip_k.shape
                     channel_penalty = float(C) / 1280.0
-                    weight = cn_weight * channel_penalty
+                    weight = effective_weight * channel_penalty
 
                     ip_k = ip_k * weight
                     ip_v = ip_v_offset + ip_v_mean * weight

@@ -433,14 +433,30 @@ with shared.gradio_root:
                                         container=False
                                     )
                                     person_likeness_strength = gr.Slider(
-                                        label='Likeness Strength',
+                                        label='Identity Strength',
                                         minimum=0.0,
                                         maximum=modules.config.default_person_likeness_strength_max,
                                         step=0.001,
                                         value=1.0
                                     )
+                                    person_likeness_face_weight = gr.Slider(
+                                        label='Face Weight',
+                                        minimum=0.0,
+                                        maximum=modules.config.default_person_likeness_face_weight_max,
+                                        step=0.001,
+                                        value=modules.config.default_person_likeness_face_weight
+                                    )
+                                    person_likeness_face_start = gr.Slider(
+                                        label='Face Weight Start At',
+                                        minimum=0.0,
+                                        maximum=1.0,
+                                        step=0.001,
+                                        value=modules.config.default_person_likeness_face_start
+                                    )
                                 person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
-                                                         person_likeness_strength] + person_likeness_ctrls
+                                                         person_likeness_strength,
+                                                         person_likeness_face_weight,
+                                                         person_likeness_face_start] + person_likeness_ctrls
                                 save_person_button.click(
                                     save_person_likeness,
                                     inputs=[saved_person_name, person_likeness_class] + person_likeness_images,

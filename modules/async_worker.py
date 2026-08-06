@@ -62,6 +62,8 @@ class AsyncTask:
         self.person_likeness_enabled = args.pop()
         self.person_likeness_class = args.pop()
         self.person_likeness_strength = args.pop()
+        self.person_likeness_face_weight = args.pop()
+        self.person_likeness_face_start = args.pop()
         self.person_likeness_images = []
         self.person_likeness_prepared_images = None
         self.person_likeness_cache_key = None
@@ -478,9 +480,10 @@ def worker():
                 0.0,
                 min(
                     modules.config.default_person_likeness_face_weight_max,
-                    0.6 * float(async_task.person_likeness_strength)
+                    float(async_task.person_likeness_face_weight)
                 )
             )
+            face_start = max(0.0, min(0.95, float(async_task.person_likeness_face_start)))
             prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
             ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
             if ip_cache_key in person_likeness_ip_adapter_cache:
@@ -498,7 +501,7 @@ def worker():
                 print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
 
             for cached_ip_task in cached_ip_tasks:
-                person_face_tasks.append([cached_ip_task, 0.9, face_weight])
+                person_face_tasks.append([cached_ip_task, 0.95, face_weight, face_start, True])
 
         all_ip_tasks = async_task.cn_tasks[flags.cn_ip] + async_task.cn_tasks[flags.cn_ip_face] + person_face_tasks
         if len(all_ip_tasks) > 0:
