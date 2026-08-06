@@ -68,12 +68,14 @@ default_vae = 'Default (model)'
 refiner_swap_method = 'joint'
 
 default_input_image_tab = 'uov_tab'
-input_image_tab_ids = ['uov_tab', 'ip_tab', 'inpaint_tab', 'describe_tab', 'enhance_tab', 'metadata_tab']
+input_image_tab_ids = ['uov_tab', 'person_tab', 'ip_tab', 'inpaint_tab', 'describe_tab', 'enhance_tab', 'metadata_tab']
 
 cn_ip = "ImagePrompt"
 cn_ip_face = "FaceSwap"
 cn_canny = "PyraCanny"
 cn_cpds = "CPDS"
+
+person_likeness_classes = ['person', 'man', 'woman']
 
 ip_list = [cn_ip, cn_canny, cn_cpds, cn_ip_face]
 default_ip = cn_ip

@@ -43,12 +43,32 @@ class AsyncTask:
         self.sharpness = args.pop()
         self.cfg_scale = args.pop()
         self.base_model_name = args.pop()
+        self.multi_checkpoint_enabled = bool(args.pop())
+        self.multi_checkpoint_model_names = args.pop()
+        if not isinstance(self.multi_checkpoint_model_names, list):
+            self.multi_checkpoint_model_names = []
+        self.multi_checkpoint_model_names = [
+            str(x) for x in self.multi_checkpoint_model_names
+            if isinstance(x, str) and x != 'None'
+        ]
+        if not self.multi_checkpoint_enabled or len(self.multi_checkpoint_model_names) == 0:
+            self.multi_checkpoint_model_names = [self.base_model_name]
         self.refiner_model_name = args.pop()
         self.refiner_switch = args.pop()
         self.loras = get_enabled_loras([(bool(args.pop()), str(args.pop()), float(args.pop())) for _ in
                                         range(default_max_lora_number)])
         self.input_image_checkbox = args.pop()
         self.current_tab = args.pop()
+        self.person_likeness_enabled = args.pop()
+        self.person_likeness_class = args.pop()
+        self.person_likeness_strength = args.pop()
+        self.person_likeness_images = []
+        self.person_likeness_prepared_images = None
+        self.person_likeness_cache_key = None
+        for _ in range(modules.config.default_person_likeness_image_count):
+            person_image = args.pop()
+            if person_image is not None:
+                self.person_likeness_images.append(person_image)
         self.uov_method = args.pop()
         self.uov_input_image = args.pop()
         self.outpaint_selections = args.pop()
@@ -159,6 +179,8 @@ class AsyncTask:
         self.enhance_stats = {}
 
 async_tasks = []
+person_likeness_preprocess_cache = {}
+person_likeness_ip_adapter_cache = {}
 
 
 class EarlyReturnException(BaseException):
@@ -189,6 +211,7 @@ def worker():
     import extras.ip_adapter as ip_adapter
     import extras.face_crop
     import fooocus_version
+    import hashlib
 
     from extras.censor import default_censor
     from modules.sdxl_styles import apply_style, get_random_style, fooocus_expansion, apply_arrays, random_style_name
@@ -396,6 +419,8 @@ def worker():
     def apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width, current_progress):
         for task in async_task.cn_tasks[flags.cn_canny]:
             cn_img, cn_stop, cn_weight = task
+            if not isinstance(cn_img, np.ndarray):
+                continue
             cn_img = resize_image(HWC3(cn_img), width=width, height=height)
 
             if not async_task.skipping_cn_preprocessor:
@@ -408,6 +433,8 @@ def worker():
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
         for task in async_task.cn_tasks[flags.cn_cpds]:
             cn_img, cn_stop, cn_weight = task
+            if not isinstance(cn_img, np.ndarray):
+                continue
             cn_img = resize_image(HWC3(cn_img), width=width, height=height)
 
             if not async_task.skipping_cn_preprocessor:
@@ -419,6 +446,8 @@ def worker():
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
         for task in async_task.cn_tasks[flags.cn_ip]:
             cn_img, cn_stop, cn_weight = task
+            if isinstance(cn_img, tuple):
+                continue
             cn_img = HWC3(cn_img)
 
             # https://github.com/tencent-ailab/IP-Adapter/blob/d580c50a291566bbf9fc7ac0f760506607297e6d/README.md?plain=1#L75
@@ -429,6 +458,8 @@ def worker():
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
         for task in async_task.cn_tasks[flags.cn_ip_face]:
             cn_img, cn_stop, cn_weight = task
+            if isinstance(cn_img, tuple):
+                continue
             cn_img = HWC3(cn_img)
 
             if not async_task.skipping_cn_preprocessor:
@@ -440,7 +471,30 @@ def worker():
             task[0] = ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
             if async_task.debugging_cn_preprocessor:
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
-        all_ip_tasks = async_task.cn_tasks[flags.cn_ip] + async_task.cn_tasks[flags.cn_ip_face]
+        person_face_tasks = []
+        if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
+                isinstance(ip_adapter_face_path, str):
+            face_weight = max(0.0, min(0.65, 0.45 * float(async_task.person_likeness_strength)))
+            prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
+            ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
+            if ip_cache_key in person_likeness_ip_adapter_cache:
+                print(f'[Person Likeness] Using cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+                cached_ip_tasks = person_likeness_ip_adapter_cache[ip_cache_key]
+            else:
+                cached_ip_tasks = [
+                    ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
+                    for cn_img in prepared_images
+                ]
+                person_likeness_ip_adapter_cache[ip_cache_key] = cached_ip_tasks
+                if len(person_likeness_ip_adapter_cache) > 12:
+                    oldest_key = next(iter(person_likeness_ip_adapter_cache))
+                    del person_likeness_ip_adapter_cache[oldest_key]
+                print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+
+            for cached_ip_task in cached_ip_tasks:
+                person_face_tasks.append([cached_ip_task, 0.9, face_weight])
+
+        all_ip_tasks = async_task.cn_tasks[flags.cn_ip] + async_task.cn_tasks[flags.cn_ip_face] + person_face_tasks
         if len(all_ip_tasks) > 0:
             pipeline.final_unet = ip_adapter.patch_model(pipeline.final_unet, all_ip_tasks)
 
@@ -638,6 +692,62 @@ def worker():
             height = async_task.overwrite_height
         return steps, switch, width, height
 
+    def get_image_cache_key(image):
+        image = np.ascontiguousarray(HWC3(image))
+        digest = hashlib.sha256()
+        digest.update(str(image.shape).encode('utf-8'))
+        digest.update(str(image.dtype).encode('utf-8'))
+        digest.update(image.tobytes())
+        return digest.hexdigest()
+
+    def get_person_likeness_cache_key(async_task):
+        return (
+            bool(async_task.skipping_cn_preprocessor),
+            tuple(get_image_cache_key(image) for image in async_task.person_likeness_images)
+        )
+
+    def get_prepared_person_likeness_images(async_task, current_progress):
+        global person_likeness_preprocess_cache
+
+        if async_task.person_likeness_prepared_images is not None:
+            return async_task.person_likeness_prepared_images
+
+        cache_key = get_person_likeness_cache_key(async_task)
+        async_task.person_likeness_cache_key = cache_key
+        if cache_key in person_likeness_preprocess_cache:
+            print(f'[Person Likeness] Using cached face crops for {len(async_task.person_likeness_images)} image(s).')
+            prepared = person_likeness_preprocess_cache[cache_key]
+            async_task.person_likeness_prepared_images = prepared
+            return prepared
+
+        images = []
+        for image in async_task.person_likeness_images:
+            image = HWC3(image)
+            if not async_task.skipping_cn_preprocessor:
+                image = extras.face_crop.crop_image(image)
+            image = resize_image(image, width=224, height=224, resize_mode=0)
+            images.append(np.ascontiguousarray(image))
+            if async_task.debugging_cn_preprocessor:
+                yield_result(async_task, image, current_progress, async_task.black_out_nsfw,
+                             do_not_show_finished_images=True)
+
+        person_likeness_preprocess_cache[cache_key] = images
+        if len(person_likeness_preprocess_cache) > 12:
+            oldest_key = next(iter(person_likeness_preprocess_cache))
+            del person_likeness_preprocess_cache[oldest_key]
+
+        async_task.person_likeness_prepared_images = images
+        print(f'[Person Likeness] Cached face crops for {len(images)} image(s).')
+        return images
+
+    def prepare_person_likeness_images(async_task, current_progress):
+        images = get_prepared_person_likeness_images(async_task, current_progress)
+        if len(images) == 0:
+            return None
+
+        normalized = [image.astype(np.float32) / 255.0 for image in images]
+        return torch.from_numpy(np.ascontiguousarray(np.stack(normalized, axis=0))).float()
+
     def process_prompt(async_task, prompt, negative_prompt, base_model_additional_loras, image_number, disable_seed_increment, use_expansion, use_style,
                        use_synthetic_refiner, current_progress, advance_progress=False):
         prompts = remove_empty_str([safe_str(p) for p in prompt.splitlines()], default='')
@@ -663,6 +773,14 @@ def worker():
                                     loras=loras, base_model_additional_loras=base_model_additional_loras,
                                     use_synthetic_refiner=use_synthetic_refiner, vae_name=async_task.vae_name)
         pipeline.set_clip_skip(async_task.clip_skip)
+        person_likeness_pixels = None
+        if async_task.input_image_checkbox and async_task.current_tab == 'person' and \
+                async_task.person_likeness_enabled and len(async_task.person_likeness_images) > 0:
+            progressbar(async_task, current_progress, 'Downloading PhotoMaker model ...')
+            photomaker_path = modules.config.downloading_photomaker()
+            progressbar(async_task, current_progress, 'Loading PhotoMaker model ...')
+            pipeline.refresh_photomaker_model(photomaker_path)
+            person_likeness_pixels = prepare_person_likeness_images(async_task, current_progress)
         if advance_progress:
             current_progress += 1
         progressbar(async_task, current_progress, 'Processing prompts ...')
@@ -743,7 +861,16 @@ def worker():
             current_progress += 1
         for i, t in enumerate(tasks):
             progressbar(async_task, current_progress, f'Encoding positive #{i + 1} ...')
-            t['c'] = pipeline.clip_encode(texts=t['positive'], pool_top_k=t['positive_top_k'])
+            if person_likeness_pixels is not None:
+                t['c'] = pipeline.clip_encode_photomaker(
+                    texts=t['positive'],
+                    id_pixel_values=person_likeness_pixels,
+                    class_name=async_task.person_likeness_class,
+                    strength=async_task.person_likeness_strength,
+                    pool_top_k=t['positive_top_k']
+                )
+            else:
+                t['c'] = pipeline.clip_encode(texts=t['positive'], pool_top_k=t['positive_top_k'])
         if advance_progress:
             current_progress += 1
         for i, t in enumerate(tasks):
@@ -913,6 +1040,8 @@ def worker():
                         async_task.prompt = async_task.inpaint_additional_prompt + '\n' + async_task.prompt
                 goals.append('inpaint')
         if async_task.current_tab == 'ip' or \
+                (async_task.current_tab == 'person' and async_task.person_likeness_enabled and
+                 len(async_task.person_likeness_images) > 0) or \
                 async_task.mixing_image_prompt_and_vary_upscale or \
                 async_task.mixing_image_prompt_and_inpaint:
             goals.append('cn')
@@ -924,6 +1053,10 @@ def worker():
             if len(async_task.cn_tasks[flags.cn_ip]) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_path = modules.config.downloading_ip_adapters('ip')
             if len(async_task.cn_tasks[flags.cn_ip_face]) > 0:
+                clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
+                    'face')
+            if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
+                    len(async_task.person_likeness_images) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
         if async_task.current_tab == 'enhance' and async_task.enhance_input_image is not None:
@@ -1085,6 +1218,12 @@ def worker():
 
         use_style = len(async_task.style_selections) > 0
 
+        original_refiner_model_name = async_task.refiner_model_name
+        selected_base_model_names = async_task.multi_checkpoint_model_names
+        if async_task.multi_checkpoint_enabled:
+            print(f'[Parameters] Multi Checkpoint Models = {selected_base_model_names}')
+        async_task.base_model_name = selected_base_model_names[0]
+
         if async_task.base_model_name == async_task.refiner_model_name:
             print(f'Refiner disabled because base model and refiner are same.')
             async_task.refiner_model_name = 'None'
@@ -1226,7 +1365,8 @@ def worker():
             yield_result(async_task, async_task.enhance_input_image, current_progress, async_task.black_out_nsfw, False,
                          async_task.disable_intermediate_results)
 
-        all_steps = steps * async_task.image_number
+        checkpoint_count = max(1, len(selected_base_model_names))
+        all_steps = steps * async_task.image_number * checkpoint_count
 
         if async_task.enhance_checkbox and async_task.enhance_uov_method != flags.disabled.casefold():
             enhance_upscale_steps = async_task.performance_selection.steps()
@@ -1236,12 +1376,12 @@ def worker():
                 else:
                     enhance_upscale_steps = async_task.performance_selection.steps_uov()
             enhance_upscale_steps, _, _, _ = apply_overrides(async_task, enhance_upscale_steps, height, width)
-            enhance_upscale_steps_total = async_task.image_number * enhance_upscale_steps
+            enhance_upscale_steps_total = async_task.image_number * checkpoint_count * enhance_upscale_steps
             all_steps += enhance_upscale_steps_total
 
         if async_task.enhance_checkbox and len(async_task.enhance_ctrls) != 0:
             enhance_steps, _, _, _ = apply_overrides(async_task, async_task.original_steps, height, width)
-            all_steps += async_task.image_number * len(async_task.enhance_ctrls) * enhance_steps
+            all_steps += async_task.image_number * checkpoint_count * len(async_task.enhance_ctrls) * enhance_steps
 
         all_steps = max(all_steps, 1)
 
@@ -1265,7 +1405,7 @@ def worker():
         processing_start_time = time.perf_counter()
 
         preparation_steps = current_progress
-        total_count = async_task.image_number
+        total_count = async_task.image_number * checkpoint_count
 
         def callback(step, x0, x, total_steps, y):
             if step == 0:
@@ -1275,38 +1415,73 @@ def worker():
                 int(current_progress + async_task.callback_steps),
                 f'Sampling step {step + 1}/{total_steps}, image {current_task_id + 1}/{total_count} ...', y)])
 
-        show_intermediate_results = len(tasks) > 1 or async_task.should_enhance
+        show_intermediate_results = total_count > 1 or async_task.should_enhance
         persist_image = not async_task.should_enhance or not async_task.save_final_enhanced_image_only
 
-        for current_task_id, task in enumerate(tasks):
-            progressbar(async_task, current_progress, f'Preparing task {current_task_id + 1}/{async_task.image_number} ...')
-            execution_start_time = time.perf_counter()
+        should_stop_generation = False
+        for checkpoint_index, checkpoint_model_name in enumerate(selected_base_model_names):
+            async_task.base_model_name = checkpoint_model_name
+            async_task.refiner_model_name = original_refiner_model_name
+            if async_task.base_model_name == async_task.refiner_model_name:
+                print(f'Refiner disabled because base model and refiner are same.')
+                async_task.refiner_model_name = 'None'
 
-            try:
-                imgs, img_paths, current_progress = process_task(all_steps, async_task, callback, controlnet_canny_path,
-                                                                 controlnet_cpds_path, current_task_id,
-                                                                 denoising_strength, final_scheduler_name, goals,
-                                                                 initial_latent, async_task.steps, switch, task['c'],
-                                                                 task['uc'], task, loras, tiled, use_expansion, width,
-                                                                 height, current_progress, preparation_steps,
-                                                                 async_task.image_number, show_intermediate_results,
-                                                                 persist_image)
+            if checkpoint_index == 0:
+                checkpoint_tasks = tasks
+                checkpoint_loras = loras
+                checkpoint_scheduler_name = final_scheduler_name
+            else:
+                progressbar(async_task, current_progress,
+                            f'Loading checkpoint {checkpoint_index + 1}/{checkpoint_count}: {checkpoint_model_name} ...')
+                checkpoint_tasks, _, checkpoint_loras, current_progress = process_prompt(
+                    async_task, async_task.prompt, async_task.negative_prompt,
+                    base_model_additional_loras, async_task.image_number,
+                    async_task.disable_seed_increment, use_expansion, use_style,
+                    use_synthetic_refiner, current_progress, advance_progress=False)
+                if 'cn' in goals:
+                    apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width, current_progress)
+                if async_task.freeu_enabled:
+                    apply_freeu(async_task)
+                checkpoint_scheduler_name = patch_samplers(async_task)
+                print(f'Using {checkpoint_scheduler_name} scheduler.')
 
-                current_progress = int(preparation_steps + (100 - preparation_steps) / float(all_steps) * async_task.steps * (current_task_id + 1))
-                images_to_enhance += imgs
+            for task_index, task in enumerate(checkpoint_tasks):
+                current_task_id = checkpoint_index * async_task.image_number + task_index
+                progressbar(async_task, current_progress,
+                            f'Preparing task {current_task_id + 1}/{total_count} with {checkpoint_model_name} ...')
+                execution_start_time = time.perf_counter()
 
-            except ldm_patched.modules.model_management.InterruptProcessingException:
-                if async_task.last_stop == 'skip':
-                    print('User skipped')
-                    async_task.last_stop = False
-                    continue
-                else:
-                    print('User stopped')
-                    break
+                try:
+                    imgs, img_paths, current_progress = process_task(
+                        all_steps, async_task, callback, controlnet_canny_path,
+                        controlnet_cpds_path, current_task_id,
+                        denoising_strength, checkpoint_scheduler_name, goals,
+                        initial_latent, async_task.steps, switch, task['c'],
+                        task['uc'], task, checkpoint_loras, tiled, use_expansion, width,
+                        height, current_progress, preparation_steps,
+                        total_count, show_intermediate_results,
+                        persist_image)
 
-            del task['c'], task['uc']  # Save memory
-            execution_time = time.perf_counter() - execution_start_time
-            print(f'Generating and saving time: {execution_time:.2f} seconds')
+                    completed_tasks = current_task_id + 1
+                    current_progress = int(preparation_steps + (100 - preparation_steps) / float(all_steps) * async_task.steps * completed_tasks)
+                    images_to_enhance += imgs
+
+                except ldm_patched.modules.model_management.InterruptProcessingException:
+                    if async_task.last_stop == 'skip':
+                        print('User skipped')
+                        async_task.last_stop = False
+                        continue
+                    else:
+                        print('User stopped')
+                        should_stop_generation = True
+                        break
+
+                del task['c'], task['uc']  # Save memory
+                execution_time = time.perf_counter() - execution_start_time
+                print(f'Generating and saving time: {execution_time:.2f} seconds')
+
+            if should_stop_generation:
+                break
 
         if not async_task.should_enhance:
             print(f'[Enhance] Skipping, preconditions aren\'t met')

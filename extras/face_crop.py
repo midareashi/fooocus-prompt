@@ -34,7 +34,7 @@ def crop_image(img_rgb):
 
     faceRestoreHelper.clean_all()
     faceRestoreHelper.read_image(np.ascontiguousarray(img_rgb[:, :, ::-1].copy()))
-    faceRestoreHelper.get_face_landmarks_5()
+    faceRestoreHelper.get_face_landmarks_5(only_keep_largest=True)
 
     landmarks = faceRestoreHelper.all_landmarks_5
     # landmarks are already sorted with confidence.

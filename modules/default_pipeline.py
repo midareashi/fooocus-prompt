@@ -6,9 +6,12 @@ import modules.config
 import modules.flags
 import ldm_patched.modules.model_management
 import ldm_patched.modules.latent_formats
+import ldm_patched.modules.utils
+import ldm_patched.modules.clip_vision
 import modules.inpaint_worker
 import extras.vae_interpose as vae_interpose
 from extras.expansion import FooocusExpansion
+from ldm_patched.contrib.external_photomaker import PhotoMakerIDEncoder
 
 from ldm_patched.modules.model_base import SDXL, SDXLRefiner
 from modules.sample_hijack import clip_separate
@@ -24,6 +27,8 @@ final_clip = None
 final_vae = None
 final_refiner_unet = None
 final_refiner_vae = None
+final_photomaker = None
+final_photomaker_filename = None
 
 loaded_ControlNets = {}
 
@@ -194,6 +199,151 @@ def clip_encode(texts, pool_top_k=1):
 
     for i, text in enumerate(texts):
         cond, pooled = clip_encode_single(final_clip, text)
+        cond_list.append(cond)
+        if i < pool_top_k:
+            pooled_acc += pooled
+
+    return [[torch.cat(cond_list, dim=1), {"pooled_output": pooled_acc}]]
+
+
+@torch.no_grad()
+@torch.inference_mode()
+def refresh_photomaker_model(filename):
+    global final_photomaker, final_photomaker_filename
+
+    if final_photomaker is not None and final_photomaker_filename == filename:
+        return
+
+    print(f'Loading PhotoMaker model: {filename}')
+    photomaker = PhotoMakerIDEncoder()
+    data = ldm_patched.modules.utils.load_torch_file(filename, safe_load=True)
+    if 'id_encoder' in data:
+        data = data['id_encoder']
+    photomaker.load_state_dict(data, strict=True)
+    photomaker.eval()
+    photomaker.to(photomaker.load_device)
+
+    final_photomaker = photomaker
+    final_photomaker_filename = filename
+    return
+
+
+def _normalize_photomaker_trigger(text, class_name, trigger_word):
+    words = str(text or '').split()
+    trigger_indexes = [
+        index for index, word in enumerate(words)
+        if word.strip('.,;:()[]{}') == trigger_word
+    ]
+
+    if len(trigger_indexes) == 0:
+        text = str(text or '').strip()
+        if text == '':
+            return f'photo of a {class_name} {trigger_word}'
+        return f'{text}, {class_name} {trigger_word}'
+
+    expanded = []
+    kept_trigger = False
+    for index, word in enumerate(words):
+        is_trigger = index in trigger_indexes
+        if is_trigger and not kept_trigger:
+            expanded.append(trigger_word)
+            kept_trigger = True
+        elif not is_trigger:
+            expanded.append(word)
+    return ' '.join(expanded)
+
+
+def _photomaker_trigger_word_id(text, trigger_word):
+    for index, word in enumerate(str(text or '').split()):
+        if word.strip('.,;:()[]{}') == trigger_word:
+            return index + 1
+    return -1
+
+
+@torch.no_grad()
+@torch.inference_mode()
+def clip_encode_photomaker(texts, id_pixel_values, class_name='person', trigger_word='img', strength=1.0, pool_top_k=1):
+    global final_clip, final_photomaker
+
+    if final_clip is None or final_photomaker is None:
+        return clip_encode(texts, pool_top_k=pool_top_k)
+    if not isinstance(texts, list) or len(texts) == 0:
+        return None
+    if not isinstance(id_pixel_values, torch.Tensor) or id_pixel_values.ndim != 4 or id_pixel_values.shape[0] == 0:
+        return clip_encode(texts, pool_top_k=pool_top_k)
+
+    photomaker = final_photomaker
+    strength = max(0.0, min(1.0, float(strength)))
+    id_pixel_values = id_pixel_values.to(photomaker.load_device)
+    id_pixel_values = ldm_patched.modules.clip_vision.clip_preprocess(id_pixel_values).float().unsqueeze(0)
+
+    cond_list = []
+    pooled_acc = 0
+
+    for i, raw_text in enumerate(texts):
+        if i == 0:
+            text = _normalize_photomaker_trigger(raw_text, class_name, trigger_word)
+            trigger_word_id = _photomaker_trigger_word_id(text, trigger_word)
+
+            tokens = final_clip.tokenize(text, return_word_ids=True)
+            out_tokens = {}
+            token_index = None
+
+            for key, token_batch in tokens.items():
+                out_tokens[key] = []
+                for batch in token_batch:
+                    clean_batch = []
+                    class_token_index = None
+                    clean_index = 0
+
+                    for token in batch:
+                        if token[2] == trigger_word_id:
+                            class_token_index = clean_index - 1
+                            continue
+                        clean_batch.append(token)
+                        clean_index += 1
+
+                    if class_token_index is not None and class_token_index >= 0:
+                        class_token = clean_batch[class_token_index]
+                        num_id_images = int(id_pixel_values.shape[1])
+                        clean_batch = clean_batch[:class_token_index] + \
+                            [class_token] * num_id_images + clean_batch[class_token_index + 1:]
+                        if token_index is None:
+                            token_index = class_token_index
+
+                    original_length = len(batch)
+                    if len(clean_batch) > original_length:
+                        clean_batch = clean_batch[:original_length]
+                    while len(clean_batch) < original_length:
+                        clean_batch.append(batch[-1])
+                    out_tokens[key].append(clean_batch)
+
+            cond, pooled = final_clip.encode_from_tokens(out_tokens, return_pooled=True)
+            if trigger_word_id > 0 and token_index is not None:
+                num_id_images = int(id_pixel_values.shape[1])
+                class_tokens_mask = [
+                    True if token_index <= j < token_index + num_id_images else False
+                    for j in range(cond.shape[1])
+                ]
+                if sum(class_tokens_mask) == num_id_images:
+                    print(f'[PhotoMaker] Using {num_id_images} ID image(s) with prompt: {text}')
+                    updated = photomaker(
+                        id_pixel_values=id_pixel_values,
+                        prompt_embeds=cond.to(photomaker.load_device),
+                        class_tokens_mask=torch.tensor(
+                            class_tokens_mask,
+                            dtype=torch.bool,
+                            device=photomaker.load_device
+                        ).unsqueeze(0)
+                    ).to(cond)
+                    cond = cond * (1.0 - strength) + updated * strength
+                else:
+                    print(f'PhotoMaker trigger was truncated in prompt: {text}')
+            else:
+                print(f'PhotoMaker trigger word "{trigger_word}" was not found in prompt: {text}')
+        else:
+            cond, pooled = clip_encode_single(final_clip, raw_text)
+
         cond_list.append(cond)
         if i < pool_top_k:
             pooled_acc += pooled

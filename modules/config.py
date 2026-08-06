@@ -197,6 +197,7 @@ path_upscale_models = get_dir_or_set_default('path_upscale_models', '../models/u
 path_inpaint = get_dir_or_set_default('path_inpaint', '../models/inpaint/')
 path_controlnet = get_dir_or_set_default('path_controlnet', '../models/controlnet/')
 path_clip_vision = get_dir_or_set_default('path_clip_vision', '../models/clip_vision/')
+path_photomaker = get_dir_or_set_default('path_photomaker', '../models/photomaker/')
 path_fooocus_expansion = get_dir_or_set_default('path_fooocus_expansion', '../models/prompt_expansion/fooocus_expansion')
 path_wildcards = get_dir_or_set_default('path_wildcards', '../wildcards/')
 path_safety_checker = get_dir_or_set_default('path_safety_checker', '../models/safety_checker/')
@@ -508,6 +509,13 @@ default_uov_method = get_config_item_or_set_default(
 default_controlnet_image_count = get_config_item_or_set_default(
     key='default_controlnet_image_count',
     default_value=4,
+    validator=lambda x: isinstance(x, int) and x > 0,
+    expected_type=int
+)
+
+default_person_likeness_image_count = get_config_item_or_set_default(
+    key='default_person_likeness_image_count',
+    default_value=5,
     validator=lambda x: isinstance(x, int) and x > 0,
     expected_type=int
 )
@@ -939,6 +947,15 @@ def downloading_ip_adapters(v):
         results += [os.path.join(path_controlnet, 'ip-adapter-plus-face_sdxl_vit-h.bin')]
 
     return results
+
+
+def downloading_photomaker():
+    load_file_from_url(
+        url='https://huggingface.co/TencentARC/PhotoMaker/resolve/main/photomaker-v1.bin',
+        model_dir=path_photomaker,
+        file_name='photomaker-v1.bin'
+    )
+    return os.path.join(path_photomaker, 'photomaker-v1.bin')
 
 
 def downloading_upscale_model():
