@@ -474,7 +474,13 @@ def worker():
         person_face_tasks = []
         if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
                 isinstance(ip_adapter_face_path, str):
-            face_weight = max(0.0, min(0.65, 0.45 * float(async_task.person_likeness_strength)))
+            face_weight = max(
+                0.0,
+                min(
+                    modules.config.default_person_likeness_face_weight_max,
+                    0.6 * float(async_task.person_likeness_strength)
+                )
+            )
             prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
             ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
             if ip_cache_key in person_likeness_ip_adapter_cache:

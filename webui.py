@@ -435,7 +435,7 @@ with shared.gradio_root:
                                     person_likeness_strength = gr.Slider(
                                         label='Likeness Strength',
                                         minimum=0.0,
-                                        maximum=1.0,
+                                        maximum=modules.config.default_person_likeness_strength_max,
                                         step=0.001,
                                         value=1.0
                                     )
