@@ -34,6 +34,10 @@ args_parser.parser.add_argument("--disable-enhance-output-sorting", action='stor
 args_parser.parser.add_argument("--enable-auto-describe-image", action='store_true',
                                 help="Enables automatic description of uov and enhance image when prompt is empty", default=False)
 
+args_parser.parser.add_argument("--fast-inpaint", action='store_true',
+                                help="Speeds up parameterized inpaint by skipping Fooocus synthetic refiner finishing. "
+                                  "This keeps the inpaint patch active for all sampling steps and may slightly change quality.")
+
 args_parser.parser.add_argument("--always-download-new-model", action='store_true',
                                 help="Always download newer models", default=False)
 

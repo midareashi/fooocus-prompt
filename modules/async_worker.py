@@ -214,6 +214,7 @@ def worker():
     import extras.face_crop
     import fooocus_version
     import hashlib
+    import args_manager
 
     from extras.censor import default_censor
     from modules.sdxl_styles import apply_style, get_random_style, fooocus_expansion, apply_arrays, random_style_name
@@ -1037,8 +1038,12 @@ def worker():
                     base_model_additional_loras += [(inpaint_patch_model_path, 1.0)]
                     print(f'[Inpaint] Current inpaint model is {inpaint_patch_model_path}')
                     if async_task.refiner_model_name == 'None':
-                        use_synthetic_refiner = True
-                        async_task.refiner_switch = 0.8
+                        if args_manager.args.fast_inpaint:
+                            print('[Inpaint] Fast inpaint enabled; skipping synthetic refiner finishing.')
+                            async_task.refiner_switch = 1.0
+                        else:
+                            use_synthetic_refiner = True
+                            async_task.refiner_switch = 0.8
                 else:
                     inpaint_head_model_path, inpaint_patch_model_path = None, None
                     print(f'[Inpaint] Parameterized inpaint is disabled.')

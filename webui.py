@@ -15,7 +15,6 @@ import modules.gradio_hijack as grh
 import modules.style_sorter as style_sorter
 import modules.meta_parser
 import modules.prompt_config
-import modules.comfy_video_bridge
 import args_manager
 import copy
 import launch
@@ -1497,60 +1496,6 @@ with shared.gradio_root:
                         .then(fn=style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                         .then(lambda: None, _js='()=>{refresh_style_localization();}')
         
-        with gr.Tab(label='Video Generation', id='video_generation_tab'):
-            gr.HTML('<h2>Wan Image-to-Video</h2>')
-            gr.HTML('Use Fooocus as a simple front-end for the saved ComfyUI Wan workflow. Defaults are conservative for a 6 GB GPU.')
-            with gr.Row():
-                with gr.Column(scale=1):
-                    video_first_frame = grh.Image(label='First Frame', source='upload', type='numpy', height=420)
-                    video_last_frame = grh.Image(label='Last Frame (optional)', source='upload', type='numpy', height=240)
-                with gr.Column(scale=1):
-                    video_prompt = gr.Textbox(label='Prompt', lines=5, placeholder='Describe the motion and scene.')
-                    video_negative_prompt = gr.Textbox(label='Negative Prompt', lines=3, value='blurry, low quality, distorted motion, flicker')
-                    with gr.Row():
-                        video_seconds = gr.Slider(label='Seconds', minimum=1, maximum=5, step=1, value=3)
-                        video_fps = gr.Radio(label='FPS', choices=[8, 12, 16], value=16)
-                    with gr.Row():
-                        video_resolution = gr.Dropdown(label='Resolution', choices=['0.52 MP - SD', '540p', '720p'], value='0.52 MP - SD')
-                        video_headroom = gr.Slider(label='VRAM Headroom', minimum=2, maximum=4, step=1, value=4)
-                    with gr.Row():
-                        wan_model_choices = modules.comfy_video_bridge.list_wan_high_low_models()
-                        video_high_model = gr.Dropdown(
-                            label='High Model',
-                            choices=wan_model_choices,
-                            value=modules.comfy_video_bridge.DEFAULT_WAN_HIGH_MODEL
-                            if modules.comfy_video_bridge.DEFAULT_WAN_HIGH_MODEL in wan_model_choices else None
-                        )
-                        video_low_model = gr.Dropdown(
-                            label='Low Model',
-                            choices=wan_model_choices,
-                            value=modules.comfy_video_bridge.DEFAULT_WAN_LOW_MODEL
-                            if modules.comfy_video_bridge.DEFAULT_WAN_LOW_MODEL in wan_model_choices else None
-                        )
-                    with gr.Row():
-                        video_high_loras = gr.CheckboxGroup(
-                            label='High LoRAs',
-                            choices=modules.comfy_video_bridge.list_wan_high_loras(),
-                            value=[]
-                        )
-                        video_low_loras = gr.CheckboxGroup(
-                            label='Low LoRAs',
-                            choices=modules.comfy_video_bridge.list_wan_low_loras(),
-                            value=[]
-                        )
-                    video_generate_button = gr.Button(value='Prepare Wan Video', variant='primary')
-            video_output = gr.Video(label='Video', visible=False)
-            video_status = gr.HTML() 
-
-            video_generate_button.click(
-                fn=modules.comfy_video_bridge.prepare_wan_img2vid,
-                inputs=[video_first_frame, video_last_frame, video_prompt, video_negative_prompt,
-                        video_seconds, video_fps, video_resolution, video_headroom,
-                        video_high_model, video_low_model, video_high_loras, video_low_loras],
-                outputs=[video_output, video_status],
-                queue=True,
-                show_progress=True
-            )
 def dump_default_english_config():
     from modules.localization import dump_english_config
     dump_english_config(grh.all_components)
