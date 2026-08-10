@@ -78,6 +78,111 @@ function onOptionsChanged(callback) {
     optionsChangedCallbacks.push(callback);
 }
 
+function getPersonLikenessPathsInput() {
+    return gradioApp().querySelector(
+        '#person_likeness_paths textarea, #person_likeness_paths input, textarea#person_likeness_paths, input#person_likeness_paths'
+    );
+}
+
+function setPersonLikenessPaths(paths) {
+    const input = getPersonLikenessPathsInput();
+    if (!input) return;
+    const value = JSON.stringify(paths);
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    if (valueSetter) {
+        valueSetter.call(input, value);
+    } else {
+        input.value = value;
+    }
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+function refreshPersonLikenessGallery() {
+    setTimeout(function() {
+        gradioApp().querySelector('#person_likeness_refresh_button')?.click();
+    }, 20);
+}
+
+function installPersonLikenessRemoveButtons() {
+    const input = getPersonLikenessPathsInput();
+    const gallery = gradioApp().querySelector('#person_likeness_gallery');
+    if (!input || !gallery) return;
+
+    let paths = [];
+    try {
+        paths = JSON.parse(input.value || '[]');
+    } catch {
+        paths = [];
+    }
+
+    const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
+    items.forEach(function(item, index) {
+        if (item.querySelector('.person-likeness-remove')) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'person-likeness-remove';
+        button.setAttribute('aria-label', 'Remove photo');
+        button.textContent = 'X';
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const nextPaths = paths.filter(function(_, pathIndex) {
+                return pathIndex !== index;
+            });
+            setPersonLikenessPaths(nextPaths);
+            refreshPersonLikenessGallery();
+        });
+        item.appendChild(button);
+    });
+}
+
+function getGenerationApplyIndexInput() {
+    return gradioApp().querySelector(
+        '#selected_generation_apply_index textarea, #selected_generation_apply_index input, textarea#selected_generation_apply_index, input#selected_generation_apply_index'
+    );
+}
+
+function setGenerationApplyIndex(index) {
+    const input = getGenerationApplyIndexInput();
+    if (!input) return false;
+    const value = String(index);
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    if (valueSetter) {
+        valueSetter.call(input, value);
+    } else {
+        input.value = value;
+    }
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+}
+
+function installGenerationHistoryApplyButtons() {
+    const gallery = gradioApp().querySelector('#final_gallery');
+    const applyButton = gradioApp().querySelector('#apply_selected_image_config_button');
+    if (!gallery || !applyButton) return;
+
+    const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
+    items.forEach(function(item, index) {
+        if (item.querySelector('.generation-config-apply')) return;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'generation-config-apply';
+        button.setAttribute('aria-label', 'Apply generation config');
+        button.setAttribute('title', 'Apply generation config');
+        button.textContent = 'Apply';
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (setGenerationApplyIndex(index)) {
+                applyButton.click();
+            }
+        });
+        item.appendChild(button);
+    });
+}
+
 function executeCallbacks(queue, arg) {
     for (const callback of queue) {
         try {
@@ -117,6 +222,8 @@ document.addEventListener("DOMContentLoaded", function() {
             uiCurrentTab = newTab;
             executeCallbacks(uiTabChangeCallbacks);
         }
+        installPersonLikenessRemoveButtons();
+        installGenerationHistoryApplyButtons();
     });
     mutationObserver.observe(gradioApp(), {childList: true, subtree: true});
     initStylePreviewOverlay();

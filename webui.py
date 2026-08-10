@@ -28,6 +28,7 @@ from modules.util import is_json
 
 
 people_dir = os.path.abspath(os.path.join('input', 'people'))
+legacy_people_dir = os.path.abspath('input')
 
 
 def sanitize_person_name(name):
@@ -36,66 +37,161 @@ def sanitize_person_name(name):
     return name[:80]
 
 
-def list_saved_people():
-    if not os.path.exists(people_dir):
+def get_uploaded_file_path(file):
+    if file is None:
+        return None
+    if isinstance(file, str):
+        return file
+    if isinstance(file, dict):
+        return file.get('name') or file.get('path')
+    return getattr(file, 'name', None)
+
+
+def flatten_person_likeness_files(files):
+    if files is None:
         return []
-    return sorted([
-        name for name in os.listdir(people_dir)
-        if os.path.isdir(os.path.join(people_dir, name))
-    ], key=lambda x: x.lower())
+    if isinstance(files, str) and files.strip().startswith('['):
+        try:
+            files = json.loads(files)
+        except Exception:
+            files = [files]
+    if isinstance(files, (str, dict)) or hasattr(files, 'name'):
+        files = [files]
+    return [file for file in files if get_uploaded_file_path(file) is not None]
 
 
-def save_person_likeness(name, subject, *images):
+def parse_person_likeness_paths(paths_json):
+    try:
+        paths = json.loads(paths_json or '[]')
+    except Exception:
+        paths = []
+    return [
+        path for path in paths
+        if isinstance(path, str) and os.path.exists(path)
+    ]
+
+
+def encode_person_likeness_paths(paths):
+    deduped = []
+    seen = set()
+    for path in paths:
+        path = os.path.abspath(path)
+        key = os.path.normcase(path)
+        if os.path.exists(path) and key not in seen:
+            deduped.append(path)
+            seen.add(key)
+    return json.dumps(deduped)
+
+
+def preview_person_likeness_paths(paths_json):
+    return parse_person_likeness_paths(paths_json)
+
+
+def append_person_likeness_files(files, paths_json):
+    paths = parse_person_likeness_paths(paths_json)
+    paths += [get_uploaded_file_path(file) for file in flatten_person_likeness_files(files)]
+    encoded = encode_person_likeness_paths(paths)
+    return encoded, preview_person_likeness_paths(encoded), gr.update(value=None)
+
+
+def clamp_float(value, default, minimum, maximum):
+    try:
+        value = float(value)
+    except Exception:
+        value = default
+    return max(minimum, min(maximum, value))
+
+
+def list_saved_people():
+    saved_people = set()
+    for base_dir in [people_dir, legacy_people_dir]:
+        if not os.path.exists(base_dir):
+            continue
+        for name in os.listdir(base_dir):
+            person_dir = os.path.join(base_dir, name)
+            if os.path.isdir(person_dir) and os.path.exists(os.path.join(person_dir, 'person.json')):
+                saved_people.add(name)
+    return sorted(saved_people, key=lambda x: x.lower())
+
+
+def resolve_saved_person_dir(person_name):
+    for base_dir in [people_dir, legacy_people_dir]:
+        person_dir = os.path.abspath(os.path.join(base_dir, person_name))
+        if os.path.exists(os.path.join(person_dir, 'person.json')) and os.path.commonpath([base_dir, person_dir]) == base_dir:
+            return person_dir, base_dir
+    return os.path.abspath(os.path.join(people_dir, person_name)), people_dir
+
+
+def save_person_likeness(name, enabled, subject, strength, face_weight, face_start, files):
     from PIL import Image
-    import shutil
-    import numpy as np
 
     person_name = sanitize_person_name(name)
     if person_name == '':
         return gr.update(), 'Enter a name before saving.'
 
-    valid_images = [image for image in images if image is not None]
-    if len(valid_images) == 0:
+    valid_files = flatten_person_likeness_files(files)
+    if len(valid_files) == 0:
         return gr.update(), 'Add at least one photo before saving.'
 
     os.makedirs(people_dir, exist_ok=True)
     person_dir = os.path.abspath(os.path.join(people_dir, person_name))
     if os.path.commonpath([people_dir, person_dir]) != people_dir:
         return gr.update(), 'Invalid person name.'
+    if os.path.exists(person_dir) and os.listdir(person_dir) and not os.path.exists(os.path.join(person_dir, 'person.json')):
+        return gr.update(), f'Cannot save: input folder already exists and is not a saved person: {person_name}'
 
-    if os.path.exists(person_dir):
-        shutil.rmtree(person_dir)
     os.makedirs(person_dir, exist_ok=True)
 
     saved_count = 0
-    for image in valid_images:
-        array = np.asarray(image)
-        if array.ndim != 3:
+    image_files = []
+    save_stamp = time.strftime('%Y%m%d_%H%M%S')
+    for file in valid_files:
+        image_path = get_uploaded_file_path(file)
+        source_path = os.path.abspath(image_path)
+        if os.path.exists(source_path) and os.path.commonpath([person_dir, source_path]) == person_dir:
+            image_files.append(os.path.basename(source_path))
+            saved_count += 1
             continue
-        if array.shape[2] > 3:
-            array = array[:, :, :3]
-        Image.fromarray(array.astype('uint8')).save(os.path.join(person_dir, f'{saved_count + 1:02d}.png'))
-        saved_count += 1
 
+        try:
+            filename = f'{save_stamp}_{saved_count + 1:02d}.png'
+            Image.open(image_path).convert('RGB').save(os.path.join(person_dir, filename))
+            image_files.append(filename)
+            saved_count += 1
+        except Exception:
+            pass
+
+    if saved_count == 0:
+        return gr.update(), 'No valid image files were found.'
+
+    person_config = {
+        'name': person_name,
+        'enabled': bool(enabled),
+        'subject': subject if subject in flags.person_likeness_classes else 'person',
+        'identity_strength': clamp_float(strength, 1.0, 0.0, modules.config.default_person_likeness_strength_max),
+        'face_weight': clamp_float(face_weight, modules.config.default_person_likeness_face_weight, 0.0,
+                                   modules.config.default_person_likeness_face_weight_max),
+        'face_weight_start': clamp_float(face_start, modules.config.default_person_likeness_face_start, 0.0, 1.0),
+        'image_count': saved_count,
+        'image_files': image_files
+    }
     with open(os.path.join(person_dir, 'person.json'), 'w', encoding='utf-8') as f:
-        json.dump({'name': person_name, 'subject': subject, 'image_count': saved_count}, f, indent=2)
+        json.dump(person_config, f, indent=2)
 
     choices = list_saved_people()
     return gr.update(choices=choices, value=person_name), f'Saved {saved_count} photo(s) for {person_name}.'
 
 
 def load_person_likeness(name):
-    from PIL import Image
-    import numpy as np
-
     person_name = sanitize_person_name(name)
-    empty_images = [None] * modules.config.default_person_likeness_image_count
     if person_name == '':
-        return ['person'] + empty_images + ['Choose a saved person to load.']
+        return True, 'person', 1.0, modules.config.default_person_likeness_face_weight, \
+            modules.config.default_person_likeness_face_start, '[]', 'Choose a saved person to load.'
 
-    person_dir = os.path.abspath(os.path.join(people_dir, person_name))
-    if not os.path.exists(person_dir) or os.path.commonpath([people_dir, person_dir]) != people_dir:
-        return ['person'] + empty_images + [f'Could not find saved person: {person_name}']
+    person_dir, base_dir = resolve_saved_person_dir(person_name)
+    if not os.path.exists(person_dir) or os.path.commonpath([base_dir, person_dir]) != base_dir:
+        return True, 'person', 1.0, modules.config.default_person_likeness_face_weight, \
+            modules.config.default_person_likeness_face_start, '[]', f'Could not find saved person: {person_name}'
 
     metadata = {}
     metadata_path = os.path.join(person_dir, 'person.json')
@@ -109,20 +205,33 @@ def load_person_likeness(name):
     subject = metadata.get('subject', 'person')
     if subject not in flags.person_likeness_classes:
         subject = 'person'
+    enabled = bool(metadata.get('enabled', True))
+    strength = clamp_float(metadata.get('identity_strength', metadata.get('strength', 1.0)), 1.0, 0.0,
+                           modules.config.default_person_likeness_strength_max)
+    face_weight = clamp_float(metadata.get('face_weight', modules.config.default_person_likeness_face_weight),
+                              modules.config.default_person_likeness_face_weight, 0.0,
+                              modules.config.default_person_likeness_face_weight_max)
+    face_start = clamp_float(metadata.get('face_weight_start', metadata.get('face_start',
+                                                                            modules.config.default_person_likeness_face_start)),
+                             modules.config.default_person_likeness_face_start, 0.0, 1.0)
 
-    image_paths = sorted([
-        os.path.join(person_dir, filename)
-        for filename in os.listdir(person_dir)
-        if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg', '.webp']
-    ])
-    loaded_images = []
-    for image_path in image_paths[:modules.config.default_person_likeness_image_count]:
-        loaded_images.append(np.asarray(Image.open(image_path).convert('RGB')))
-
-    while len(loaded_images) < modules.config.default_person_likeness_image_count:
-        loaded_images.append(None)
-
-    return [subject] + loaded_images + [f'Loaded {len(image_paths)} photo(s) for {person_name}.']
+    image_files = metadata.get('image_files')
+    if isinstance(image_files, list):
+        image_paths = [
+            os.path.join(person_dir, filename)
+            for filename in image_files
+            if isinstance(filename, str)
+            and os.path.exists(os.path.join(person_dir, filename))
+            and os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg', '.webp']
+        ]
+    else:
+        image_paths = sorted([
+            os.path.join(person_dir, filename)
+            for filename in os.listdir(person_dir)
+            if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg', '.webp']
+        ])
+    return enabled, subject, strength, face_weight, face_start, encode_person_likeness_paths(image_paths), \
+        f'Loaded {len(image_paths)} photo(s) for {person_name}.'
 
 
 def build_prompt_config(prompt, negative_prompt, style_selections, performance_selection, overwrite_step,
@@ -205,67 +314,142 @@ def get_task(*args):
     return worker.AsyncTask(args=args)
 
 
-def generate_clicked(task: worker.AsyncTask):
-    import ldm_patched.modules.model_management as model_management
+def enqueue_generate_task(*args):
+    task = get_task(*args)
+    should_monitor = False
 
-    with model_management.interrupt_processing_mutex:
-        model_management.interrupt_processing = False
-    # outputs=[progress_html, progress_window, progress_gallery, gallery]
+    if len(task.args) > 0:
+        pending_count = worker.append_async_task(task)
+        should_monitor = worker.begin_queue_monitor()
+        print(f'[Queue] Added generation task. Pending tasks: {pending_count}')
 
-    if len(task.args) == 0:
+    return task, should_monitor, \
+        gr.update(visible=True, interactive=True), \
+        gr.update(visible=True, interactive=True), \
+        gr.update(visible=True, interactive=True), \
+        gr.update(), \
+        True
+
+
+def monitor_generate_queue(should_monitor, session_history):
+    session_history = list(session_history or [])
+
+    if not should_monitor:
+        yield gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), \
+            gr.update(), gr.update(), gr.update(), gr.update()
         return
 
-    execution_start_time = time.perf_counter()
-    finished = False
+    observed_task = None
+    execution_start_time = None
 
     yield gr.update(visible=True, value=modules.html.make_progress_html(1, 'Waiting for task to start ...')), \
         gr.update(visible=True, value=None), \
         gr.update(visible=False, value=None), \
-        gr.update(visible=False)
+        gr.update(visible=True), \
+        gr.update(), \
+        gr.update(visible=True, interactive=True), \
+        gr.update(visible=True, interactive=True), \
+        gr.update(visible=True, interactive=True), \
+        True
 
-    worker.async_tasks.append(task)
+    try:
+        while True:
+            active_task = worker.get_current_task()
+            if active_task is not None and observed_task is not active_task:
+                observed_task = active_task
+                execution_start_time = time.perf_counter()
 
-    while not finished:
-        time.sleep(0.01)
-        if len(task.yields) > 0:
-            flag, product = task.yields.pop(0)
+            if observed_task is None:
+                pending_count = worker.get_pending_task_count()
+                if pending_count == 0:
+                    break
+
+                yield gr.update(
+                    visible=True,
+                    value=modules.html.make_progress_html(1, f'Waiting for queued task ... ({pending_count} pending)')
+                ), gr.update(), gr.update(), gr.update(), \
+                    gr.update(), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    True
+                time.sleep(0.1)
+                continue
+
+            if len(observed_task.yields) == 0:
+                time.sleep(0.01)
+                continue
+
+            flag, product = observed_task.yields.pop(0)
             if flag == 'preview':
-
                 # help bad internet connection by skipping duplicated preview
-                if len(task.yields) > 0:  # if we have the next item
-                    if task.yields[0][0] == 'preview':   # if the next item is also a preview
-                        # print('Skipped one preview for better internet connection.')
+                if len(observed_task.yields) > 0:
+                    if observed_task.yields[0][0] == 'preview':
                         continue
 
                 percentage, title, image = product
                 yield gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
                     gr.update(visible=True, value=image) if image is not None else gr.update(), \
                     gr.update(), \
-                    gr.update(visible=False)
+                    gr.update(visible=True), \
+                    gr.update(), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    True
             if flag == 'results':
+                for image_item in product:
+                    if isinstance(image_item, str):
+                        if image_item not in session_history:
+                            session_history.append(image_item)
+                    else:
+                        session_history.append(image_item)
+
                 yield gr.update(visible=True), \
                     gr.update(visible=True), \
-                    gr.update(visible=True, value=product), \
-                    gr.update(visible=False)
+                    gr.update(visible=False), \
+                    gr.update(visible=True, value=session_history), \
+                    session_history, \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    True
             if flag == 'finish':
                 if not args_manager.args.disable_enhance_output_sorting:
-                    product = sort_enhance_images(product, task)
+                    product = sort_enhance_images(product, observed_task)
+
+                for image_item in product:
+                    if isinstance(image_item, str):
+                        if image_item not in session_history:
+                            session_history.append(image_item)
+                    else:
+                        session_history.append(image_item)
 
                 yield gr.update(visible=False), \
+                    gr.update(visible=True), \
                     gr.update(visible=False), \
-                    gr.update(visible=False), \
-                    gr.update(visible=True, value=product)
-                finished = True
+                    gr.update(visible=True, value=session_history), \
+                    session_history, \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=True, interactive=True), \
+                    True
 
-                # delete Fooocus temp images, only keep gradio temp images
-                if args_manager.args.disable_image_log:
-                    for filepath in product:
-                        if isinstance(filepath, str) and os.path.exists(filepath):
-                            os.remove(filepath)
+                if execution_start_time is not None:
+                    execution_time = time.perf_counter() - execution_start_time
+                    print(f'Total time: {execution_time:.2f} seconds')
 
-    execution_time = time.perf_counter() - execution_start_time
-    print(f'Total time: {execution_time:.2f} seconds')
-    return
+                observed_task = None
+                execution_start_time = None
+    finally:
+        worker.end_queue_monitor()
+
+    yield gr.update(), gr.update(), gr.update(), gr.update(), \
+        gr.update(), \
+        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
+        gr.update(visible=False, interactive=False), \
+        False
 
 
 def sort_enhance_images(images, task):
@@ -331,19 +515,30 @@ with shared.gradio_root:
     with gr.Tabs(elem_id='generation_mode_tabs'):
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
+            state_session_gallery = gr.State([])
+            state_selected_generation_index = gr.State(None)
             inpaint_engine_state = gr.State('empty')
             with gr.Row():
                 with gr.Column(scale=2):
-                    with gr.Row():
-                        progress_window = grh.Image(label='Preview', show_label=True, visible=False, height=768,
-                                                    elem_classes=['main_view'])
-                        progress_gallery = gr.Gallery(label='Finished Images', show_label=True, object_fit='contain',
-                                                      height=768, visible=False, elem_classes=['main_view', 'image_gallery'])
+                    with gr.Row(elem_id='generation_image_panel'):
+                        with gr.Column(scale=1, elem_id='current_generation_panel'):
+                            progress_window = grh.Image(label='Current Image', show_label=True, visible=True, height=640,
+                                                        elem_classes=['main_view'])
+                            progress_gallery = gr.Gallery(label='Finished Images', show_label=True, object_fit='contain',
+                                                          height=640, visible=False, elem_classes=['main_view', 'image_gallery'])
+                        with gr.Column(scale=1, elem_id='generation_history_panel'):
+                            selected_generation_apply_index = gr.Textbox(value='',
+                                                                          elem_id='selected_generation_apply_index',
+                                                                          elem_classes='generation_apply_hidden_control')
+                            apply_selected_image_config_button = gr.Button(value='Apply Selected Image Config',
+                                                                           elem_id='apply_selected_image_config_button',
+                                                                           elem_classes='generation_apply_hidden_control')
+                            gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
+                                                 elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
+                                                 elem_id='final_gallery')
+                            selected_image_status = gr.HTML()
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
-                    gallery = gr.Gallery(label='Gallery', show_label=False, object_fit='contain', visible=True, height=768,
-                                         elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
-                                         elem_id='final_gallery')
                     with gr.Row():
                         with gr.Column(scale=17):
                             prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
@@ -362,17 +557,23 @@ with shared.gradio_root:
         
                             def stop_clicked(currentTask):
                                 import ldm_patched.modules.model_management as model_management
-                                currentTask.last_stop = 'stop'
-                                if (currentTask.processing):
+                                target_task = currentTask if currentTask.processing else worker.get_current_task()
+                                if target_task is None:
+                                    target_task = currentTask
+                                target_task.last_stop = 'stop'
+                                if (target_task.processing):
                                     model_management.interrupt_current_processing()
-                                return currentTask
+                                return target_task
         
                             def skip_clicked(currentTask):
                                 import ldm_patched.modules.model_management as model_management
-                                currentTask.last_stop = 'skip'
-                                if (currentTask.processing):
+                                target_task = currentTask if currentTask.processing else worker.get_current_task()
+                                if target_task is None:
+                                    target_task = currentTask
+                                target_task.last_stop = 'skip'
+                                if (target_task.processing):
                                     model_management.interrupt_current_processing()
-                                return currentTask
+                                return target_task
         
                             stop_button.click(stop_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False, _js='cancelGenerateForever')
                             skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
@@ -399,7 +600,6 @@ with shared.gradio_root:
                                         uov_method = gr.Radio(label='Upscale or Variation:', choices=flags.uov_list, value=modules.config.default_uov_method)
                                         gr.HTML('<a href="https://github.com/lllyasviel/Fooocus/discussions/390" target="_blank">\U0001F4D4 Documentation</a>')
                             with gr.Tab(label='Person Likeness', id='person_tab') as person_tab:
-                                person_likeness_images = []
                                 person_likeness_ctrls = []
                                 with gr.Row():
                                     saved_person_name = gr.Textbox(label='Name', placeholder='Person name')
@@ -411,18 +611,33 @@ with shared.gradio_root:
                                     save_person_button = gr.Button(value='Save Person', variant='secondary')
                                     load_person_button = gr.Button(value='Load Person', variant='secondary')
                                 saved_person_status = gr.HTML()
-                                with gr.Row():
-                                    for image_count in range(modules.config.default_person_likeness_image_count):
-                                        with gr.Column():
-                                            person_likeness_image = grh.Image(
-                                                label=f'Photo {image_count + 1}',
-                                                source='upload',
-                                                type='numpy',
-                                                show_label=True,
-                                                height=240
-                                            )
-                                            person_likeness_images.append(person_likeness_image)
-                                            person_likeness_ctrls.append(person_likeness_image)
+                                person_likeness_files = gr.File(
+                                    label='Drop Photos',
+                                    file_count='multiple',
+                                    file_types=['image'],
+                                    type='file',
+                                    elem_id='person_likeness_upload'
+                                )
+                                person_likeness_paths = gr.Textbox(
+                                    value='[]',
+                                    visible=False,
+                                    elem_id='person_likeness_paths'
+                                )
+                                person_likeness_gallery = gr.Gallery(
+                                    label='Selected Photos',
+                                    show_label=True,
+                                    elem_id='person_likeness_gallery',
+                                    columns=6,
+                                    object_fit='cover',
+                                    height=330,
+                                    allow_preview=False,
+                                    show_download_button=False
+                                )
+                                person_likeness_refresh_button = gr.Button(
+                                    value='Refresh Person Thumbnails',
+                                    visible=False,
+                                    elem_id='person_likeness_refresh_button'
+                                )
                                 with gr.Row():
                                     person_likeness_enabled = gr.Checkbox(label='Enable Person Likeness', value=True)
                                     person_likeness_class = gr.Radio(
@@ -455,10 +670,13 @@ with shared.gradio_root:
                                 person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
                                                          person_likeness_strength,
                                                          person_likeness_face_weight,
-                                                         person_likeness_face_start] + person_likeness_ctrls
+                                                         person_likeness_face_start,
+                                                         person_likeness_paths]
                                 save_person_button.click(
                                     save_person_likeness,
-                                    inputs=[saved_person_name, person_likeness_class] + person_likeness_images,
+                                    inputs=[saved_person_name, person_likeness_enabled, person_likeness_class,
+                                            person_likeness_strength, person_likeness_face_weight,
+                                            person_likeness_face_start, person_likeness_paths],
                                     outputs=[saved_person_selection, saved_person_status],
                                     queue=False,
                                     show_progress=False
@@ -466,11 +684,40 @@ with shared.gradio_root:
                                 load_person_button.click(
                                     load_person_likeness,
                                     inputs=[saved_person_selection],
-                                    outputs=[person_likeness_class] + person_likeness_images + [saved_person_status],
+                                    outputs=[person_likeness_enabled, person_likeness_class, person_likeness_strength,
+                                             person_likeness_face_weight, person_likeness_face_start,
+                                             person_likeness_paths, saved_person_status],
+                                    queue=False,
+                                    show_progress=False
+                                ).then(
+                                    preview_person_likeness_paths,
+                                    inputs=person_likeness_paths,
+                                    outputs=person_likeness_gallery,
                                     queue=False,
                                     show_progress=False
                                 )
-                                gr.HTML('* Upload clear photos of the same person. Use one trigger phrase like "woman img", "man img", or "person img"; Fooocus will add it when omitted.')
+                                person_likeness_files.change(
+                                    append_person_likeness_files,
+                                    inputs=[person_likeness_files, person_likeness_paths],
+                                    outputs=[person_likeness_paths, person_likeness_gallery, person_likeness_files],
+                                    queue=False,
+                                    show_progress=False
+                                )
+                                person_likeness_refresh_button.click(
+                                    preview_person_likeness_paths,
+                                    inputs=person_likeness_paths,
+                                    outputs=person_likeness_gallery,
+                                    queue=False,
+                                    show_progress=False
+                                )
+                                person_likeness_paths.change(
+                                    preview_person_likeness_paths,
+                                    inputs=person_likeness_paths,
+                                    outputs=person_likeness_gallery,
+                                    queue=False,
+                                    show_progress=False
+                                )
+                                gr.HTML('* Drop clear photos of the same person. Use one trigger phrase like "woman img", "man img", or "person img"; Fooocus will add it when omitted.')
                             with gr.Tab(label='Image Prompt', id='ip_tab') as ip_tab:
                                 with gr.Row():
                                     ip_images = []
@@ -964,7 +1211,7 @@ with shared.gradio_root:
                                     lora_weight = gr.Slider(label='Weight', minimum=modules.config.default_loras_min_weight,
                                                             maximum=modules.config.default_loras_max_weight, step=0.01, value=weight,
                                                             elem_classes='lora_weight', scale=5)
-                                    lora_note_button = gr.Button(value='ðŸ“', variant='secondary',
+                                    lora_note_button = gr.Button(value='\U0001f4dd', variant='secondary',
                                                                  visible=filename != 'None')
                                     lora_note_add_button = gr.Button(value='+', variant='secondary',
                                                                      visible=False)
@@ -1217,6 +1464,7 @@ with shared.gradio_root:
                                             queue=False, show_progress=False)
         
                 state_is_generating = gr.State(False)
+                state_queue_monitor = gr.State(False)
         
                 load_data_outputs = [advanced_checkbox, image_number, prompt, negative_prompt, style_selections,
                                      performance_selection, overwrite_step, overwrite_switch, aspect_ratios_selection,
@@ -1248,10 +1496,9 @@ with shared.gradio_root:
                         return refresh_prompt_config_dropdown(), f'Deleted prompt config: {name}'
                     return refresh_prompt_config_dropdown(), 'No prompt config was deleted.'
         
-                def load_prompt_config(name, is_generating, inpaint_mode):
-                    config_data = modules.prompt_config.load_prompt_config(name)
+                def prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, status):
                     if len(config_data) == 0:
-                        return [gr.update()] * (len(load_data_outputs) + len(lora_prompt_ctrls) + len(lora_note_buttons) + len(lora_note_add_buttons) + len(lora_note_editor_cols)) + ['Select a saved prompt config to load.']
+                        return [gr.update()] * (len(load_data_outputs) + len(lora_prompt_ctrls) + len(lora_note_buttons) + len(lora_note_add_buttons) + len(lora_note_editor_cols)) + [status]
         
                     lora_prompts = []
                     lora_note_button_updates = []
@@ -1268,7 +1515,52 @@ with shared.gradio_root:
                         lora_note_button_updates.append(gr.update(visible=has_lora))
                         lora_note_add_button_updates.append(gr.update(visible=has_lora and has_note))
                         lora_note_editor_updates.append(gr.update(visible=False))
-                    return modules.meta_parser.load_parameter_button_click(config_data, is_generating, inpaint_mode) + lora_prompts + lora_note_button_updates + lora_note_add_button_updates + lora_note_editor_updates + [f'Loaded prompt config: {name}']
+                    return modules.meta_parser.load_parameter_button_click(config_data, is_generating, inpaint_mode) + lora_prompts + lora_note_button_updates + lora_note_add_button_updates + lora_note_editor_updates + [status]
+
+                def load_prompt_config(name, is_generating, inpaint_mode):
+                    config_data = modules.prompt_config.load_prompt_config(name)
+                    if len(config_data) == 0:
+                        return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, 'Select a saved prompt config to load.')
+                    return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, f'Loaded prompt config: {name}')
+
+                def select_generation_image(evt):
+                    selected_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                    return selected_index, f'Selected image #{int(selected_index) + 1}.'
+
+                def get_selected_generation_image_path(selected_index, session_history):
+                    session_history = list(session_history or [])
+                    try:
+                        selected_index = int(selected_index)
+                    except Exception:
+                        return None
+                    if selected_index < 0 or selected_index >= len(session_history):
+                        return None
+                    image_path = session_history[selected_index]
+                    return image_path if isinstance(image_path, str) else None
+
+                def get_selected_generation_config(selected_index, session_history):
+                    image_path = get_selected_generation_image_path(selected_index, session_history)
+                    if image_path is None:
+                        return {}, None
+
+                    config_data = worker.get_generated_image_config(image_path)
+                    if len(config_data) > 0:
+                        return config_data, image_path
+
+                    parameters, metadata_scheme = modules.meta_parser.read_info_from_image(image_path)
+                    if parameters is None or metadata_scheme is None:
+                        return {}, image_path
+
+                    metadata_parser = modules.meta_parser.get_metadata_parser(metadata_scheme)
+                    return metadata_parser.to_json(parameters), image_path
+
+                def apply_selected_generation_config(selected_index, session_history, is_generating, inpaint_mode):
+                    config_data, image_path = get_selected_generation_config(selected_index, session_history)
+                    if len(config_data) == 0:
+                        return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, 'Select a generated image with metadata first.')
+
+                    return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode,
+                                                       f'Applied config from {os.path.basename(image_path)}.')
         
                 save_prompt_config_button.click(save_current_prompt_config, inputs=[prompt_config_name] + prompt_config_inputs,
                                                 outputs=[prompt_config_selection, prompt_config_status],
@@ -1279,6 +1571,16 @@ with shared.gradio_root:
                 load_prompt_config_button.click(load_prompt_config, inputs=[prompt_config_selection, state_is_generating, inpaint_mode],
                                                 outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status],
                                                 queue=False, show_progress=False) \
+                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();}')
+
+                gallery.select(select_generation_image, outputs=[state_selected_generation_index, selected_image_status],
+                               queue=False, show_progress=False)
+                apply_selected_image_config_button.click(apply_selected_generation_config,
+                                                         inputs=[selected_generation_apply_index, state_session_gallery,
+                                                                 state_is_generating, inpaint_mode],
+                                                         outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [selected_image_status],
+                                                         queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();}')
         
@@ -1424,19 +1726,36 @@ with shared.gradio_root:
                 metadata_import_button.click(trigger_metadata_import, inputs=[metadata_input_image, state_is_generating], outputs=load_data_outputs, queue=False, show_progress=True) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False)
         
-                generate_button.click(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=True, interactive=True), gr.update(visible=False, interactive=False), [], True),
-                                      outputs=[stop_button, skip_button, generate_button, gallery, state_is_generating]) \
-                    .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed) \
-                    .then(fn=get_task, inputs=ctrls, outputs=currentTask) \
-                    .then(fn=generate_clicked, inputs=currentTask, outputs=[progress_html, progress_window, progress_gallery, gallery]) \
-                    .then(lambda: (gr.update(visible=True, interactive=True), gr.update(visible=False, interactive=False), gr.update(visible=False, interactive=False), False),
-                          outputs=[generate_button, stop_button, skip_button, state_is_generating]) \
+                generate_button.click(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed,
+                                      queue=False, show_progress=False) \
+                    .then(fn=enqueue_generate_task, inputs=ctrls,
+                          outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
+                                   gallery, state_is_generating],
+                          queue=False, show_progress=False) \
+                    .then(fn=monitor_generate_queue, inputs=[state_queue_monitor, state_session_gallery],
+                          outputs=[progress_html, progress_window, progress_gallery, gallery,
+                                   state_session_gallery, generate_button, stop_button, skip_button,
+                                   state_is_generating]) \
                     .then(fn=update_history_link, outputs=history_link) \
-                    .then(fn=lambda: None, _js='playNotification').then(fn=lambda: None, _js='refresh_grid_delayed')
+                    .then(fn=lambda x: x, inputs=state_queue_monitor, outputs=state_queue_monitor,
+                          queue=False, show_progress=False,
+                          _js='(x)=>{if(x){playNotification();} return x;}') \
+                    .then(fn=lambda x: x, inputs=state_queue_monitor, outputs=state_queue_monitor,
+                          queue=False, show_progress=False,
+                          _js='(x)=>{if(x){refresh_grid_delayed();} return x;}')
         
-                reset_button.click(lambda: [worker.AsyncTask(args=[]), False, gr.update(visible=True, interactive=True)] +
-                                           [gr.update(visible=False)] * 6 +
-                                           [gr.update(visible=True, value=[])],
+                reset_button.click(lambda: [
+                                       worker.AsyncTask(args=[]),
+                                       False,
+                                       gr.update(visible=True, interactive=True),
+                                       gr.update(visible=False),
+                                       gr.update(visible=False),
+                                       gr.update(visible=False),
+                                       gr.update(visible=False),
+                                       gr.update(visible=True),
+                                       gr.update(visible=False),
+                                       gr.update(visible=True)
+                                   ],
                                    outputs=[currentTask, state_is_generating, generate_button,
                                             reset_button, stop_button, skip_button,
                                             progress_html, progress_window, progress_gallery, gallery],

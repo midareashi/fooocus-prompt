@@ -12,6 +12,9 @@ class AsyncTask:
         from modules.flags import Performance, MetadataScheme, ip_list, disabled
         from modules.util import get_enabled_loras
         from modules.config import default_max_lora_number
+        from PIL import Image
+        import numpy as np
+        import json
         import args_manager
 
         self.args = args.copy()
@@ -24,6 +27,39 @@ class AsyncTask:
 
         if len(args) == 0:
             return
+
+        def get_uploaded_file_path(file):
+            if file is None:
+                return None
+            if isinstance(file, str):
+                return file
+            if isinstance(file, dict):
+                return file.get('name') or file.get('path')
+            return getattr(file, 'name', None)
+
+        def load_uploaded_image(file):
+            if isinstance(file, np.ndarray):
+                return file
+            image_path = get_uploaded_file_path(file)
+            if image_path is None:
+                return None
+            try:
+                return np.asarray(Image.open(image_path).convert('RGB'))
+            except Exception as e:
+                print(f'[Person Likeness] Failed to load image {image_path}: {e}')
+                return None
+
+        def flatten_uploaded_files(files):
+            if files is None:
+                return []
+            if isinstance(files, str) and files.strip().startswith('['):
+                try:
+                    files = json.loads(files)
+                except Exception:
+                    files = [files]
+            if isinstance(files, (str, dict, np.ndarray)) or hasattr(files, 'name'):
+                files = [files]
+            return [file for file in files if file is not None]
 
         args.reverse()
         self.generate_image_grid = args.pop()
@@ -67,8 +103,9 @@ class AsyncTask:
         self.person_likeness_images = []
         self.person_likeness_prepared_images = None
         self.person_likeness_cache_key = None
-        for _ in range(modules.config.default_person_likeness_image_count):
-            person_image = args.pop()
+        person_likeness_files = flatten_uploaded_files(args.pop())
+        for person_file in person_likeness_files:
+            person_image = load_uploaded_image(person_file)
             if person_image is not None:
                 self.person_likeness_images.append(person_image)
         self.uov_method = args.pop()
@@ -181,8 +218,66 @@ class AsyncTask:
         self.enhance_stats = {}
 
 async_tasks = []
+async_tasks_lock = threading.Lock()
+current_task = None
+queue_monitor_lock = threading.Lock()
+queue_monitor_running = False
+generated_image_configs = {}
+generated_image_configs_lock = threading.Lock()
 person_likeness_preprocess_cache = {}
 person_likeness_ip_adapter_cache = {}
+
+
+def append_async_task(task):
+    with async_tasks_lock:
+        async_tasks.append(task)
+        return len(async_tasks)
+
+
+def pop_async_task():
+    with async_tasks_lock:
+        if len(async_tasks) == 0:
+            return None
+        return async_tasks.pop(0)
+
+
+def get_pending_task_count():
+    with async_tasks_lock:
+        return len(async_tasks)
+
+
+def get_current_task():
+    return current_task
+
+
+def begin_queue_monitor():
+    global queue_monitor_running
+
+    with queue_monitor_lock:
+        if queue_monitor_running:
+            return False
+        queue_monitor_running = True
+        return True
+
+
+def end_queue_monitor():
+    global queue_monitor_running
+
+    with queue_monitor_lock:
+        queue_monitor_running = False
+
+
+def register_generated_image_config(path, config_data):
+    with generated_image_configs_lock:
+        generated_image_configs[path] = config_data
+        if len(generated_image_configs) > 1000:
+            oldest_key = next(iter(generated_image_configs))
+            del generated_image_configs[oldest_key]
+
+
+def get_generated_image_config(path):
+    with generated_image_configs_lock:
+        return generated_image_configs.get(path, {}).copy()
 
 
 class EarlyReturnException(BaseException):
@@ -190,7 +285,7 @@ class EarlyReturnException(BaseException):
 
 
 def worker():
-    global async_tasks
+    global current_task
 
     import os
     import traceback
@@ -415,7 +510,9 @@ def worker():
             d.append(('Metadata Scheme', 'metadata_scheme',
                       async_task.metadata_scheme.value if async_task.save_metadata_to_images else async_task.save_metadata_to_images))
             d.append(('Version', 'version', 'Fooocus v' + fooocus_version.version))
-            img_paths.append(log(x, d, metadata_parser, async_task.output_format, task, persist_image))
+            image_path = log(x, d, metadata_parser, async_task.output_format, task, persist_image)
+            register_generated_image_config(image_path, {key: value for _, key, value in d})
+            img_paths.append(image_path)
 
         return img_paths
 
@@ -484,25 +581,26 @@ def worker():
                     float(async_task.person_likeness_face_weight)
                 )
             )
-            face_start = max(0.0, min(0.95, float(async_task.person_likeness_face_start)))
-            prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
-            ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
-            if ip_cache_key in person_likeness_ip_adapter_cache:
-                print(f'[Person Likeness] Using cached FaceSwap embeddings for {len(prepared_images)} image(s).')
-                cached_ip_tasks = person_likeness_ip_adapter_cache[ip_cache_key]
-            else:
-                cached_ip_tasks = [
-                    ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
-                    for cn_img in prepared_images
-                ]
-                person_likeness_ip_adapter_cache[ip_cache_key] = cached_ip_tasks
-                if len(person_likeness_ip_adapter_cache) > 12:
-                    oldest_key = next(iter(person_likeness_ip_adapter_cache))
-                    del person_likeness_ip_adapter_cache[oldest_key]
-                print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+            if face_weight > 0:
+                face_start = max(0.0, min(0.95, float(async_task.person_likeness_face_start)))
+                prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
+                ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
+                if ip_cache_key in person_likeness_ip_adapter_cache:
+                    print(f'[Person Likeness] Using cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+                    cached_ip_tasks = person_likeness_ip_adapter_cache[ip_cache_key]
+                else:
+                    cached_ip_tasks = [
+                        ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
+                        for cn_img in prepared_images
+                    ]
+                    person_likeness_ip_adapter_cache[ip_cache_key] = cached_ip_tasks
+                    if len(person_likeness_ip_adapter_cache) > 12:
+                        oldest_key = next(iter(person_likeness_ip_adapter_cache))
+                        del person_likeness_ip_adapter_cache[oldest_key]
+                    print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
 
-            for cached_ip_task in cached_ip_tasks:
-                person_face_tasks.append([cached_ip_task, 0.95, face_weight, face_start, True])
+                for cached_ip_task in cached_ip_tasks:
+                    person_face_tasks.append([cached_ip_task, 0.95, face_weight, face_start, True])
 
         all_ip_tasks = async_task.cn_tasks[flags.cn_ip] + async_task.cn_tasks[flags.cn_ip_face] + person_face_tasks
         if len(all_ip_tasks) > 0:
@@ -1055,7 +1153,8 @@ def worker():
                 goals.append('inpaint')
         if async_task.current_tab == 'ip' or \
                 (async_task.current_tab == 'person' and async_task.person_likeness_enabled and
-                 len(async_task.person_likeness_images) > 0) or \
+                 len(async_task.person_likeness_images) > 0 and
+                 float(async_task.person_likeness_face_weight) > 0) or \
                 async_task.mixing_image_prompt_and_vary_upscale or \
                 async_task.mixing_image_prompt_and_inpaint:
             goals.append('cn')
@@ -1070,7 +1169,8 @@ def worker():
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
             if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
-                    len(async_task.person_likeness_images) > 0:
+                    len(async_task.person_likeness_images) > 0 and \
+                    float(async_task.person_likeness_face_weight) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
         if async_task.current_tab == 'enhance' and async_task.enhance_input_image is not None:
@@ -1653,10 +1753,13 @@ def worker():
 
     while True:
         time.sleep(0.01)
-        if len(async_tasks) > 0:
-            task = async_tasks.pop(0)
+        task = pop_async_task()
+        if task is not None:
+            current_task = task
 
             try:
+                with ldm_patched.modules.model_management.interrupt_processing_mutex:
+                    ldm_patched.modules.model_management.interrupt_processing = False
                 handler(task)
                 if task.generate_image_grid:
                     build_image_wall(task)
@@ -1668,6 +1771,7 @@ def worker():
             finally:
                 if pid in modules.patch.patch_settings:
                     del modules.patch.patch_settings[pid]
+                current_task = None
     pass
 
 
