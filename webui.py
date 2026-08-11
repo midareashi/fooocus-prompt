@@ -1,13 +1,11 @@
 import gradio as gr
 import random
 import os
-import sys
 import json
 import html as html_lib
 import ast
 import time
 import re
-import threading
 import shared
 import modules.config
 import fooocus_version
@@ -335,25 +333,6 @@ def get_task(*args):
     return worker.AsyncTask(args=args)
 
 
-def restart_fooocus():
-    import ldm_patched.modules.model_management as model_management
-
-    worker.clear_pending_tasks()
-    active_task = worker.get_current_task()
-    if active_task is not None:
-        active_task.last_stop = 'stop'
-        if active_task.processing:
-            model_management.interrupt_current_processing()
-
-    def restart_process():
-        time.sleep(0.75)
-        print('[Restart] Restarting Fooocus with the same command line ...')
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-
-    threading.Thread(target=restart_process, daemon=True).start()
-    return 'Restarting Fooocus ...'
-
-
 def set_quick_preview_mode(enabled):
     return bool(enabled)
 
@@ -631,21 +610,6 @@ if isinstance(args_manager.args.preset, str):
 shared.gradio_root = gr.Blocks(title=title).queue()
 
 with shared.gradio_root:
-    with gr.Row(elem_id='fooocus_top_bar'):
-        restart_instance_button = gr.Button(
-            label='Reset',
-            value='Reset',
-            elem_id='restart_instance_button',
-            elem_classes=['fooocus_restart_button']
-        )
-        restart_instance_status = gr.HTML(elem_id='restart_instance_status')
-        restart_instance_button.click(
-            restart_fooocus,
-            outputs=restart_instance_status,
-            queue=False,
-            show_progress=False
-        )
-
     with gr.Tabs(elem_id='generation_mode_tabs'):
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
@@ -754,15 +718,13 @@ with shared.gradio_root:
                         with gr.Row():
                             prompt_config_name = gr.Textbox(label='Name', placeholder='Optional name for the current prompt config')
                             prompt_config_selection = gr.Dropdown(label='Saved', choices=modules.prompt_config.list_prompt_configs(), value=None)
-                        prompt_config_load_mode = gr.Radio(
-                            label='Load Mode',
-                            choices=['Full Config', 'Replace Prompt', 'Append Prompt'],
-                            value='Full Config'
-                        )
                         with gr.Row():
                             save_prompt_config_button = gr.Button(value='Save Current Config', variant='secondary')
-                            load_prompt_config_button = gr.Button(value='Load Selected Config', variant='secondary')
                             delete_prompt_config_button = gr.Button(value='Delete Selected Config', variant='secondary')
+                        with gr.Row():
+                            load_full_prompt_config_button = gr.Button(value='Load Full Config', variant='secondary')
+                            replace_prompt_config_button = gr.Button(value='Replace Prompt', variant='secondary')
+                            append_prompt_config_button = gr.Button(value='Append Prompt', variant='secondary')
                         prompt_config_status = gr.HTML()
                     with gr.Accordion(label='Wildprompt', open=False, elem_classes=['wildprompt_selections_tab']):
                         wildprompt_sorter.try_load_sorted_wildprompts()
@@ -2093,13 +2055,32 @@ with shared.gradio_root:
                 delete_prompt_config_button.click(delete_prompt_config, inputs=prompt_config_selection,
                                                   outputs=[prompt_config_selection, prompt_config_status],
                                                   queue=False, show_progress=False)
-                load_prompt_config_button.click(load_prompt_config, inputs=[prompt_config_selection, prompt_config_load_mode, prompt, state_is_generating, inpaint_mode],
-                                                outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status],
-                                                queue=False, show_progress=False) \
+
+                load_prompt_config_outputs = load_data_outputs + lora_prompt_ctrls + lora_note_buttons + \
+                    lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status]
+
+                def load_full_prompt_config(name, current_prompt, is_generating, inpaint_mode):
+                    return load_prompt_config(name, 'Full Config', current_prompt, is_generating, inpaint_mode)
+
+                def replace_prompt_from_config(name, current_prompt, is_generating, inpaint_mode):
+                    return load_prompt_config(name, 'Replace Prompt', current_prompt, is_generating, inpaint_mode)
+
+                def append_prompt_from_config(name, current_prompt, is_generating, inpaint_mode):
+                    return load_prompt_config(name, 'Append Prompt', current_prompt, is_generating, inpaint_mode)
+
+                load_full_prompt_config_button.click(load_full_prompt_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
+                                                     outputs=load_prompt_config_outputs,
+                                                     queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
+                replace_prompt_config_button.click(replace_prompt_from_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
+                                                   outputs=load_prompt_config_outputs,
+                                                   queue=False, show_progress=False)
+                append_prompt_config_button.click(append_prompt_from_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
+                                                 outputs=load_prompt_config_outputs,
+                                                 queue=False, show_progress=False)
 
                 gallery.select(select_generation_image, outputs=[state_selected_generation_index, selected_image_status],
                                queue=False, show_progress=False)

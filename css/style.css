@@ -106,41 +106,6 @@ div:has(> #positive_prompt) {
   min-width: min(1px, 100%) !important;
 }
 
-#fooocus_top_bar {
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-#restart_instance_button {
-  max-width: 120px;
-  min-width: 88px !important;
-}
-
-#restart_instance_button,
-#restart_instance_button button,
-.fooocus_restart_button,
-.fooocus_restart_button button {
-  border: 1px solid rgba(251, 146, 60, 0.75) !important;
-  background: #c2410c !important;
-  color: #fff7ed !important;
-  font-weight: 700 !important;
-}
-
-#restart_instance_button:hover,
-#restart_instance_button button:hover,
-.fooocus_restart_button:hover,
-.fooocus_restart_button button:hover {
-  background: #ea580c !important;
-}
-
-#restart_instance_status {
-  min-width: 150px;
-  color: rgba(251, 191, 36, 0.95);
-  font-size: 13px;
-}
-
 #generation_image_panel {
   align-items: stretch;
 }

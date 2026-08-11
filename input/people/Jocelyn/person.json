@@ -5,12 +5,11 @@
   "identity_strength": 1.0,
   "face_weight": 0.9,
   "face_weight_start": 0.3,
-  "image_count": 5,
+  "image_count": 4,
   "image_files": [
     "20260811_115542_01.png",
     "20260811_115542_02.png",
     "20260811_115542_03.png",
-    "20260811_115542_04.png",
     "20260811_115542_05.png"
   ]
 }
