@@ -1879,7 +1879,11 @@ with shared.gradio_root:
                     config_data['performance'] = flags.Performance.QUALITY.value
                     config_data['steps'] = 60
                     config_data['quick_preview'] = False
-                    return config_data, image_path, f'Regenerating {os.path.basename(image_path)} at Quality, 60 steps.'
+                    config_data['image_number'] = 1
+                    config_data['wildprompts'] = '[]'
+                    config_data['wildprompt_generate_all'] = False
+                    config_data['wildprompt_line_selections'] = '{}'
+                    return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
 
                 def parse_literal(value, expected_type, default):
                     if isinstance(value, expected_type):
@@ -1913,11 +1917,13 @@ with shared.gradio_root:
                     set_if_present(7, 'wildprompt_generate_all', bool)
                     set_if_present(8, 'wildprompt_line_selections', str)
                     args[9] = flags.Performance.QUALITY.value
-                    set_if_present(11, 'image_number', int)
+                    args[11] = 1
                     set_if_present(13, 'seed', int)
                     set_if_present(15, 'sharpness', float)
                     set_if_present(16, 'guidance_scale', float)
                     set_if_present(17, 'base_model', str)
+                    args[18] = False
+                    args[19] = [args[17]]
                     set_if_present(20, 'refiner_model', str)
                     set_if_present(21, 'refiner_switch', float)
                     lora_start = 22

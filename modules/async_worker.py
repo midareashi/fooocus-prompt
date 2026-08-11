@@ -559,6 +559,7 @@ def worker():
                  ('Quick Preview', 'quick_preview', async_task.quick_preview),
                  ('Performance', 'performance', async_task.performance_selection.value),
                  ('Steps', 'steps', async_task.steps),
+                 ('Image Number', 'image_number', async_task.image_number),
                  ('Resolution', 'resolution', str((width, height))),
                  ('Guidance Scale', 'guidance_scale', async_task.cfg_scale),
                  ('Sharpness', 'sharpness', async_task.sharpness),
