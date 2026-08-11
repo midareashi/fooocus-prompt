@@ -1,22 +1,20 @@
-Wild West, Female Saloon Pianist, A nimble-fingered musician with a penchant for melancholic tunes
-Wild West, Female Undertaker, A solemn figure, clad in black, with an eerie calmness around death
-Wild West, Female Stagecoach Driver, A weathered traveler, skilled at navigating treacherous trails
-Wild West, Female Bounty Hunter, A relentless pursuer, always on the hunt for elusive targets
-Wild West, Female Gambler, A suave cardsharp, skilled at reading opponents and stacking the deck
-Wild West, Female Blacksmith, A burly figure, skilled at shaping metal and forging durable tools
-Wild West, Female Frontierswoman, A resourceful and independent woman, unafraid of the wild
-Wild West, Female Railroad Engineer, A visionary with a determination to connect towns through iron tracks
-Wild West, Female Prospectors' Cook, A jolly chef, skilled at turning simple ingredients into hearty meals
-Wild West, Female Whiskey Distiller, A grizzled character, brewing potent spirits in the back of a dimly lit saloon
-Wild West, Female Cattle Rustler, A shadowy figure with a penchant for mischief and stolen livestock
-Wild West, Female Quarantine Doctor, A no-nonsense physician dealing with the harsh realities of frontier medicine
-Wild West, Female Tavern Wench, A lively and spirited server, keeping the drinks flowing with a smile
-Wild West, Female Sheriff's Deputy, A loyal and capable right hand to the town's main law enforcement
-Wild West, Female Chinese Railroad Worker, A resilient laborer, contributing to the construction of the transcontinental railroad
-Wild West, Female Native American Guide, A wise and patient guide, intimately connected with the land
-Wild West, Female Gold Prospector, A meticulous analyst, determining the purity of precious metals
-Wild West, Female Pony Express Rider, A swift and daring courier, racing against time to deliver messages
-Wild West, Female Wagon Train Leader, A seasoned trailblazer, guiding families through the dangers of the frontier
-Wild West, Female Reformed Outlaw, A former bandit seeking redemption, haunted by past misdeeds
-Wild West, Female Reclusive Mountain Woman, A solitary individual, living off the land in the remote mountains
-Wild West, Female Chinatown Apothecary, A wise herbalist and healer within the bustling Chinatown district, blending traditional Eastern remedies with frontier medicine
+Wild West, Saloon Pianist, A nimble musician in a smoky frontier saloon, playing through arguments, card games, and breaking glass
+Wild West, Undertaker, A solemn black-clad figure with measuring tape, quiet eyes, and a wagon waiting under harsh sunlight
+Wild West, Stagecoach Driver, A weathered driver with leather gloves, dust-caked coat, and nerves steady enough for canyon roads
+Wild West, Bounty Hunter, A relentless tracker with worn boots, a long coat, and a stack of folded wanted posters
+Wild West, Gambler, A polished cardsharp with sharp eyes, hidden cards, and a smile that never reveals the real hand
+Wild West, Blacksmith, A powerful craftsperson at the forge, shaping red-hot iron beside sparks, tools, and horseshoes
+Wild West, Frontierswoman, A practical settler with a rifle, patched clothes, and the grit to survive open country
+Wild West, Railroad Engineer, A determined builder with rolled plans, soot marks, and a vision of iron tracks crossing wilderness
+Wild West, Whiskey Distiller, A secretive maker of frontier spirits, working copper stills by lantern light behind a saloon
+Wild West, Cattle Rustler, A shadowy rider with a low hat, rope, and stolen herd tracks vanishing across moonlit plains
+Wild West, Quarantine Doctor, A frontier physician in a worn coat, carrying medical bags, masks, and hard decisions during an outbreak
+Wild West, Sheriff's Deputy, A steady lawkeeper with a badge, rifle, and the burden of holding a frightened town together
+Wild West, Railroad Worker, A resilient laborer with work gloves, pickaxe, and grit earned laying track through dangerous terrain
+Wild West, Trail Guide, A patient guide who reads weather, animal tracks, and distant landmarks better than any map
+Wild West, Gold Prospector, A meticulous seeker with pans, sample bags, and feverish hope under a battered hat
+Wild West, Pony Express Rider, A fearless courier with a fast horse, mail satchel, and dust rising behind a dangerous route
+Wild West, Wagon Train Leader, A seasoned organizer guiding families, supplies, and frightened animals across hostile terrain
+Wild West, Reformed Outlaw, A former bandit with a haunted stare, old scars, and a careful life built after violence
+Wild West, Reclusive Mountain Woman, A solitary survivalist with furs, traps, herbs, and a cabin hidden above the timberline
+Wild West, Chinatown Apothecary, A skilled herbalist in a frontier district, surrounded by medicine drawers, hanging roots, and handwritten remedies

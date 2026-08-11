@@ -1,50 +1,32 @@
-Science Fiction, Space Station Zephyr-9, A massive, self-sustaining space habitat with diverse ecosystems
-Science Fiction, Cyberpunk Megacity Neo-Tokyo, A sprawling cityscape filled with towering skyscrapers and neon lights
-Science Fiction, Martian Mining Colony Theta-7, An underground settlement extracting valuable resources from Mars
-Science Fiction, Floating Cloud City of Nimbus, A city suspended in the clouds above a gas giant
-Science Fiction, The Quantum Nexus, A pocket dimension where realities converge and intertwine
-Science Fiction, Bioluminescent Jungle Planet Xenoria, A lush world illuminated by glowing flora and fauna
-Science Fiction, Interstellar Trading Hub Alpha Centauri, A bustling market where species from different galaxies converge
-Science Fiction, Oceanic Research Station Abyssal, A facility deep beneath the ocean studying alien marine life
-Science Fiction, AI-Controlled Utopia Eden-Prime, A utopian city governed by benevolent artificial intelligence
-Science Fiction, The Singularity Citadel, A massive structure at the edge of a black hole, shrouded in mystery
-Science Fiction, Frozen Exoplanet Glacia-12, A world covered in ice and snow with ancient frozen civilizations
-Science Fiction, Cyberspace Hub Cyberverse, A virtual reality realm where minds can interact with digital landscapes
-Science Fiction, Sentient Asteroid Colony Asteria, An asteroid converted into a mobile city with advanced technology
-Science Fiction, Time Rift Observatory Chronos Station, A facility studying anomalies in the space-time continuum
-Science Fiction, The Galactic Library of Arcane Knowledge, A repository of ancient wisdom from across the universe
-Science Fiction, Solar Flare Arena, A gladiatorial arena in the corona of a star, where combatants battle in intense heat
-Science Fiction, Synthetic Moon Factory LunaCorp, A moon converted into a manufacturing facility for advanced technology
-Science Fiction, Genetic Engineering Facility Helix Labs, A laboratory pushing the boundaries of biological modification
-Science Fiction, Holographic Entertainment World HoloSphere, An amusement park with holographic simulations of different realities
-Science Fiction, Invisible City Mirage, A hidden metropolis protected by advanced cloaking technology
-Science Fiction, Quantum Energy Harvesting Station, A facility harnessing energy from quantum fluctuations in space
-Science Fiction, Subterranean Hive City Subterra, A city built underground, thriving in the depths of a desolate planet
-Science Fiction, Solar Sail Fleet Solaris Armada, Massive ships propelled by solar sails, exploring the cosmos
-Science Fiction, Deserted Space Colony Ghost Haven, An abandoned colony with eerie remnants of its former inhabitants
-Science Fiction, Orbital Sky Gardens Celestial Blooms, Floating gardens in orbit, sustaining life through advanced agriculture
-Science Fiction, Hive Mind Nexus, The central hub of a collective consciousness uniting a network of minds
-Science Fiction, A.I. Junkyard Scrapyard Sigma, A graveyard of discarded artificial intelligence and robotic components
-Science Fiction, Living Spaceship Sanctuary, A massive bioengineered organism serving as a sentient starship
-Science Fiction, Virtual Reality Dystopia Omega Grid, A digital realm plagued by glitches and anomalies
-Science Fiction, Magnetic Storm Observatory Magnetar Watch, A research station studying powerful magnetic storms
-Science Fiction, The Quantum Labyrinth, A maze-like structure where reality constantly shifts and changes
-Science Fiction, Nomadic Space Fleet Wanderer's Armada, A fleet of ships constantly on the move through the cosmos
-Science Fiction, Asteroid Belt Mining Colony Belt Haven, A settlement built among the asteroids, extracting resources
-Science Fiction, A.I. Prison Matrix, A digital prison where rogue artificial intelligences are confined
-Science Fiction, The Galactic Bazaar, An interstellar market where exotic goods and artifacts are traded
-Science Fiction, Energy Harvesting Dyson Sphere, A colossal structure surrounding a star to harness its energy
-Science Fiction, Transdimensional Observatory, A facility observing and studying alternate dimensions
-Science Fiction, Solar Wind Surfing Resort, A recreational facility where individuals "surf" on solar winds
-Science Fiction, Forbidden Zone Omega, A region of space cordoned off due to mysterious and dangerous phenomena
-Science Fiction, Artificial Intelligence Uprising Bastion, A stronghold for rebellious AIs fighting for independence
-Science Fiction, Exoplanetary Pleasure Dome Celestial Oasis, An entertainment resort on a distant, habitable exoplanet
-Science Fiction, Quantum Encryption Citadel, A heavily fortified facility protecting classified quantum information
-Science Fiction, Space Junkyard Graveyard of Titans, A graveyard of derelict spacecraft and colossal abandoned structures
-Science Fiction, Neon-lit Underground Cyberpunk District, A subterranean city with a vibrant and gritty cyberpunk atmosphere
-Science Fiction, Quantum Communications Nexus Q-Link Hub, A hub facilitating instantaneous communication across vast distances
-Science Fiction, Xenomorph Research Facility, A top-secret lab studying extraterrestrial life forms and their biology
-Science Fiction, Dimensional Rift Outpost Nexus Point, An outpost built around a stable portal to alternate dimensions
-Science Fiction, Exoplanetary Terraforming Hub Genesis Alpha, A facility working to transform planets into habitable environments
-Science Fiction, Starship Graveyard Celestial Wrecks, A graveyard of destroyed starships in the vacuum of space
-Science Fiction, Bio-Dome Sanctuary Verdant Haven, A self-contained ecosystem within a protective dome, preserving biodiversity
+Science Fiction, Space Station Zephyr-9, A massive self-sustaining orbital habitat with layered biodomes, docking rings, and bright windows against deep space
+Science Fiction, Martian Mining Colony Theta-7, A rugged underground settlement carved into red cliffs on Mars, with pressurized tunnels, rover bays, and glowing ore elevators
+Science Fiction, Floating Cloud City of Nimbus, A city suspended in the turbulent clouds of a gas giant, anchored by anti-gravity pylons and lightning-lit platforms
+Science Fiction, Bioluminescent Jungle Planet Xenoria, A lush alien exoplanet covered in glowing forests, strange flowers, and luminous mist beneath multiple moons
+Science Fiction, Singularity Citadel, A colossal fortress orbiting the edge of a black hole, distorted by gravitational lensing and surrounded by accretion-disk light
+Science Fiction, Frozen Exoplanet Glacia-12, An icy alien world with buried ruins, blue-white glaciers, frozen megastructures, and auroras sweeping across the sky
+Science Fiction, Sentient Asteroid Colony Asteria, A hollowed asteroid transformed into a mobile city, with engine arrays, crater windows, and living machinery embedded in stone
+Science Fiction, Time Rift Observatory Chronos Station, A remote station studying glowing tears in space-time, with observation arms pointed into a fractured starfield
+Science Fiction, Galactic Library of Arcane Knowledge, An ancient archive drifting between stars, filled with alien vaults, rotating data rings, and cathedral-scale reading chambers
+Science Fiction, Solar Flare Arena, A shielded arena skimming the corona of a star, surrounded by plasma arcs, radiant armor, and impossible heat shimmer
+Science Fiction, Synthetic Moon Factory LunaCorp, An artificial moon converted into a planet-sized manufacturing complex, with glowing assembly trenches and orbital shipyards
+Science Fiction, Quantum Energy Harvesting Station, A deep-space facility drawing power from shimmering quantum distortions, suspended in a field of luminous collector arrays
+Science Fiction, Subterranean Hive City Subterra, A vast underground city beneath a barren exoplanet, lit by reactor cores, maglev tunnels, and vertical habitat shafts
+Science Fiction, Solar Sail Fleet Solaris Armada, A graceful fleet of enormous ships unfurling mirrored sails near a bright star, drifting through a golden solar wind
+Science Fiction, Deserted Space Colony Ghost Haven, An abandoned off-world settlement with dark habitat domes, dust-covered corridors, failing airlocks, and eerie emergency lights
+Science Fiction, Orbital Sky Gardens Celestial Blooms, Floating botanical gardens in orbit, with glass domes, trailing vines, artificial rivers, and a planet curving below
+Science Fiction, Living Spaceship Sanctuary, A massive bioengineered starship grown like a living organism, with ribbed corridors, glowing membranes, and organic observation decks
+Science Fiction, Magnetic Storm Observatory Magnetar Watch, A reinforced observatory near a magnetar, watching violent magnetic storms ripple through space in bands of electric color
+Science Fiction, Quantum Labyrinth, A maze-like alien megastructure in deep space where corridors shift, gravity flips, and impossible stars shine through fractured walls
+Science Fiction, Nomadic Space Fleet Wanderer's Armada, A traveling civilization of mismatched ships, habitat barges, and greenhouse vessels crossing the dark between star systems
+Science Fiction, Asteroid Belt Mining Colony Belt Haven, A busy settlement threaded through an asteroid belt, with tether bridges, mining lasers, cargo drones, and spinning habitats
+Science Fiction, Energy Harvesting Dyson Sphere, A colossal partial sphere around a star, covered in city-sized collector panels, maintenance docks, and radiant golden machinery
+Science Fiction, Transdimensional Observatory, A remote orbital facility watching alternate universes through enormous aperture rings and translucent windows into impossible skies
+Science Fiction, Solar Wind Surfing Resort, A daring orbital resort where riders launch from silver platforms and surf luminous solar currents above a nearby star
+Science Fiction, Forbidden Zone Omega, A quarantined region of space filled with derelict probes, warning beacons, strange lights, and an unexplained shadow across the stars
+Science Fiction, Exoplanetary Pleasure Dome Celestial Oasis, A luxury resort dome on a distant exoplanet, overlooking alien oceans, ringed moons, and glowing night gardens
+Science Fiction, Space Junkyard Graveyard of Titans, A vast field of derelict spacecraft, broken orbital stations, and colossal wreckage drifting silently under starlight
+Science Fiction, Xenomorph Research Facility, A sealed research station on a remote moon, with containment chambers, warning lights, and alien biology spreading through the walls
+Science Fiction, Dimensional Rift Outpost Nexus Point, A frontier outpost built around a stable portal, with scaffolds, hazard lights, and a swirling rift opening into alien stars
+Science Fiction, Exoplanetary Terraforming Hub Genesis Alpha, A massive terraforming complex reshaping an alien planet with atmosphere towers, weather engines, and seeded green valleys
+Science Fiction, Starship Graveyard Celestial Wrecks, A haunted graveyard of destroyed starships in open space, with torn hulls, drifting debris, and cold blue nebula light
+Science Fiction, Bio-Dome Sanctuary Verdant Haven, A protected ecosystem dome on a hostile planet, preserving alien forests beneath storms, toxic skies, and distant twin suns

@@ -1,37 +1,24 @@
-Fantasy, Female Heroic Warrior, Skilled in combat, fights for justice
-Fantasy, Female Wise Wizard, Master of arcane knowledge and spells
-Fantasy, Female Rogue Thief, Sneaky and agile, excels in stealth and theft
-Fantasy, Female Noble Princess, Heir to the throne, responsible and just
-Fantasy, Female Mystical Druid, Connected to nature, possesses magical powers
-Fantasy, Female Enigmatic Sorcerer, Powerful magic user with a mysterious past
-Fantasy, Female Loyal Squire, Devoted companion to a knight or hero
-Fantasy, Female Archer, Expert marksman with unparalleled precision
-Fantasy, Female Skilled Blacksmith, Master craftsman skilled in forging magical weapons
-Fantasy, Female Cunning Assassin, Specializes in discreetly eliminating targets, weilding twin daggers coated in poison
-Fantasy, Female Spirited Bard, Charismatic musician and storyteller playing a lute
-Fantasy, Female Mysterious Oracle, Possesses foresight and cryptic knowledge
-Fantasy, Female Fierce Barbarian, Powerful and fearless warrior from the wilds
-Fantasy, Female Angelic Guardian, Celestial being sent to protect the mortal realm
-Fantasy, Female Dark Necromancer, Raises the dead and controls dark forces
-Fantasy, Female Savage Beastmaster, Commands and communicates with wild beasts
-Fantasy, Female Cursed Vampire, Immortal being with a thirst for blood
-Fantasy, Female Mercurial Trickster, Mischievous and unpredictable trickster
-Fantasy, Female Kind-hearted Healer, Skilled in the arts of restoration and curing
-Fantasy, Female Nomadic Ranger, Roams the wilderness, skilled tracker and survivalist
-Fantasy, Female Mystical Alchemist, Master of potions and transformative elixirs
-Fantasy, Female Ghostly Specter, Spirit lingering in the mortal realm
-Fantasy, Female Ancient Dragon Rider, Bonds with and rides a powerful dragon
-Fantasy, Female Celestial Enchantress, Harnesses the power of the stars for magic
-Fantasy, Female Forest Guardian, Protector of ancient woodlands and creatures
-Fantasy, Female Martial Monk, Disciplined warrior with spiritual enlightenment
-Fantasy, Female Magma Elemental, Being of living molten rock and fire
-Fantasy, Female Ice Queen, Ruler with control over frost and ice
-Fantasy, Female Lunar Priestess, Channels the power of the moon for magic
-Fantasy, Female Golem Guardian, Animated stone or clay construct protecting a place
-Fantasy, Female Cursed Werewolf, Human cursed to transform into a wolf-like creature
-Fantasy, Female Vengeful Ghost, Spirit seeking retribution for an unresolved past
-Fantasy, Female Petrifying Gorgon, Possesses a gaze that turns others to stone
-Fantasy, Female Elemental Shaman, Communicates with and controls the elements
-Fantasy, Female Mutant Shape-shifter, Can morph into different forms at will
-Fantasy, Female Stormbringer Valkyrie, Warrior maiden wielding the power of storms
-Fantasy, Female Sentient Plant Druid, Connected to the flora, capable of manipulating plants
+Fantasy, Heroic Warrior, A battle-tested fighter in scarred armor, carrying a family sword and a shield marked by old campaigns
+Fantasy, Wise Wizard, An elderly spellcaster with star-patterned robes, a carved staff, and scrolls floating in candlelit air
+Fantasy, Rogue Thief, A nimble infiltrator in dark leather, carrying lockpicks, throwing knives, and stolen jewels hidden in plain sight
+Fantasy, Mystical Druid, A nature-bound spellcaster with antlered ornaments, bark-textured armor, and green magic curling from their hands
+Fantasy, Enigmatic Sorcerer, A mysterious mage with layered robes, arcane tattoos, and unstable power glowing beneath their skin
+Fantasy, Cunning Assassin, A silent killer with twin blades, poison rings, and a hooded cloak made for palace shadows
+Fantasy, Spirited Bard, A charismatic performer with a decorated lute, travel-worn finery, and songs that stir visible magic in the air
+Fantasy, Mysterious Oracle, A veiled seer with blindfolded eyes, gold charms, and prophetic smoke rising from a ritual bowl
+Fantasy, Fierce Barbarian, A wildlands champion with furs, braided hair, heavy weapons, and trophies from brutal northern battles
+Fantasy, Angelic Guardian, A radiant protector in white-gold armor, carrying a flaming spear and wings of hard light
+Fantasy, Dark Necromancer, A grave-robed mage with bone jewelry, cold lanterns, and spirits bound around their steps
+Fantasy, Kind-hearted Healer, A gentle medic with herb satchels, glowing hands, and a staff wrapped in ribbons from saved lives
+Fantasy, Nomadic Ranger, A wilderness scout in weathered cloak and leather, carrying a longbow, maps, and trail markers
+Fantasy, Mystical Alchemist, A potion maker with stained gloves, glass vials, portable burners, and impossible colors trapped in bottles
+Fantasy, Ghostly Specter, A translucent figure in torn finery, carrying fragments of memory and pale light from another life
+Fantasy, Ancient Dragon Rider, A veteran rider with scorched armor, scale charms, and the confidence of someone bonded to a legendary mount
+Fantasy, Celestial Enchantress, A star-powered mage with moonstone jewelry, floating constellations, and robes that shimmer like night skies
+Fantasy, Forest Guardian, A woodland protector with leaf armor, mossy cloak, and old magic rooted in ancient groves
+Fantasy, Martial Monk, A disciplined fighter with prayer beads, wrapped hands, and quiet power focused into precise motion
+Fantasy, Magma Elemental, A living figure of stone and molten fire, glowing through cracked obsidian skin
+Fantasy, Ice Queen, A regal ruler in crystalline robes, wielding frost magic with calm authority
+Fantasy, Lunar Priestess, A moonlit cleric with silver symbols, ritual bells, and pale light circling her altar
+Fantasy, Elemental Shaman, A storm-marked mystic carrying charms of earth, flame, wind, and water
+Fantasy, Stormbringer Valkyrie, A spear-bearing warrior in bright armor, calling lightning over a battlefield sky
