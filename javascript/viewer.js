@@ -59,7 +59,17 @@ onUiLoaded(async () => {
 
 function on_style_selection_blur() {
     let target = document.querySelector("#gradio_receiver_style_selections textarea");
+    if (!target) return;
     target.value = "on_style_selection_blur " + Math.random();
+    let e = new Event("input", {bubbles: true})
+    Object.defineProperty(e, "target", {value: target})
+    target.dispatchEvent(e);
+}
+
+function on_wildprompt_selection_blur() {
+    let target = document.querySelector("#gradio_receiver_wildprompt_selections textarea");
+    if (!target) return;
+    target.value = "on_wildprompt_selection_blur " + Math.random();
     let e = new Event("input", {bubbles: true})
     Object.defineProperty(e, "target", {value: target})
     target.dispatchEvent(e);
@@ -72,10 +82,20 @@ onUiLoaded(async () => {
         span.innerHTML = span.innerHTML.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
     });
 
-    document.querySelector('.style_selections').addEventListener('focusout', function (event) {
+    let styleSelections = document.querySelector('.style_selections');
+    if (styleSelections) styleSelections.addEventListener('focusout', function (event) {
         setTimeout(() => {
             if (!this.contains(document.activeElement)) {
                 on_style_selection_blur();
+            }
+        }, 200);
+    });
+
+    let wildpromptSelections = document.querySelector('.wildprompt_selections');
+    if (wildpromptSelections) wildpromptSelections.addEventListener('focusout', function (event) {
+        setTimeout(() => {
+            if (!this.contains(document.activeElement)) {
+                on_wildprompt_selection_blur();
             }
         }, 200);
     });

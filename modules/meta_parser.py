@@ -31,6 +31,8 @@ def load_parameter_button_click(raw_metadata: dict | str, is_generating: bool, i
     get_str('prompt', 'Prompt', loaded_parameter_dict, results)
     get_str('negative_prompt', 'Negative Prompt', loaded_parameter_dict, results)
     get_list('styles', 'Styles', loaded_parameter_dict, results)
+    get_list('wildprompts', 'Wildprompts', loaded_parameter_dict, results)
+    get_bool('wildprompt_generate_all', 'Generate All Wildprompts', loaded_parameter_dict, results)
     performance = get_str('performance', 'Performance', loaded_parameter_dict, results)
     get_steps('steps', 'Steps', loaded_parameter_dict, results)
     get_number('overwrite_switch', 'Overwrite Switch', loaded_parameter_dict, results)
@@ -88,6 +90,19 @@ def get_list(key: str, fallback: str | None, source_dict: dict, results: list, d
         h = source_dict.get(key, source_dict.get(fallback, default))
         h = eval(h)
         assert isinstance(h, list)
+        results.append(h)
+    except:
+        results.append(gr.update())
+
+
+def get_bool(key: str, fallback: str | None, source_dict: dict, results: list, default=None):
+    try:
+        h = source_dict.get(key, source_dict.get(fallback, default))
+        assert h is not None
+        if isinstance(h, str):
+            h = h.strip().casefold() in ['true', '1', 'yes', 'on']
+        else:
+            h = bool(h)
         results.append(h)
     except:
         results.append(gr.update())
@@ -270,7 +285,7 @@ def parse_meta_from_preset(preset_content):
         else:
             preset_prepared[meta_key] = items[settings_key] if settings_key in items and items[settings_key] is not None else getattr(modules.config, settings_key)
 
-        if settings_key == "default_styles" or settings_key == "default_aspect_ratio":
+        if settings_key in ["default_styles", "default_wildprompts", "default_aspect_ratio"]:
             preset_prepared[meta_key] = str(preset_prepared[meta_key])
 
     return preset_prepared

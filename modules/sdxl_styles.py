@@ -8,6 +8,7 @@ from random import Random
 
 # cannot use modules.config - validators causing circular imports
 styles_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sdxl_styles/'))
+wildprompts_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../wildprompts/'))
 
 
 def normalize_key(k):
@@ -53,6 +54,14 @@ random_style_name = 'Random Style'
 legal_style_names = [fooocus_expansion, random_style_name] + style_keys
 
 
+def get_legal_wildprompt_names():
+    wildprompt_files = get_files_from_folder(wildprompts_path, ['.txt'])
+    return [os.path.splitext(file)[0] for file in wildprompt_files]
+
+
+legal_wildprompt_names = get_legal_wildprompt_names()
+
+
 def get_random_style(rng: Random) -> str:
     return rng.choice(list(styles.items()))[0]
 
@@ -60,6 +69,39 @@ def get_random_style(rng: Random) -> str:
 def apply_style(style, positive):
     p, n = styles[style]
     return p.replace('{prompt}', positive).splitlines(), n.splitlines(), '{prompt}' in p
+
+
+def _load_wildprompt_lines(wildprompt_selection):
+    with open(os.path.join(wildprompts_path, f'{wildprompt_selection}.txt'), encoding='utf-8') as f:
+        return [x for x in f.read().splitlines() if x.strip() != '']
+
+
+def apply_wildprompts(wildprompt_selections, rng):
+    prompts = []
+
+    for wildprompt_selection in wildprompt_selections:
+        try:
+            wildprompt_lines = _load_wildprompt_lines(wildprompt_selection)
+            assert len(wildprompt_lines) > 0
+            prompts.append(rng.choice(wildprompt_lines))
+        except Exception:
+            print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
+
+    return ', '.join(prompts)
+
+
+def get_all_wildprompts(wildprompt_selections):
+    prompts = []
+
+    if len(wildprompt_selections) != 1:
+        return prompts
+
+    try:
+        prompts.extend(_load_wildprompt_lines(wildprompt_selections[0]))
+    except Exception:
+        print(f'[Wildprompts] Warning: {wildprompt_selections[0]}.txt missing or empty.')
+
+    return prompts
 
 
 def get_words(arrays, total_mult, index):

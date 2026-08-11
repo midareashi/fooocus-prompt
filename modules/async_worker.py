@@ -66,6 +66,10 @@ class AsyncTask:
         self.prompt = args.pop()
         self.negative_prompt = args.pop()
         self.style_selections = args.pop()
+        self.wildprompt_selections = args.pop()
+        if not isinstance(self.wildprompt_selections, list):
+            self.wildprompt_selections = []
+        self.wildprompt_generate_all = args.pop()
 
         self.performance_selection = Performance(args.pop())
         self.steps = self.performance_selection.steps()
@@ -312,12 +316,13 @@ def worker():
     import args_manager
 
     from extras.censor import default_censor
-    from modules.sdxl_styles import apply_style, get_random_style, fooocus_expansion, apply_arrays, random_style_name
+    from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
+                                     random_style_name, apply_wildprompts, get_all_wildprompts)
     from modules.private_logger import log
     from extras.expansion import safe_str
     from modules.util import (remove_empty_str, HWC3, resize_image, get_image_shape_ceil, set_image_shape_ceil,
-                              get_shape_ceil, resample_image, erode_or_dilate, parse_lora_references_from_prompt,
-                              apply_wildcards)
+                               get_shape_ceil, resample_image, erode_or_dilate, parse_lora_references_from_prompt,
+                               apply_wildcards, join_prompts)
     from modules.upscaler import perform_upscale
     from modules.flags import Performance
     from modules.meta_parser import get_metadata_parser
@@ -463,6 +468,8 @@ def worker():
                  ('Fooocus V2 Expansion', 'prompt_expansion', task['expansion']),
                  ('Styles', 'styles',
                   str(task['styles'] if not use_expansion else [fooocus_expansion] + task['styles'])),
+                 ('Wildprompts', 'wildprompts', str(task['wildprompts'])),
+                 ('Generate All Wildprompts', 'wildprompt_generate_all', async_task.wildprompt_generate_all),
                  ('Performance', 'performance', async_task.performance_selection.value),
                  ('Steps', 'steps', async_task.steps),
                  ('Resolution', 'resolution', str((width, height))),
@@ -893,15 +900,31 @@ def worker():
             current_progress += 1
         progressbar(async_task, current_progress, 'Processing prompts ...')
         tasks = []
-        for i in range(image_number):
+        raw_wildprompt_selections = copy.deepcopy(async_task.wildprompt_selections)
+        use_wildprompt = len(async_task.wildprompt_selections) > 0
+        all_wildprompts = []
+        if async_task.wildprompt_generate_all and len(async_task.wildprompt_selections) == 1:
+            all_wildprompts = get_all_wildprompts(async_task.wildprompt_selections)
+
+        total_prompts = len(all_wildprompts) * image_number if len(all_wildprompts) > 0 else image_number
+        for i in range(total_prompts):
             if disable_seed_increment:
                 task_seed = async_task.seed % (constants.MAX_SEED + 1)
             else:
                 task_seed = (async_task.seed + i) % (constants.MAX_SEED + 1)  # randint is inclusive, % is not
 
             task_rng = random.Random(task_seed)  # may bind to inpaint noise in the future
+            wildprompt_index = i // image_number
+            if len(all_wildprompts) > 0:
+                wildprompt_prompt = all_wildprompts[wildprompt_index]
+            else:
+                wildprompt_prompt = apply_wildprompts(async_task.wildprompt_selections, task_rng) if use_wildprompt else ''
+            wildprompt_prompt = apply_wildcards(wildprompt_prompt, task_rng, wildprompt_index,
+                                                async_task.read_wildcards_in_order)
+
             task_prompt = apply_wildcards(prompt, task_rng, i, async_task.read_wildcards_in_order)
             task_prompt = apply_arrays(task_prompt, i)
+            task_prompt = join_prompts(task_prompt, wildprompt_prompt)
             task_negative_prompt = apply_wildcards(negative_prompt, task_rng, i, async_task.read_wildcards_in_order)
             task_extra_positive_prompts = [apply_wildcards(pmt, task_rng, i, async_task.read_wildcards_in_order) for pmt
                                            in
@@ -953,7 +976,8 @@ def worker():
                 negative_top_k=len(negative_basic_workloads),
                 log_positive_prompt='\n'.join([task_prompt] + task_extra_positive_prompts),
                 log_negative_prompt='\n'.join([task_negative_prompt] + task_extra_negative_prompts),
-                styles=task_styles
+                styles=task_styles,
+                wildprompts=raw_wildprompt_selections
             ))
         if use_expansion:
             if advance_progress:

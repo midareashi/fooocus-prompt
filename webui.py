@@ -13,6 +13,7 @@ import modules.constants as constants
 import modules.flags as flags
 import modules.gradio_hijack as grh
 import modules.style_sorter as style_sorter
+import modules.wildprompt_sorter as wildprompt_sorter
 import modules.meta_parser
 import modules.prompt_config
 import modules.lora_notes
@@ -245,7 +246,8 @@ def load_person_likeness(name):
         f'Loaded {len(image_paths)} photo(s) for {person_name}.'
 
 
-def build_prompt_config(prompt, negative_prompt, style_selections, performance_selection, overwrite_step,
+def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_selections, wildprompt_generate_all,
+                        performance_selection, overwrite_step,
                         overwrite_switch, aspect_ratios_selection, overwrite_width, overwrite_height,
                         guidance_scale, sharpness, adm_scaler_positive, adm_scaler_negative, adm_scaler_end,
                         refiner_swap_method, adaptive_cfg, clip_skip, base_model, refiner_model, refiner_switch,
@@ -265,6 +267,8 @@ def build_prompt_config(prompt, negative_prompt, style_selections, performance_s
         'prompt': prompt,
         'negative_prompt': negative_prompt,
         'styles': str(style_selections or []),
+        'wildprompts': str(wildprompt_selections or []),
+        'wildprompt_generate_all': bool(wildprompt_generate_all),
         'performance': performance_selection,
         'steps': int(overwrite_step),
         'overwrite_switch': overwrite_switch,
@@ -1190,7 +1194,60 @@ with shared.gradio_root:
                                                                queue=False,
                                                                show_progress=False).then(
                             lambda: None, _js='()=>{refresh_style_localization();}')
-        
+
+                    with gr.Tab(label='Wildprompt', elem_classes=['wildprompt_selections_tab']):
+                        wildprompt_sorter.try_load_sorted_wildprompts()
+
+                        wildprompt_generate_all = gr.Checkbox(
+                            label='Generate All Wildprompts',
+                            value=False,
+                            container=False,
+                            elem_classes='min_check',
+                            info='When selected, creates an image for each prompt in the selected file. Increase Image Number to generate each prompt multiple times. Only works if one wildprompt is selected.',
+                            interactive=True
+                        )
+                        wildprompt_search_bar = gr.Textbox(show_label=False, container=False,
+                                                           placeholder='🔎 Type here to search wildprompts ...',
+                                                           value='',
+                                                           label='Search Wildprompts')
+                        wildprompt_selections = gr.CheckboxGroup(show_label=False, container=False,
+                                                                 choices=copy.deepcopy(wildprompt_sorter.all_wildprompts),
+                                                                 value=copy.deepcopy(modules.config.default_wildprompts),
+                                                                 label='Selected Wildprompts',
+                                                                 elem_classes=['wildprompt_selections'])
+                        gradio_receiver_wildprompt_selections = gr.Textbox(
+                            elem_id='gradio_receiver_wildprompt_selections',
+                            visible=False
+                        )
+
+                        shared.gradio_root.load(
+                            lambda: gr.update(choices=copy.deepcopy(wildprompt_sorter.all_wildprompts)),
+                            outputs=wildprompt_selections
+                        )
+
+                        wildprompt_search_bar.change(wildprompt_sorter.search_wildprompts,
+                                                     inputs=[wildprompt_selections, wildprompt_search_bar],
+                                                     outputs=wildprompt_selections,
+                                                     queue=False,
+                                                     show_progress=False).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        gradio_receiver_wildprompt_selections.input(wildprompt_sorter.sort_wildprompts,
+                                                                    inputs=wildprompt_selections,
+                                                                    outputs=wildprompt_selections,
+                                                                    queue=False,
+                                                                    show_progress=False).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        wildprompt_refresh = gr.Button(label='Refresh', value='🔄 Refresh All Wildprompts',
+                                                       variant='secondary', elem_classes='refresh_button')
+
+                        def handle_wildprompt_refresh_click():
+                            return gr.update(choices=wildprompt_sorter.try_load_sorted_wildprompts())
+
+                        wildprompt_refresh.click(handle_wildprompt_refresh_click, [], wildprompt_selections,
+                                                 queue=False, show_progress=False)
+
                     with gr.Tab(label='Models'):
                         with gr.Group():
                             with gr.Row():
@@ -1502,6 +1559,7 @@ with shared.gradio_root:
                 state_queue_monitor = gr.State(False)
         
                 load_data_outputs = [advanced_checkbox, image_number, prompt, negative_prompt, style_selections,
+                                     wildprompt_selections, wildprompt_generate_all,
                                      performance_selection, overwrite_step, overwrite_switch, aspect_ratios_selection,
                                      overwrite_width, overwrite_height, guidance_scale, sharpness, adm_scaler_positive,
                                      adm_scaler_negative, adm_scaler_end, refiner_swap_method, adaptive_cfg, clip_skip,
@@ -1511,7 +1569,8 @@ with shared.gradio_root:
                                      load_parameter_button] + freeu_ctrls + lora_ctrls
         
                 prompt_config_inputs = [
-                    prompt, negative_prompt, style_selections, performance_selection, overwrite_step, overwrite_switch,
+                    prompt, negative_prompt, style_selections, wildprompt_selections, wildprompt_generate_all,
+                    performance_selection, overwrite_step, overwrite_switch,
                     aspect_ratios_selection, overwrite_width, overwrite_height, guidance_scale, sharpness,
                     adm_scaler_positive, adm_scaler_negative, adm_scaler_end, refiner_swap_method, adaptive_cfg, clip_skip,
                     base_model, refiner_model, refiner_switch, sampler_name, scheduler_name, vae_name, seed_random,
@@ -1641,7 +1700,8 @@ with shared.gradio_root:
                                                 outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status],
                                                 queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
-                    .then(lambda: None, _js='()=>{refresh_style_localization();}')
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
 
                 gallery.select(select_generation_image, outputs=[state_selected_generation_index, selected_image_status],
                                queue=False, show_progress=False)
@@ -1651,7 +1711,8 @@ with shared.gradio_root:
                                                          outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [selected_image_status],
                                                          queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
-                    .then(lambda: None, _js='()=>{refresh_style_localization();}')
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 remove_selected_image_button.click(remove_generation_from_history,
                                                    inputs=[selected_generation_remove_index, state_session_gallery],
                                                    outputs=[gallery, state_session_gallery, state_selected_generation_index,
@@ -1700,7 +1761,8 @@ with shared.gradio_root:
         
                     preset_selection.change(preset_selection_change, inputs=[preset_selection, state_is_generating, inpaint_mode], outputs=load_data_outputs, queue=False, show_progress=True) \
                         .then(fn=style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
-                        .then(lambda: None, _js='()=>{refresh_style_localization();}') \
+                        .then(fn=wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                        .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}') \
                         .then(inpaint_engine_state_change, inputs=[inpaint_engine_state] + enhance_inpaint_mode_ctrls, outputs=enhance_inpaint_engine_ctrls, queue=False, show_progress=False)
         
                 performance_selection.change(lambda x: [gr.update(interactive=not flags.Performance.has_restricted_features(x))] * 11 +
@@ -1742,7 +1804,7 @@ with shared.gradio_root:
         
                 ctrls = [currentTask, generate_image_grid]
                 ctrls += [
-                    prompt, negative_prompt, style_selections,
+                    prompt, negative_prompt, style_selections, wildprompt_selections, wildprompt_generate_all,
                     performance_selection, aspect_ratios_selection, image_number, output_format, image_seed,
                     read_wildcards_in_order, sharpness, guidance_scale
                 ]
@@ -1789,7 +1851,10 @@ with shared.gradio_root:
         
                 prompt.input(parse_meta, inputs=[prompt, state_is_generating], outputs=[prompt, generate_button, load_parameter_button], queue=False, show_progress=False)
         
-                load_parameter_button.click(modules.meta_parser.load_parameter_button_click, inputs=[prompt, state_is_generating, inpaint_mode], outputs=load_data_outputs, queue=False, show_progress=False)
+                load_parameter_button.click(modules.meta_parser.load_parameter_button_click, inputs=[prompt, state_is_generating, inpaint_mode], outputs=load_data_outputs, queue=False, show_progress=False) \
+                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
         
                 def trigger_metadata_import(file, state_is_generating):
                     parameters, metadata_scheme = modules.meta_parser.read_info_from_image(file)
@@ -1803,7 +1868,9 @@ with shared.gradio_root:
                     return modules.meta_parser.load_parameter_button_click(parsed_parameters, state_is_generating, inpaint_mode)
         
                 metadata_import_button.click(trigger_metadata_import, inputs=[metadata_input_image, state_is_generating], outputs=load_data_outputs, queue=False, show_progress=True) \
-                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False)
+                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
         
                 generate_button.click(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed,
                                       queue=False, show_progress=False) \

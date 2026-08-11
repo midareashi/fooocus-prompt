@@ -3,6 +3,8 @@ import args_manager
 import modules.config
 import json
 import urllib.parse
+import ast
+import html
 
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
@@ -11,6 +13,26 @@ from modules.meta_parser import MetadataParser, get_exif
 from modules.util import generate_temp_filename
 
 log_cache = {}
+
+
+def _metadata_value(metadata, key, default=''):
+    for _, metadata_key, value in metadata:
+        if metadata_key == key:
+            return value
+    return default
+
+
+def _metadata_list_value(metadata, key):
+    value = _metadata_value(metadata, key, [])
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = ast.literal_eval(value)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
+    return []
 
 
 def get_current_html_path(output_format=None):
@@ -63,6 +85,9 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
         "hr { border-color: gray; } "
         "button, .button-link { background-color: black; color: white; border: 1px solid grey; border-radius: 5px; padding: 5px 10px; text-align: center; display: inline-block; font-size: 16px; cursor: pointer; text-decoration: none; margin-right: 6px; }"
         "button:hover, .button-link:hover {background-color: grey; color: black;}"
+        "#filters { display: flex; gap: 24px; flex-wrap: wrap; margin: 12px 0; } "
+        "#filters label { display: block; margin: 3px 0; } "
+        ".filter-heading { font-weight: bold; margin-bottom: 4px; } "
         "</style>"
     )
 
@@ -88,10 +113,55 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
         }
         alert('Copied to Clipboard!\\nPaste to prompt area to load parameters.\\nCurrent clipboard content is:\\n\\n' + txt);
         }
+        function updateFilters() {
+            const modelFilters = Array.from(document.querySelectorAll('input[name="baseModelFilter"]:checked')).map((x) => x.value);
+            const wildpromptFilters = Array.from(document.querySelectorAll('input[name="wildpromptFilter"]:checked')).map((x) => x.value);
+            document.querySelectorAll('.image-container').forEach(function(item) {
+                const model = item.getAttribute('data-model') || '';
+                let wildprompts = [];
+                try {
+                    wildprompts = JSON.parse(item.getAttribute('data-wildprompts') || '[]');
+                } catch (e) {}
+                const modelMatch = modelFilters.length === 0 || modelFilters.includes(model);
+                const wildpromptMatch = wildpromptFilters.length === 0 || wildpromptFilters.some((x) => wildprompts.includes(x));
+                item.style.display = modelMatch && wildpromptMatch ? 'block' : 'none';
+            });
+        }
+        function initFilters() {
+            const modelCounts = {};
+            const wildpromptCounts = {};
+            document.querySelectorAll('.image-container').forEach(function(item) {
+                const model = item.getAttribute('data-model') || '';
+                if (model) modelCounts[model] = (modelCounts[model] || 0) + 1;
+                let wildprompts = [];
+                try {
+                    wildprompts = JSON.parse(item.getAttribute('data-wildprompts') || '[]');
+                } catch (e) {}
+                wildprompts.forEach((prompt) => wildpromptCounts[prompt] = (wildpromptCounts[prompt] || 0) + 1);
+            });
+            function addFilters(containerId, name, counts) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                Object.keys(counts).sort().forEach(function(value) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = name;
+                    checkbox.value = value;
+                    checkbox.addEventListener('change', updateFilters);
+                    const label = document.createElement('label');
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(value + ' (' + counts[value] + ')'));
+                    container.appendChild(label);
+                });
+            }
+            addFilters('baseModelFilters', 'baseModelFilter', modelCounts);
+            addFilters('wildpromptFilters', 'wildpromptFilter', wildpromptCounts);
+        }
+        window.addEventListener('load', initFilters);
         </script>"""
     )
 
-    begin_part = f"<!DOCTYPE html><html><head><title>Fooocus Log {date_string}</title>{css_styles}</head><body>{js}<p>Fooocus Log {date_string} (private)</p>\n<p>Metadata is embedded if enabled in the config or developer debug mode. You can find the information for each image in line Metadata Scheme.</p><!--fooocus-log-split-->\n\n"
+    begin_part = f"<!DOCTYPE html><html><head><title>Fooocus Log {date_string}</title>{css_styles}</head><body>{js}<p>Fooocus Log {date_string} (private)</p>\n<p>Metadata is embedded if enabled in the config or developer debug mode. You can find the information for each image in line Metadata Scheme.</p><div id=\"filters\"><div id=\"baseModelFilters\"><div class=\"filter-heading\">Base Model</div></div><div id=\"wildpromptFilters\"><div class=\"filter-heading\">Wildprompts</div></div></div><!--fooocus-log-split-->\n\n"
     end_part = f'\n<!--fooocus-log-split--></body></html>'
 
     middle_part = log_cache.get(html_name, "")
@@ -105,7 +175,9 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
                 middle_part = existing_split[0]
 
     div_name = only_name.replace('.', '_')
-    item = f"<div id=\"{div_name}\" class=\"image-container\"><hr><table><tr>\n"
+    base_model = html.escape(str(_metadata_value(metadata, 'base_model')), quote=True)
+    wildprompts = html.escape(json.dumps(_metadata_list_value(metadata, 'wildprompts')), quote=True)
+    item = f"<div id=\"{div_name}\" class=\"image-container\" data-model=\"{base_model}\" data-wildprompts=\"{wildprompts}\"><hr><table><tr>\n"
     item += f"<td><a href=\"{only_name}\" target=\"_blank\"><img src='{only_name}' onerror=\"this.closest('.image-container').style.display='none';\" loading='lazy'/></a><div>{only_name}</div></td>"
     item += "<td><table class='metadata'>"
     for label, key, value in metadata:

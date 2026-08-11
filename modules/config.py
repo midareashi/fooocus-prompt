@@ -384,6 +384,12 @@ default_styles = get_config_item_or_set_default(
     validator=lambda x: isinstance(x, list) and all(y in modules.sdxl_styles.legal_style_names for y in x),
     expected_type=list
 )
+default_wildprompts = get_config_item_or_set_default(
+    key='default_wildprompts',
+    default_value=[],
+    validator=lambda x: isinstance(x, list) and all(y in modules.sdxl_styles.legal_wildprompt_names for y in x),
+    expected_type=list
+)
 default_prompt_negative = get_config_item_or_set_default(
     key='default_prompt_negative',
     default_value='',
@@ -775,6 +781,7 @@ possible_preset_keys = {
     "default_prompt": "prompt",
     "default_prompt_negative": "negative_prompt",
     "default_styles": "styles",
+    "default_wildprompts": "wildprompts",
     "default_aspect_ratio": "resolution",
     "default_save_metadata_to_images": "default_save_metadata_to_images",
     "checkpoint_downloads": "checkpoint_downloads",

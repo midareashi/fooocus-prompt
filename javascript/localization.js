@@ -77,7 +77,13 @@ function processNode(node) {
 }
 
 function refresh_style_localization() {
-    processNode(document.querySelector('.style_selections'));
+    let node = document.querySelector('.style_selections');
+    if (node) processNode(node);
+}
+
+function refresh_wildprompt_localization() {
+    let node = document.querySelector('.wildprompt_selections');
+    if (node) processNode(node);
 }
 
 function refresh_aspect_ratios_label(value) {
