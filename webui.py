@@ -15,6 +15,7 @@ import modules.gradio_hijack as grh
 import modules.style_sorter as style_sorter
 import modules.meta_parser
 import modules.prompt_config
+import modules.lora_notes
 import args_manager
 import copy
 import launch
@@ -127,18 +128,18 @@ def save_person_likeness(name, enabled, subject, strength, face_weight, face_sta
 
     person_name = sanitize_person_name(name)
     if person_name == '':
-        return gr.update(), 'Enter a name before saving.'
+        return gr.update(), 'Enter a name before saving.', gr.update(), gr.update()
 
     valid_files = flatten_person_likeness_files(files)
     if len(valid_files) == 0:
-        return gr.update(), 'Add at least one photo before saving.'
+        return gr.update(), 'Add at least one photo before saving.', gr.update(), gr.update()
 
     os.makedirs(people_dir, exist_ok=True)
     person_dir = os.path.abspath(os.path.join(people_dir, person_name))
     if os.path.commonpath([people_dir, person_dir]) != people_dir:
-        return gr.update(), 'Invalid person name.'
+        return gr.update(), 'Invalid person name.', gr.update(), gr.update()
     if os.path.exists(person_dir) and os.listdir(person_dir) and not os.path.exists(os.path.join(person_dir, 'person.json')):
-        return gr.update(), f'Cannot save: input folder already exists and is not a saved person: {person_name}'
+        return gr.update(), f'Cannot save: input folder already exists and is not a saved person: {person_name}', gr.update(), gr.update()
 
     os.makedirs(person_dir, exist_ok=True)
 
@@ -162,7 +163,7 @@ def save_person_likeness(name, enabled, subject, strength, face_weight, face_sta
             pass
 
     if saved_count == 0:
-        return gr.update(), 'No valid image files were found.'
+        return gr.update(), 'No valid image files were found.', gr.update(), gr.update()
 
     person_config = {
         'name': person_name,
@@ -178,8 +179,18 @@ def save_person_likeness(name, enabled, subject, strength, face_weight, face_sta
     with open(os.path.join(person_dir, 'person.json'), 'w', encoding='utf-8') as f:
         json.dump(person_config, f, indent=2)
 
+    image_file_set = set(image_files)
+    for filename in os.listdir(person_dir):
+        path = os.path.join(person_dir, filename)
+        if os.path.isfile(path) and filename not in image_file_set and os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg', '.webp']:
+            try:
+                os.remove(path)
+            except Exception:
+                pass
+
+    saved_paths = encode_person_likeness_paths([os.path.join(person_dir, filename) for filename in image_files])
     choices = list_saved_people()
-    return gr.update(choices=choices, value=person_name), f'Saved {saved_count} photo(s) for {person_name}.'
+    return gr.update(choices=choices, value=person_name), f'Saved {saved_count} photo(s) for {person_name}.', saved_paths, preview_person_likeness_paths(saved_paths)
 
 
 def load_person_likeness(name):
@@ -342,6 +353,13 @@ def monitor_generate_queue(should_monitor, session_history):
     observed_task = None
     execution_start_time = None
 
+    def get_latest_display_image(image_items):
+        image_items = list(image_items or [])
+        for image_item in reversed(image_items):
+            if isinstance(image_item, str):
+                return image_item
+        return image_items[-1] if len(image_items) > 0 else None
+
     yield gr.update(visible=True, value=modules.html.make_progress_html(1, 'Waiting for task to start ...')), \
         gr.update(visible=True, value=None), \
         gr.update(visible=False, value=None), \
@@ -405,8 +423,9 @@ def monitor_generate_queue(should_monitor, session_history):
                     else:
                         session_history.append(image_item)
 
+                latest_image = get_latest_display_image(product)
                 yield gr.update(visible=True), \
-                    gr.update(visible=True), \
+                    gr.update(visible=True, value=latest_image) if latest_image is not None else gr.update(visible=True), \
                     gr.update(visible=False), \
                     gr.update(visible=True, value=session_history), \
                     session_history, \
@@ -425,8 +444,9 @@ def monitor_generate_queue(should_monitor, session_history):
                     else:
                         session_history.append(image_item)
 
+                latest_image = get_latest_display_image(product)
                 yield gr.update(visible=False), \
-                    gr.update(visible=True), \
+                    gr.update(visible=True, value=latest_image) if latest_image is not None else gr.update(visible=True), \
                     gr.update(visible=False), \
                     gr.update(visible=True, value=session_history), \
                     session_history, \
@@ -533,6 +553,18 @@ with shared.gradio_root:
                             apply_selected_image_config_button = gr.Button(value='Apply Selected Image Config',
                                                                            elem_id='apply_selected_image_config_button',
                                                                            elem_classes='generation_apply_hidden_control')
+                            selected_generation_remove_index = gr.Textbox(value='',
+                                                                           elem_id='selected_generation_remove_index',
+                                                                           elem_classes='generation_apply_hidden_control')
+                            remove_selected_image_button = gr.Button(value='Remove Selected Image',
+                                                                     elem_id='remove_selected_image_button',
+                                                                     elem_classes='generation_apply_hidden_control')
+                            selected_generation_delete_index = gr.Textbox(value='',
+                                                                           elem_id='selected_generation_delete_index',
+                                                                           elem_classes='generation_apply_hidden_control')
+                            delete_selected_image_button = gr.Button(value='Delete Selected Image',
+                                                                     elem_id='delete_selected_image_button',
+                                                                     elem_classes='generation_apply_hidden_control')
                             gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
                                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                                  elem_id='final_gallery')
@@ -677,7 +709,8 @@ with shared.gradio_root:
                                     inputs=[saved_person_name, person_likeness_enabled, person_likeness_class,
                                             person_likeness_strength, person_likeness_face_weight,
                                             person_likeness_face_start, person_likeness_paths],
-                                    outputs=[saved_person_selection, saved_person_status],
+                                    outputs=[saved_person_selection, saved_person_status, person_likeness_paths,
+                                             person_likeness_gallery],
                                     queue=False,
                                     show_progress=False
                                 )
@@ -1213,9 +1246,10 @@ with shared.gradio_root:
                                                             elem_classes='lora_weight', scale=5)
                                     lora_note_button = gr.Button(value='\U0001f4dd', variant='secondary',
                                                                  visible=filename != 'None')
+                                    saved_lora_note = modules.lora_notes.load_lora_note(filename)
                                     lora_note_add_button = gr.Button(value='+', variant='secondary',
-                                                                     visible=False)
-                                    lora_prompt = gr.Textbox(visible=False)
+                                                                     visible=filename != 'None' and saved_lora_note != '')
+                                    lora_prompt = gr.Textbox(value=saved_lora_note, visible=False)
                                     lora_ctrls += [lora_enabled, lora_model, lora_weight]
                                     lora_prompt_ctrls.append(lora_prompt)
                                     lora_note_buttons.append(lora_note_button)
@@ -1229,23 +1263,24 @@ with shared.gradio_root:
                                         lora_note_cancel_button = gr.Button(value='Cancel', variant='secondary')
                                     lora_note_editor_cols.append(lora_note_editor_col)
         
-                                def lora_selection_changed(model_name, note):
+                                def lora_selection_changed(model_name):
                                     has_model = model_name != 'None'
-                                    has_note = str(note or '').strip() != ''
-                                    return gr.update(visible=has_model), gr.update(visible=has_model and has_note), gr.update(visible=False)
+                                    note = modules.lora_notes.load_lora_note(model_name)
+                                    has_note = note != ''
+                                    return gr.update(value=note), gr.update(visible=has_model), gr.update(visible=has_model and has_note), gr.update(visible=False)
         
                                 def open_lora_note(note):
                                     return gr.update(visible=True), str(note or '')
         
                                 def save_lora_note(model_name, note):
-                                    note = str(note or '').strip()
+                                    note = modules.lora_notes.save_lora_note(model_name, note)
                                     return note, gr.update(visible=False), gr.update(visible=model_name != 'None' and note != '')
         
                                 def cancel_lora_note(note):
                                     return gr.update(visible=False), str(note or '')
         
-                                lora_model.change(lora_selection_changed, inputs=[lora_model, lora_prompt],
-                                                  outputs=[lora_note_button, lora_note_add_button, lora_note_editor_col],
+                                lora_model.change(lora_selection_changed, inputs=lora_model,
+                                                  outputs=[lora_prompt, lora_note_button, lora_note_add_button, lora_note_editor_col],
                                                   show_progress=False, queue=False)
                                 lora_note_button.click(open_lora_note, inputs=lora_prompt,
                                                        outputs=[lora_note_editor_col, lora_note_editor],
@@ -1505,10 +1540,12 @@ with shared.gradio_root:
                     lora_note_add_button_updates = []
                     lora_note_editor_updates = []
                     for i in range(len(lora_prompt_ctrls)):
-                        lora_prompt = config_data.get(f'lora_prompt_{i + 1}', '')
                         lora_config = str(config_data.get(f'lora_combined_{i + 1}', 'None'))
                         lora_parts = lora_config.split(' : ')
                         lora_model_name = lora_parts[1] if len(lora_parts) == 3 else lora_parts[0]
+                        lora_prompt = modules.lora_notes.load_lora_note(lora_model_name)
+                        if lora_prompt == '':
+                            lora_prompt = config_data.get(f'lora_prompt_{i + 1}', '')
                         has_lora = lora_model_name != 'None'
                         has_note = str(lora_prompt or '').strip() != ''
                         lora_prompts.append(gr.update(value=lora_prompt))
@@ -1561,6 +1598,38 @@ with shared.gradio_root:
 
                     return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode,
                                                        f'Applied config from {os.path.basename(image_path)}.')
+
+                def remove_generation_from_history(selected_index, session_history):
+                    session_history = list(session_history or [])
+                    image_path = get_selected_generation_image_path(selected_index, session_history)
+                    if image_path is None:
+                        return gr.update(value=session_history), session_history, gr.update(value=None), 'Select a history image to remove.'
+
+                    try:
+                        selected_index = int(selected_index)
+                    except Exception:
+                        return gr.update(value=session_history), session_history, gr.update(value=None), 'Select a history image to remove.'
+
+                    removed_path = session_history.pop(selected_index)
+                    return gr.update(value=session_history), session_history, gr.update(value=None), f'Removed {os.path.basename(str(removed_path))} from session history.'
+
+                def delete_generation_from_history(selected_index, session_history):
+                    session_history = list(session_history or [])
+                    image_path = get_selected_generation_image_path(selected_index, session_history)
+                    if image_path is None:
+                        return gr.update(value=session_history), session_history, gr.update(value=None), 'Select a history image to delete.'
+
+                    status = f'Deleted {os.path.basename(image_path)} and removed it from session history.'
+                    if os.path.exists(image_path) and os.path.isfile(image_path):
+                        try:
+                            os.remove(image_path)
+                        except Exception as e:
+                            status = f'Could not delete {os.path.basename(image_path)}: {e}'
+                    else:
+                        status = f'Image file was already missing: {os.path.basename(image_path)}'
+
+                    session_history = [path for index, path in enumerate(session_history) if index != int(selected_index)]
+                    return gr.update(value=session_history), session_history, gr.update(value=None), status
         
                 save_prompt_config_button.click(save_current_prompt_config, inputs=[prompt_config_name] + prompt_config_inputs,
                                                 outputs=[prompt_config_selection, prompt_config_status],
@@ -1583,6 +1652,16 @@ with shared.gradio_root:
                                                          queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();}')
+                remove_selected_image_button.click(remove_generation_from_history,
+                                                   inputs=[selected_generation_remove_index, state_session_gallery],
+                                                   outputs=[gallery, state_session_gallery, state_selected_generation_index,
+                                                            selected_image_status],
+                                                   queue=False, show_progress=False)
+                delete_selected_image_button.click(delete_generation_from_history,
+                                                   inputs=[selected_generation_delete_index, state_session_gallery],
+                                                   outputs=[gallery, state_session_gallery, state_selected_generation_index,
+                                                            selected_image_status],
+                                                   queue=False, show_progress=False)
         
                 if not args_manager.args.disable_preset_selection:
                     def preset_selection_change(preset, is_generating, inpaint_mode):

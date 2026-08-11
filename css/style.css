@@ -119,15 +119,18 @@ div:has(> #positive_prompt) {
   display: none !important;
 }
 
+#generation_history_panel .form:has(.generation_apply_hidden_control) {
+  display: none !important;
+}
+
 #final_gallery .thumbnail-item {
   position: relative;
 }
 
-#final_gallery .generation-config-apply {
+#final_gallery .generation-history-action {
   position: absolute;
-  right: 6px;
   bottom: 6px;
-  min-width: 56px;
+  min-width: 54px;
   min-height: 28px;
   padding: 3px 8px;
   border-radius: 6px;
@@ -139,8 +142,32 @@ div:has(> #positive_prompt) {
   z-index: 3;
 }
 
-#final_gallery .generation-config-apply:hover {
+#final_gallery .generation-history-action:hover {
   background: rgba(44, 102, 199, 0.95);
+}
+
+#final_gallery .generation-config-apply {
+  right: 6px;
+  bottom: 6px;
+}
+
+#final_gallery .generation-history-remove {
+  right: 6px;
+  bottom: 40px;
+}
+
+#final_gallery .generation-history-delete {
+  right: 6px;
+  bottom: 74px;
+  background: rgba(94, 22, 28, 0.86);
+}
+
+#final_gallery .generation-history-delete:hover {
+  background: rgba(178, 42, 52, 0.96);
+}
+
+#final_gallery .generation-config-apply-hidden .generation-history-action {
+  display: none !important;
 }
 
 .resizable_area {

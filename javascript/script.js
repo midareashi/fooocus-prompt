@@ -118,22 +118,38 @@ function installPersonLikenessRemoveButtons() {
 
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
     items.forEach(function(item, index) {
-        if (item.querySelector('.person-likeness-remove')) return;
-        const button = document.createElement('button');
+        const path = paths[index] || '';
+        item.dataset.personLikenessPath = path;
+
+        let button = item.querySelector('.person-likeness-remove');
+        if (!button) {
+            button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'person-likeness-remove';
+            button.setAttribute('aria-label', 'Remove photo');
+            button.textContent = 'X';
+            item.appendChild(button);
+        }
+
+        button.dataset.personLikenessPath = path;
         button.type = 'button';
-        button.className = 'person-likeness-remove';
-        button.setAttribute('aria-label', 'Remove photo');
-        button.textContent = 'X';
-        button.addEventListener('click', function(event) {
+        button.onclick = function(event) {
             event.preventDefault();
             event.stopPropagation();
-            const nextPaths = paths.filter(function(_, pathIndex) {
-                return pathIndex !== index;
+            const removePath = button.dataset.personLikenessPath || item.dataset.personLikenessPath || '';
+            let currentPaths = [];
+            try {
+                currentPaths = JSON.parse(input.value || '[]');
+            } catch {
+                currentPaths = [];
+            }
+            const nextPaths = currentPaths.filter(function(path, pathIndex) {
+                return removePath ? path !== removePath : pathIndex !== index;
             });
             setPersonLikenessPaths(nextPaths);
+            item.remove();
             refreshPersonLikenessGallery();
-        });
-        item.appendChild(button);
+        };
     });
 }
 
@@ -143,8 +159,19 @@ function getGenerationApplyIndexInput() {
     );
 }
 
-function setGenerationApplyIndex(index) {
-    const input = getGenerationApplyIndexInput();
+function getGenerationRemoveIndexInput() {
+    return gradioApp().querySelector(
+        '#selected_generation_remove_index textarea, #selected_generation_remove_index input, textarea#selected_generation_remove_index, input#selected_generation_remove_index'
+    );
+}
+
+function getGenerationDeleteIndexInput() {
+    return gradioApp().querySelector(
+        '#selected_generation_delete_index textarea, #selected_generation_delete_index input, textarea#selected_generation_delete_index, input#selected_generation_delete_index'
+    );
+}
+
+function setGenerationActionIndex(input, index) {
     if (!input) return false;
     const value = String(index);
     const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
@@ -158,28 +185,71 @@ function setGenerationApplyIndex(index) {
     return true;
 }
 
+function setGenerationApplyIndex(index) {
+    return setGenerationActionIndex(getGenerationApplyIndexInput(), index);
+}
+
+function setGenerationRemoveIndex(index) {
+    return setGenerationActionIndex(getGenerationRemoveIndexInput(), index);
+}
+
+function setGenerationDeleteIndex(index) {
+    return setGenerationActionIndex(getGenerationDeleteIndexInput(), index);
+}
+
+function ensureGenerationHistoryButton(item, className, label, title, onClick) {
+    let button = item.querySelector(`.${className}`);
+    if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = `generation-history-action ${className}`;
+        button.textContent = label;
+        item.appendChild(button);
+    }
+    button.setAttribute('aria-label', title);
+    button.setAttribute('title', title);
+    button.onclick = onClick;
+}
+
 function installGenerationHistoryApplyButtons() {
     const gallery = gradioApp().querySelector('#final_gallery');
     const applyButton = gradioApp().querySelector('#apply_selected_image_config_button');
-    if (!gallery || !applyButton) return;
+    const removeButton = gradioApp().querySelector('#remove_selected_image_button');
+    const deleteButton = gradioApp().querySelector('#delete_selected_image_button');
+    if (!gallery || !applyButton || !removeButton || !deleteButton) return;
 
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
     items.forEach(function(item, index) {
-        if (item.querySelector('.generation-config-apply')) return;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'generation-config-apply';
-        button.setAttribute('aria-label', 'Apply generation config');
-        button.setAttribute('title', 'Apply generation config');
-        button.textContent = 'Apply';
-        button.addEventListener('click', function(event) {
+        const isTinyThumbnail = item.getBoundingClientRect().width < 80;
+        item.classList.toggle('generation-config-apply-hidden', isTinyThumbnail);
+        if (isTinyThumbnail) {
+            item.querySelectorAll('.generation-history-action').forEach(function(button) {
+                button.remove();
+            });
+            return;
+        }
+
+        ensureGenerationHistoryButton(item, 'generation-config-apply', 'Apply', 'Apply generation config', function(event) {
             event.preventDefault();
             event.stopPropagation();
             if (setGenerationApplyIndex(index)) {
                 applyButton.click();
             }
         });
-        item.appendChild(button);
+        ensureGenerationHistoryButton(item, 'generation-history-remove', 'Remove', 'Remove from history', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (setGenerationRemoveIndex(index)) {
+                removeButton.click();
+            }
+        });
+        ensureGenerationHistoryButton(item, 'generation-history-delete', 'Delete', 'Delete file and remove from history', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (setGenerationDeleteIndex(index)) {
+                deleteButton.click();
+            }
+        });
     });
 }
 
