@@ -171,6 +171,18 @@ function getGenerationDeleteIndexInput() {
     );
 }
 
+function getGenerationQualityIndexInput() {
+    return gradioApp().querySelector(
+        '#selected_generation_quality_index textarea, #selected_generation_quality_index input, textarea#selected_generation_quality_index, input#selected_generation_quality_index'
+    );
+}
+
+function getQuickPreviewGenerationIndicesInput() {
+    return gradioApp().querySelector(
+        '#quick_preview_generation_indices textarea, #quick_preview_generation_indices input, textarea#quick_preview_generation_indices, input#quick_preview_generation_indices'
+    );
+}
+
 function setGenerationActionIndex(input, index) {
     if (!input) return false;
     const value = String(index);
@@ -197,6 +209,20 @@ function setGenerationDeleteIndex(index) {
     return setGenerationActionIndex(getGenerationDeleteIndexInput(), index);
 }
 
+function setGenerationQualityIndex(index) {
+    return setGenerationActionIndex(getGenerationQualityIndexInput(), index);
+}
+
+function getQueueRemoveIdInput() {
+    return gradioApp().querySelector(
+        '#selected_queue_remove_id textarea, #selected_queue_remove_id input, textarea#selected_queue_remove_id, input#selected_queue_remove_id'
+    );
+}
+
+function setQueueRemoveId(queueId) {
+    return setGenerationActionIndex(getQueueRemoveIdInput(), queueId);
+}
+
 function ensureGenerationHistoryButton(item, className, label, title, onClick) {
     let button = item.querySelector(`.${className}`);
     if (!button) {
@@ -216,7 +242,17 @@ function installGenerationHistoryApplyButtons() {
     const applyButton = gradioApp().querySelector('#apply_selected_image_config_button');
     const removeButton = gradioApp().querySelector('#remove_selected_image_button');
     const deleteButton = gradioApp().querySelector('#delete_selected_image_button');
-    if (!gallery || !applyButton || !removeButton || !deleteButton) return;
+    const qualityButton = gradioApp().querySelector('#regenerate_selected_quality_button');
+    const previewIndicesInput = getQuickPreviewGenerationIndicesInput();
+    if (!gallery || !applyButton || !removeButton || !deleteButton || !qualityButton) return;
+
+    let previewIndices = [];
+    try {
+        previewIndices = JSON.parse(previewIndicesInput?.value || '[]');
+    } catch {
+        previewIndices = [];
+    }
+    const previewIndexSet = new Set(previewIndices.map((index) => Number(index)));
 
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
     items.forEach(function(item, index) {
@@ -250,6 +286,38 @@ function installGenerationHistoryApplyButtons() {
                 deleteButton.click();
             }
         });
+
+        const existingQualityButton = item.querySelector('.generation-quality-regenerate');
+        if (!previewIndexSet.has(index)) {
+            existingQualityButton?.remove();
+            return;
+        }
+
+        ensureGenerationHistoryButton(item, 'generation-quality-regenerate', 'Quality 60', 'Regenerate quick preview at Quality, 60 steps', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (setGenerationQualityIndex(index)) {
+                qualityButton.click();
+            }
+        });
+    });
+}
+
+function installQueueButtons() {
+    const removeButton = gradioApp().querySelector('#remove_queued_task_button');
+    const panel = gradioApp().querySelector('#queue_status_panel');
+    if (!removeButton || !panel) return;
+
+    panel.querySelectorAll('.queue-remove-button').forEach(function(button) {
+        if (button.dataset.boundQueueRemove) return;
+        button.dataset.boundQueueRemove = 'true';
+        button.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (setQueueRemoveId(button.dataset.queueId || '')) {
+                removeButton.click();
+            }
+        };
     });
 }
 
@@ -294,6 +362,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         installPersonLikenessRemoveButtons();
         installGenerationHistoryApplyButtons();
+        installQueueButtons();
     });
     mutationObserver.observe(gradioApp(), {childList: true, subtree: true});
     initStylePreviewOverlay();

@@ -76,12 +76,24 @@ def _load_wildprompt_lines(wildprompt_selection):
         return [x for x in f.read().splitlines() if x.strip() != '']
 
 
-def apply_wildprompts(wildprompt_selections, rng):
+def load_wildprompt_lines(wildprompt_selection):
+    try:
+        return _load_wildprompt_lines(wildprompt_selection)
+    except Exception:
+        return []
+
+
+def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None):
     prompts = []
+    wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
 
     for wildprompt_selection in wildprompt_selections:
         try:
-            wildprompt_lines = _load_wildprompt_lines(wildprompt_selection)
+            selected_lines = wildprompt_line_selections.get(wildprompt_selection, None)
+            if isinstance(selected_lines, list) and len(selected_lines) == 0:
+                continue
+            wildprompt_lines = selected_lines if isinstance(selected_lines, list) else _load_wildprompt_lines(wildprompt_selection)
+            wildprompt_lines = [x for x in wildprompt_lines if isinstance(x, str) and x.strip() != '']
             assert len(wildprompt_lines) > 0
             prompts.append(rng.choice(wildprompt_lines))
         except Exception:
@@ -90,14 +102,19 @@ def apply_wildprompts(wildprompt_selections, rng):
     return ', '.join(prompts)
 
 
-def get_all_wildprompts(wildprompt_selections):
+def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None):
     prompts = []
+    wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
 
     if len(wildprompt_selections) != 1:
         return prompts
 
     try:
-        prompts.extend(_load_wildprompt_lines(wildprompt_selections[0]))
+        selected_lines = wildprompt_line_selections.get(wildprompt_selections[0], None)
+        if isinstance(selected_lines, list) and len(selected_lines) == 0:
+            return prompts
+        prompts.extend(selected_lines if isinstance(selected_lines, list) else _load_wildprompt_lines(wildprompt_selections[0]))
+        prompts = [x for x in prompts if isinstance(x, str) and x.strip() != '']
     except Exception:
         print(f'[Wildprompts] Warning: {wildprompt_selections[0]}.txt missing or empty.')
 

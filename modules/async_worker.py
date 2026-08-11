@@ -63,6 +63,7 @@ class AsyncTask:
 
         args.reverse()
         self.generate_image_grid = args.pop()
+        self.quick_preview = bool(args.pop())
         self.prompt = args.pop()
         self.negative_prompt = args.pop()
         self.style_selections = args.pop()
@@ -70,6 +71,12 @@ class AsyncTask:
         if not isinstance(self.wildprompt_selections, list):
             self.wildprompt_selections = []
         self.wildprompt_generate_all = args.pop()
+        try:
+            self.wildprompt_line_selections = json.loads(args.pop())
+        except Exception:
+            self.wildprompt_line_selections = {}
+        if not isinstance(self.wildprompt_line_selections, dict):
+            self.wildprompt_line_selections = {}
 
         self.performance_selection = Performance(args.pop())
         self.steps = self.performance_selection.steps()
@@ -132,6 +139,10 @@ class AsyncTask:
         self.scheduler_name = args.pop()
         self.vae_name = args.pop()
         self.overwrite_step = args.pop()
+        if self.quick_preview:
+            self.overwrite_step = 1
+            self.steps = 1
+            self.original_steps = 1
         self.overwrite_switch = args.pop()
         self.overwrite_width = args.pop()
         self.overwrite_height = args.pop()
@@ -226,6 +237,7 @@ async_tasks_lock = threading.Lock()
 current_task = None
 queue_monitor_lock = threading.Lock()
 queue_monitor_running = False
+next_async_task_id = 1
 generated_image_configs = {}
 generated_image_configs_lock = threading.Lock()
 person_likeness_preprocess_cache = {}
@@ -233,7 +245,10 @@ person_likeness_ip_adapter_cache = {}
 
 
 def append_async_task(task):
+    global next_async_task_id
     with async_tasks_lock:
+        task.queue_id = next_async_task_id
+        next_async_task_id += 1
         async_tasks.append(task)
         return len(async_tasks)
 
@@ -252,6 +267,71 @@ def get_pending_task_count():
 
 def get_current_task():
     return current_task
+
+
+def get_task_summary(task):
+    if task is None or not hasattr(task, 'prompt'):
+        return {}
+
+    total_images = int(getattr(task, 'image_number', 1) or 1)
+    checkpoint_count = len(getattr(task, 'multi_checkpoint_model_names', []) or [])
+    if checkpoint_count > 1:
+        total_images *= checkpoint_count
+
+    wildprompt_selections = getattr(task, 'wildprompt_selections', []) or []
+    if getattr(task, 'wildprompt_generate_all', False) and len(wildprompt_selections) == 1:
+        try:
+            from modules.sdxl_styles import get_all_wildprompts
+            total_images *= max(1, len(get_all_wildprompts(
+                wildprompt_selections,
+                getattr(task, 'wildprompt_line_selections', {})
+            )))
+        except Exception:
+            pass
+
+    prompt = str(getattr(task, 'prompt', '') or '').splitlines()[0].strip()
+    if len(prompt) > 96:
+        prompt = prompt[:93] + '...'
+
+    return {
+        'id': getattr(task, 'queue_id', 0),
+        'prompt': prompt or '(empty prompt)',
+        'images': total_images,
+        'steps': int(getattr(task, 'steps', 0) or 0),
+        'performance': getattr(getattr(task, 'performance_selection', None), 'value', ''),
+        'quick_preview': bool(getattr(task, 'quick_preview', False)),
+        'processing': bool(getattr(task, 'processing', False)),
+    }
+
+
+def get_queue_snapshot():
+    with async_tasks_lock:
+        pending = [get_task_summary(task) for task in async_tasks]
+    return {
+        'active': get_task_summary(current_task) if current_task is not None else None,
+        'pending': pending
+    }
+
+
+def remove_pending_task(queue_id):
+    try:
+        queue_id = int(queue_id)
+    except Exception:
+        return False
+
+    with async_tasks_lock:
+        for index, task in enumerate(async_tasks):
+            if getattr(task, 'queue_id', None) == queue_id:
+                del async_tasks[index]
+                return True
+    return False
+
+
+def clear_pending_tasks():
+    with async_tasks_lock:
+        removed = len(async_tasks)
+        async_tasks.clear()
+        return removed
 
 
 def begin_queue_monitor():
@@ -300,6 +380,7 @@ def worker():
     import shared
     import random
     import copy
+    import json
     import cv2
     import modules.default_pipeline as pipeline
     import modules.core as core
@@ -467,9 +548,12 @@ def worker():
                  ('Negative Prompt', 'negative_prompt', task['log_negative_prompt']),
                  ('Fooocus V2 Expansion', 'prompt_expansion', task['expansion']),
                  ('Styles', 'styles',
-                  str(task['styles'] if not use_expansion else [fooocus_expansion] + task['styles'])),
+                 str(task['styles'] if not use_expansion else [fooocus_expansion] + task['styles'])),
                  ('Wildprompts', 'wildprompts', str(task['wildprompts'])),
                  ('Generate All Wildprompts', 'wildprompt_generate_all', async_task.wildprompt_generate_all),
+                 ('Wildprompt Line Selections', 'wildprompt_line_selections',
+                  json.dumps(async_task.wildprompt_line_selections, ensure_ascii=False)),
+                 ('Quick Preview', 'quick_preview', async_task.quick_preview),
                  ('Performance', 'performance', async_task.performance_selection.value),
                  ('Steps', 'steps', async_task.steps),
                  ('Resolution', 'resolution', str((width, height))),
@@ -904,7 +988,8 @@ def worker():
         use_wildprompt = len(async_task.wildprompt_selections) > 0
         all_wildprompts = []
         if async_task.wildprompt_generate_all and len(async_task.wildprompt_selections) == 1:
-            all_wildprompts = get_all_wildprompts(async_task.wildprompt_selections)
+            all_wildprompts = get_all_wildprompts(async_task.wildprompt_selections,
+                                                  async_task.wildprompt_line_selections)
 
         total_prompts = len(all_wildprompts) * image_number if len(all_wildprompts) > 0 else image_number
         for i in range(total_prompts):
@@ -918,7 +1003,8 @@ def worker():
             if len(all_wildprompts) > 0:
                 wildprompt_prompt = all_wildprompts[wildprompt_index]
             else:
-                wildprompt_prompt = apply_wildprompts(async_task.wildprompt_selections, task_rng) if use_wildprompt else ''
+                wildprompt_prompt = apply_wildprompts(async_task.wildprompt_selections, task_rng,
+                                                      async_task.wildprompt_line_selections) if use_wildprompt else ''
             wildprompt_prompt = apply_wildcards(wildprompt_prompt, task_rng, wildprompt_index,
                                                 async_task.read_wildcards_in_order)
 

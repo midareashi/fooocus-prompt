@@ -33,6 +33,7 @@ def load_parameter_button_click(raw_metadata: dict | str, is_generating: bool, i
     get_list('styles', 'Styles', loaded_parameter_dict, results)
     get_list('wildprompts', 'Wildprompts', loaded_parameter_dict, results)
     get_bool('wildprompt_generate_all', 'Generate All Wildprompts', loaded_parameter_dict, results)
+    get_str('wildprompt_line_selections', 'Wildprompt Line Selections', loaded_parameter_dict, results, default='{}')
     performance = get_str('performance', 'Performance', loaded_parameter_dict, results)
     get_steps('steps', 'Steps', loaded_parameter_dict, results)
     get_number('overwrite_switch', 'Overwrite Switch', loaded_parameter_dict, results)
