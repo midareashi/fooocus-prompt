@@ -5,7 +5,7 @@ import re
 import modules.config
 
 
-PROMPT_CONFIG_DIR = os.path.join(modules.config.path_outputs, 'prompt_configs')
+PROMPT_CONFIG_DIR = os.path.abspath(os.path.join('input', 'prompt_configs'))
 
 
 def _ensure_dir():
