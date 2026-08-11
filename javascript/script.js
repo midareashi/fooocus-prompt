@@ -305,8 +305,9 @@ function installGenerationHistoryApplyButtons() {
 
 function installQueueButtons() {
     const removeButton = gradioApp().querySelector('#remove_queued_task_button');
+    const stopButton = gradioApp().querySelector('#stop_queue_button');
     const panel = gradioApp().querySelector('#queue_status_panel');
-    if (!removeButton || !panel) return;
+    if (!removeButton || !stopButton || !panel) return;
 
     panel.querySelectorAll('.queue-remove-button').forEach(function(button) {
         if (button.dataset.boundQueueRemove) return;
@@ -317,6 +318,16 @@ function installQueueButtons() {
             if (setQueueRemoveId(button.dataset.queueId || '')) {
                 removeButton.click();
             }
+        };
+    });
+
+    panel.querySelectorAll('.queue-stop-button').forEach(function(button) {
+        if (button.dataset.boundQueueStop) return;
+        button.dataset.boundQueueStop = 'true';
+        button.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            stopButton.click();
         };
     });
 }

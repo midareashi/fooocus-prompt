@@ -4,7 +4,8 @@
   "styles": "['Fooocus V2', 'Fooocus Photograph', 'Fooocus Negative']",
   "wildprompts": "[]",
   "wildprompt_generate_all": false,
-  "performance": "Quality",
+  "wildprompt_line_selections": "{}",
+  "performance": "Speed",
   "steps": -1,
   "overwrite_switch": -1,
   "guidance_scale": 3,
@@ -13,7 +14,7 @@
   "refiner_swap_method": "joint",
   "adaptive_cfg": 7,
   "clip_skip": 2,
-  "base_model": "XL\\Photo\\cyberrealisticXL_v70.safetensors",
+  "base_model": "cyberrealisticXL_v100.safetensors",
   "refiner_model": "None",
   "refiner_switch": 0.5,
   "sampler": "dpmpp_2m_sde_gpu",
@@ -21,8 +22,10 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-11 14:52:30",
+  "saved_at": "2026-08-11 15:44:10",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)",
-  "lora_combined_1": "True : Trained\\girl_named_qq_v2_sdxl_lora-000003.safetensors : 1"
+  "lora_combined_1": "True : Trained\\girl_named_qq.safetensors : 1",
+  "lora_combined_2": "True : StS_age_slider_v1_initial_release.safetensors : -2",
+  "lora_prompt_1": "girl_named_qq, 10 years old, young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks"
 }

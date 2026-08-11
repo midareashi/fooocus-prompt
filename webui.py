@@ -1,10 +1,13 @@
 import gradio as gr
 import random
 import os
+import sys
 import json
 import html as html_lib
+import ast
 import time
 import re
+import threading
 import shared
 import modules.config
 import fooocus_version
@@ -332,6 +335,25 @@ def get_task(*args):
     return worker.AsyncTask(args=args)
 
 
+def restart_fooocus():
+    import ldm_patched.modules.model_management as model_management
+
+    worker.clear_pending_tasks()
+    active_task = worker.get_current_task()
+    if active_task is not None:
+        active_task.last_stop = 'stop'
+        if active_task.processing:
+            model_management.interrupt_current_processing()
+
+    def restart_process():
+        time.sleep(0.75)
+        print('[Restart] Restarting Fooocus with the same command line ...')
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    threading.Thread(target=restart_process, daemon=True).start()
+    return 'Restarting Fooocus ...'
+
+
 def set_quick_preview_mode(enabled):
     return bool(enabled)
 
@@ -354,7 +376,7 @@ def make_queue_panel_html():
         prompt = html_lib.escape(task.get('prompt', '(empty prompt)'))
         performance = html_lib.escape(str(task.get('performance') or ''))
         badge_html = ''.join(badges)
-        action = '<span class="queue-active-label">Running</span>' if status == 'active' else \
+        action = '<button type="button" class="queue-stop-button">Stop Queue</button>' if status == 'active' else \
             f'<button type="button" class="queue-remove-button" data-queue-id="{int(task.get("id", 0))}">Remove</button>'
         return (
             f'<div class="queue-row queue-row-{status}">'
@@ -385,7 +407,7 @@ def enqueue_generate_task(*args):
 
     return task, should_monitor, \
         gr.update(visible=True, interactive=True), \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(visible=True, interactive=True), \
         gr.update(), \
         gr.update(value=make_queue_panel_html()), \
@@ -430,7 +452,7 @@ def monitor_generate_queue(should_monitor, session_history):
         gr.update(visible=False, value=None), \
         gr.update(visible=True), \
         gr.update(), \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(visible=True, interactive=True), \
         gr.update(visible=True, interactive=True), \
         gr.update(value=make_queue_panel_html()), \
@@ -455,7 +477,7 @@ def monitor_generate_queue(should_monitor, session_history):
                 ), gr.update(), gr.update(), gr.update(), \
                     gr.update(), \
                     gr.update(visible=True, interactive=True), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
@@ -481,7 +503,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     gr.update(visible=True), \
                     gr.update(), \
                     gr.update(visible=True, interactive=True), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
@@ -501,7 +523,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     gr.update(visible=True, value=session_history), \
                     session_history, \
                     gr.update(visible=True, interactive=True), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
@@ -524,7 +546,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     gr.update(visible=True, value=session_history), \
                     session_history, \
                     gr.update(visible=True, interactive=True), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
@@ -609,6 +631,21 @@ if isinstance(args_manager.args.preset, str):
 shared.gradio_root = gr.Blocks(title=title).queue()
 
 with shared.gradio_root:
+    with gr.Row(elem_id='fooocus_top_bar'):
+        restart_instance_button = gr.Button(
+            label='Reset',
+            value='Reset',
+            elem_id='restart_instance_button',
+            elem_classes=['fooocus_restart_button']
+        )
+        restart_instance_status = gr.HTML(elem_id='restart_instance_status')
+        restart_instance_button.click(
+            restart_fooocus,
+            outputs=restart_instance_status,
+            queue=False,
+            show_progress=False
+        )
+
     with gr.Tabs(elem_id='generation_mode_tabs'):
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
@@ -616,7 +653,7 @@ with shared.gradio_root:
             state_selected_generation_index = gr.State(None)
             quick_preview_mode = gr.State(False)
             inpaint_engine_state = gr.State('empty')
-            with gr.Row():
+            with gr.Row(elem_id='generation_main_row'):
                 with gr.Column(scale=2):
                     with gr.Row(elem_id='generation_image_panel'):
                         with gr.Column(scale=1, elem_id='current_generation_panel'):
@@ -658,6 +695,9 @@ with shared.gradio_root:
                             remove_queued_task_button = gr.Button(value='Remove Queued Item',
                                                                   elem_id='remove_queued_task_button',
                                                                   elem_classes='generation_apply_hidden_control')
+                            stop_queue_button = gr.Button(value='Stop Queue',
+                                                          elem_id='stop_queue_button',
+                                                          elem_classes='generation_apply_hidden_control')
                             gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
                                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                                  elem_id='final_gallery')
@@ -680,7 +720,7 @@ with shared.gradio_root:
                             reset_button = gr.Button(label="Reconnect", value="Reconnect", elem_classes='type_row', elem_id='reset_button', visible=False)
                             load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
                             skip_button = gr.Button(label="Skip", value="Skip", elem_classes='type_row_half', elem_id='skip_button', visible=False)
-                            stop_button = gr.Button(label="Stop Queue", value="Stop Queue", elem_classes='type_row_half', elem_id='stop_button', visible=False)
+                            stop_button = gr.Button(label="Stop", value="Stop", elem_classes='type_row_half', elem_id='stop_button', visible=False)
         
                             def stop_clicked(currentTask):
                                 import ldm_patched.modules.model_management as model_management
@@ -703,6 +743,7 @@ with shared.gradio_root:
                                     model_management.interrupt_current_processing()
                                 return target_task
         
+                            stop_queue_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
                             stop_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
                             skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
                     with gr.Row(elem_classes='advanced_check_row'):
@@ -713,11 +754,158 @@ with shared.gradio_root:
                         with gr.Row():
                             prompt_config_name = gr.Textbox(label='Name', placeholder='Optional name for the current prompt config')
                             prompt_config_selection = gr.Dropdown(label='Saved', choices=modules.prompt_config.list_prompt_configs(), value=None)
+                        prompt_config_load_mode = gr.Radio(
+                            label='Load Mode',
+                            choices=['Full Config', 'Replace Prompt', 'Append Prompt'],
+                            value='Full Config'
+                        )
                         with gr.Row():
                             save_prompt_config_button = gr.Button(value='Save Current Config', variant='secondary')
                             load_prompt_config_button = gr.Button(value='Load Selected Config', variant='secondary')
                             delete_prompt_config_button = gr.Button(value='Delete Selected Config', variant='secondary')
                         prompt_config_status = gr.HTML()
+                    with gr.Accordion(label='Wildprompt', open=False, elem_classes=['wildprompt_selections_tab']):
+                        wildprompt_sorter.try_load_sorted_wildprompts()
+
+                        wildprompt_generate_all = gr.Checkbox(
+                            label='Generate All Wildprompts',
+                            value=False,
+                            container=False,
+                            elem_classes='min_check',
+                            info='When selected, creates an image for each prompt in the selected file. Increase Image Number to generate each prompt multiple times. Only works if one wildprompt is selected.',
+                            interactive=True
+                        )
+                        wildprompt_search_bar = gr.Textbox(show_label=False, container=False,
+                                                           placeholder='Type here to search wildprompts ...',
+                                                           value='',
+                                                           label='Search Wildprompts')
+                        wildprompt_selections = gr.CheckboxGroup(show_label=False, container=False,
+                                                                 choices=copy.deepcopy(wildprompt_sorter.all_wildprompts),
+                                                                 value=copy.deepcopy(modules.config.default_wildprompts),
+                                                                 label='Selected Wildprompts',
+                                                                 elem_classes=['wildprompt_selections'])
+                        gradio_receiver_wildprompt_selections = gr.Textbox(
+                            elem_id='gradio_receiver_wildprompt_selections',
+                            visible=False
+                        )
+                        wildprompt_line_selection_json = gr.Textbox(
+                            value='{}',
+                            elem_id='wildprompt_line_selection_json',
+                            visible=False
+                        )
+                        wildprompt_line_section_ctrls = []
+                        wildprompt_line_name_ctrls = []
+                        wildprompt_line_selection_ctrls = []
+                        wildprompt_line_all_buttons = []
+                        wildprompt_line_none_buttons = []
+                        for wildprompt_line_section_index in range(wildprompt_sorter.max_wildprompt_detail_sections):
+                            with gr.Accordion(label='Wildprompt Rows', open=False, visible=False) as wildprompt_line_section:
+                                wildprompt_line_name = gr.Textbox(value='', visible=False)
+                                with gr.Row():
+                                    wildprompt_line_all = gr.Button(value='All', variant='secondary')
+                                    wildprompt_line_none = gr.Button(value='None', variant='secondary')
+                                wildprompt_line_selection = gr.CheckboxGroup(
+                                    show_label=False,
+                                    container=False,
+                                    choices=[],
+                                    value=[],
+                                    label='Selected Prompt Rows',
+                                    elem_classes=['wildprompt_line_selections']
+                                )
+                            wildprompt_line_section_ctrls.append(wildprompt_line_section)
+                            wildprompt_line_name_ctrls.append(wildprompt_line_name)
+                            wildprompt_line_selection_ctrls.append(wildprompt_line_selection)
+                            wildprompt_line_all_buttons.append(wildprompt_line_all)
+                            wildprompt_line_none_buttons.append(wildprompt_line_none)
+                        wildprompt_line_section_outputs = sum(
+                            [[section, name, selection] for section, name, selection in zip(
+                                wildprompt_line_section_ctrls,
+                                wildprompt_line_name_ctrls,
+                                wildprompt_line_selection_ctrls
+                            )],
+                            []
+                        )
+
+                        for wildprompt_line_name, wildprompt_line_selection, wildprompt_line_all, wildprompt_line_none in zip(
+                                wildprompt_line_name_ctrls,
+                                wildprompt_line_selection_ctrls,
+                                wildprompt_line_all_buttons,
+                                wildprompt_line_none_buttons):
+                            wildprompt_line_all.click(
+                                wildprompt_sorter.select_all_wildprompt_lines,
+                                inputs=wildprompt_line_name,
+                                outputs=wildprompt_line_selection,
+                                queue=False,
+                                show_progress=False
+                            ).then(
+                                wildprompt_sorter.encode_wildprompt_line_selections,
+                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                                outputs=wildprompt_line_selection_json,
+                                queue=False,
+                                show_progress=False
+                            )
+                            wildprompt_line_none.click(
+                                wildprompt_sorter.select_no_wildprompt_lines,
+                                outputs=wildprompt_line_selection,
+                                queue=False,
+                                show_progress=False
+                            ).then(
+                                wildprompt_sorter.encode_wildprompt_line_selections,
+                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                                outputs=wildprompt_line_selection_json,
+                                queue=False,
+                                show_progress=False
+                            )
+
+                        shared.gradio_root.load(
+                            lambda: gr.update(choices=copy.deepcopy(wildprompt_sorter.all_wildprompts)),
+                            outputs=wildprompt_selections
+                        )
+
+                        wildprompt_search_bar.change(wildprompt_sorter.search_wildprompts,
+                                                     inputs=[wildprompt_selections, wildprompt_search_bar],
+                                                     outputs=wildprompt_selections,
+                                                     queue=False,
+                                                     show_progress=False).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        wildprompt_selections.change(
+                            wildprompt_sorter.update_wildprompt_line_sections,
+                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
+                            outputs=wildprompt_line_section_outputs,
+                            queue=False,
+                            show_progress=False
+                        )
+
+                        for wildprompt_line_selection in wildprompt_line_selection_ctrls:
+                            wildprompt_line_selection.change(
+                                wildprompt_sorter.encode_wildprompt_line_selections,
+                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                                outputs=wildprompt_line_selection_json,
+                                queue=False,
+                                show_progress=False
+                            )
+
+                        gradio_receiver_wildprompt_selections.input(wildprompt_sorter.sort_wildprompts,
+                                                                    inputs=wildprompt_selections,
+                                                                    outputs=wildprompt_selections,
+                                                                    queue=False,
+                                                                    show_progress=False).then(
+                            wildprompt_sorter.update_wildprompt_line_sections,
+                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
+                            outputs=wildprompt_line_section_outputs,
+                            queue=False,
+                            show_progress=False).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        wildprompt_refresh = gr.Button(label='Refresh', value='Refresh All Wildprompts',
+                                                       variant='secondary', elem_classes='refresh_button')
+
+                        def handle_wildprompt_refresh_click():
+                            return gr.update(choices=wildprompt_sorter.try_load_sorted_wildprompts())
+
+                        wildprompt_refresh.click(handle_wildprompt_refresh_click, [], wildprompt_selections,
+                                                 queue=False, show_progress=False)
                     with gr.Row(visible=modules.config.default_image_prompt_checkbox) as image_input_panel:
                         with gr.Tabs(selected=modules.config.default_selected_image_input_tab_id):
                             with gr.Tab(label='Upscale or Variation', id='uov_tab') as uov_tab:
@@ -1191,7 +1379,7 @@ with shared.gradio_root:
                     enhance_checkbox.change(lambda x: gr.update(visible=x), inputs=enhance_checkbox,
                                                 outputs=enhance_input_panel, queue=False, show_progress=False, _js=switch_js)
         
-                with gr.Column(scale=1, visible=modules.config.default_advanced_checkbox) as advanced_column:
+                with gr.Column(scale=1, visible=modules.config.default_advanced_checkbox, elem_id='advanced_column') as advanced_column:
                     with gr.Tab(label='Settings'):
                         if not args_manager.args.disable_preset_selection:
                             preset_selection = gr.Dropdown(label='Preset',
@@ -1286,149 +1474,6 @@ with shared.gradio_root:
                                                                queue=False,
                                                                show_progress=False).then(
                             lambda: None, _js='()=>{refresh_style_localization();}')
-
-                    with gr.Tab(label='Wildprompt', elem_classes=['wildprompt_selections_tab']):
-                        wildprompt_sorter.try_load_sorted_wildprompts()
-
-                        wildprompt_generate_all = gr.Checkbox(
-                            label='Generate All Wildprompts',
-                            value=False,
-                            container=False,
-                            elem_classes='min_check',
-                            info='When selected, creates an image for each prompt in the selected file. Increase Image Number to generate each prompt multiple times. Only works if one wildprompt is selected.',
-                            interactive=True
-                        )
-                        wildprompt_search_bar = gr.Textbox(show_label=False, container=False,
-                                                           placeholder='🔎 Type here to search wildprompts ...',
-                                                           value='',
-                                                           label='Search Wildprompts')
-                        wildprompt_selections = gr.CheckboxGroup(show_label=False, container=False,
-                                                                 choices=copy.deepcopy(wildprompt_sorter.all_wildprompts),
-                                                                 value=copy.deepcopy(modules.config.default_wildprompts),
-                                                                 label='Selected Wildprompts',
-                                                                 elem_classes=['wildprompt_selections'])
-                        gradio_receiver_wildprompt_selections = gr.Textbox(
-                            elem_id='gradio_receiver_wildprompt_selections',
-                            visible=False
-                        )
-                        wildprompt_line_selection_json = gr.Textbox(
-                            value='{}',
-                            elem_id='wildprompt_line_selection_json',
-                            visible=False
-                        )
-                        wildprompt_line_section_ctrls = []
-                        wildprompt_line_name_ctrls = []
-                        wildprompt_line_selection_ctrls = []
-                        wildprompt_line_all_buttons = []
-                        wildprompt_line_none_buttons = []
-                        for wildprompt_line_section_index in range(wildprompt_sorter.max_wildprompt_detail_sections):
-                            with gr.Accordion(label='Wildprompt Rows', open=False, visible=False) as wildprompt_line_section:
-                                wildprompt_line_name = gr.Textbox(value='', visible=False)
-                                with gr.Row():
-                                    wildprompt_line_all = gr.Button(value='All', variant='secondary')
-                                    wildprompt_line_none = gr.Button(value='None', variant='secondary')
-                                wildprompt_line_selection = gr.CheckboxGroup(
-                                    show_label=False,
-                                    container=False,
-                                    choices=[],
-                                    value=[],
-                                    label='Selected Prompt Rows',
-                                    elem_classes=['wildprompt_line_selections']
-                                )
-                            wildprompt_line_section_ctrls.append(wildprompt_line_section)
-                            wildprompt_line_name_ctrls.append(wildprompt_line_name)
-                            wildprompt_line_selection_ctrls.append(wildprompt_line_selection)
-                            wildprompt_line_all_buttons.append(wildprompt_line_all)
-                            wildprompt_line_none_buttons.append(wildprompt_line_none)
-                        wildprompt_line_section_outputs = sum(
-                            [[section, name, selection] for section, name, selection in zip(
-                                wildprompt_line_section_ctrls,
-                                wildprompt_line_name_ctrls,
-                                wildprompt_line_selection_ctrls
-                            )],
-                            []
-                        )
-
-                        for wildprompt_line_name, wildprompt_line_selection, wildprompt_line_all, wildprompt_line_none in zip(
-                                wildprompt_line_name_ctrls,
-                                wildprompt_line_selection_ctrls,
-                                wildprompt_line_all_buttons,
-                                wildprompt_line_none_buttons):
-                            wildprompt_line_all.click(
-                                wildprompt_sorter.select_all_wildprompt_lines,
-                                inputs=wildprompt_line_name,
-                                outputs=wildprompt_line_selection,
-                                queue=False,
-                                show_progress=False
-                            ).then(
-                                wildprompt_sorter.encode_wildprompt_line_selections,
-                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
-                                outputs=wildprompt_line_selection_json,
-                                queue=False,
-                                show_progress=False
-                            )
-                            wildprompt_line_none.click(
-                                wildprompt_sorter.select_no_wildprompt_lines,
-                                outputs=wildprompt_line_selection,
-                                queue=False,
-                                show_progress=False
-                            ).then(
-                                wildprompt_sorter.encode_wildprompt_line_selections,
-                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
-                                outputs=wildprompt_line_selection_json,
-                                queue=False,
-                                show_progress=False
-                            )
-
-                        shared.gradio_root.load(
-                            lambda: gr.update(choices=copy.deepcopy(wildprompt_sorter.all_wildprompts)),
-                            outputs=wildprompt_selections
-                        )
-
-                        wildprompt_search_bar.change(wildprompt_sorter.search_wildprompts,
-                                                     inputs=[wildprompt_selections, wildprompt_search_bar],
-                                                     outputs=wildprompt_selections,
-                                                     queue=False,
-                                                     show_progress=False).then(
-                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
-
-                        wildprompt_selections.change(
-                            wildprompt_sorter.update_wildprompt_line_sections,
-                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
-                            outputs=wildprompt_line_section_outputs,
-                            queue=False,
-                            show_progress=False
-                        )
-
-                        for wildprompt_line_selection in wildprompt_line_selection_ctrls:
-                            wildprompt_line_selection.change(
-                                wildprompt_sorter.encode_wildprompt_line_selections,
-                                inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
-                                outputs=wildprompt_line_selection_json,
-                                queue=False,
-                                show_progress=False
-                            )
-
-                        gradio_receiver_wildprompt_selections.input(wildprompt_sorter.sort_wildprompts,
-                                                                    inputs=wildprompt_selections,
-                                                                    outputs=wildprompt_selections,
-                                                                    queue=False,
-                                                                    show_progress=False).then(
-                            wildprompt_sorter.update_wildprompt_line_sections,
-                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
-                            outputs=wildprompt_line_section_outputs,
-                            queue=False,
-                            show_progress=False).then(
-                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
-
-                        wildprompt_refresh = gr.Button(label='Refresh', value='🔄 Refresh All Wildprompts',
-                                                       variant='secondary', elem_classes='refresh_button')
-
-                        def handle_wildprompt_refresh_click():
-                            return gr.update(choices=wildprompt_sorter.try_load_sorted_wildprompts())
-
-                        wildprompt_refresh.click(handle_wildprompt_refresh_click, [], wildprompt_selections,
-                                                 queue=False, show_progress=False)
 
                     with gr.Tab(label='Models'):
                         with gr.Group():
@@ -1796,10 +1841,32 @@ with shared.gradio_root:
                         lora_note_editor_updates.append(gr.update(visible=False))
                     return modules.meta_parser.load_parameter_button_click(config_data, is_generating, inpaint_mode) + lora_prompts + lora_note_button_updates + lora_note_add_button_updates + lora_note_editor_updates + [status]
 
-                def load_prompt_config(name, is_generating, inpaint_mode):
+                def prompt_only_config_to_ui_updates(config_data, current_prompt, mode, status):
+                    update_count = len(load_data_outputs) + len(lora_prompt_ctrls) + len(lora_note_buttons) + \
+                        len(lora_note_add_buttons) + len(lora_note_editor_cols)
+                    updates = [gr.update()] * update_count
+
+                    saved_prompt = str(config_data.get('prompt', config_data.get('Prompt', '')) or '')
+                    current_prompt = str(current_prompt or '')
+
+                    if mode == 'Append Prompt' and current_prompt.strip() != '' and saved_prompt.strip() != '':
+                        next_prompt = f'{current_prompt}, {saved_prompt}'
+                    elif mode == 'Append Prompt' and saved_prompt.strip() == '':
+                        next_prompt = current_prompt
+                    else:
+                        next_prompt = saved_prompt
+
+                    # load_data_outputs order: advanced checkbox, image number, prompt, ...
+                    updates[2] = next_prompt
+                    return updates + [status]
+
+                def load_prompt_config(name, mode, current_prompt, is_generating, inpaint_mode):
                     config_data = modules.prompt_config.load_prompt_config(name)
                     if len(config_data) == 0:
                         return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, 'Select a saved prompt config to load.')
+                    if mode in ['Replace Prompt', 'Append Prompt']:
+                        action = 'Replaced prompt from' if mode == 'Replace Prompt' else 'Appended prompt from'
+                        return prompt_only_config_to_ui_updates(config_data, current_prompt, mode, f'{action}: {name}')
                     return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, f'Loaded prompt config: {name}')
 
                 def select_generation_image(evt):
@@ -1841,17 +1908,141 @@ with shared.gradio_root:
                     return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode,
                                                        f'Applied config from {os.path.basename(image_path)}.')
 
-                def apply_selected_generation_quality_config(selected_index, session_history, is_generating, inpaint_mode):
+                def get_selected_generation_quality_config(selected_index, session_history):
                     config_data, image_path = get_selected_generation_config(selected_index, session_history)
                     if len(config_data) == 0:
-                        return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, 'Select a quick preview with metadata first.')
+                        return {}, None, 'Select a quick preview with metadata first.'
 
                     config_data = config_data.copy()
                     config_data['performance'] = flags.Performance.QUALITY.value
                     config_data['steps'] = 60
                     config_data['quick_preview'] = False
-                    return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode,
-                                                       f'Regenerating {os.path.basename(image_path)} at Quality, 60 steps.')
+                    return config_data, image_path, f'Regenerating {os.path.basename(image_path)} at Quality, 60 steps.'
+
+                def parse_literal(value, expected_type, default):
+                    if isinstance(value, expected_type):
+                        return value
+                    if isinstance(value, str):
+                        try:
+                            parsed = ast.literal_eval(value)
+                            if isinstance(parsed, expected_type):
+                                return parsed
+                        except Exception:
+                            pass
+                    return default
+
+                def apply_config_to_generation_args(config_data, args):
+                    args = list(args)
+
+                    def set_if_present(index, key, cast=lambda x: x):
+                        if key in config_data and config_data[key] is not None:
+                            try:
+                                args[index] = cast(config_data[key])
+                            except Exception:
+                                pass
+
+                    args[2] = False
+                    set_if_present(3, 'prompt', str)
+                    set_if_present(4, 'negative_prompt', str)
+                    if 'styles' in config_data:
+                        args[5] = parse_literal(config_data.get('styles'), list, args[5])
+                    if 'wildprompts' in config_data:
+                        args[6] = parse_literal(config_data.get('wildprompts'), list, args[6])
+                    set_if_present(7, 'wildprompt_generate_all', bool)
+                    set_if_present(8, 'wildprompt_line_selections', str)
+                    args[9] = flags.Performance.QUALITY.value
+                    set_if_present(11, 'image_number', int)
+                    set_if_present(13, 'seed', int)
+                    set_if_present(15, 'sharpness', float)
+                    set_if_present(16, 'guidance_scale', float)
+                    set_if_present(17, 'base_model', str)
+                    set_if_present(20, 'refiner_model', str)
+                    set_if_present(21, 'refiner_switch', float)
+                    lora_start = 22
+                    after_loras = lora_start + modules.config.default_max_lora_number * 3
+
+                    resolution = parse_literal(config_data.get('resolution'), tuple, None)
+                    if resolution is None:
+                        resolution = parse_literal(config_data.get('resolution'), list, None)
+                    if isinstance(resolution, (tuple, list)) and len(resolution) >= 2:
+                        width, height = int(resolution[0]), int(resolution[1])
+                        formatted = modules.config.add_ratio(f'{width}*{height}')
+                        if formatted in modules.config.available_aspect_ratios_labels:
+                            args[10] = formatted
+                            args[after_loras + 28] = -1
+                            args[after_loras + 29] = -1
+                        else:
+                            args[after_loras + 28] = width
+                            args[after_loras + 29] = height
+
+                    performance_lora = flags.Performance.QUALITY.lora_filename()
+                    for index in range(modules.config.default_max_lora_number):
+                        value = config_data.get(f'lora_combined_{index + 1}')
+                        if not isinstance(value, str):
+                            continue
+                        parts = value.split(' : ')
+                        try:
+                            enabled, name, weight = True, parts[0], parts[1]
+                            if len(parts) == 3:
+                                enabled, name, weight = parts[0] == 'True', parts[1], parts[2]
+                            if name == performance_lora:
+                                continue
+                            base = lora_start + index * 3
+                            args[base] = enabled
+                            args[base + 1] = name
+                            args[base + 2] = float(weight)
+                        except Exception:
+                            pass
+
+                    set_if_present(after_loras + 23, 'sampler', str)
+                    set_if_present(after_loras + 24, 'scheduler', str)
+                    set_if_present(after_loras + 25, 'vae', str)
+                    args[after_loras + 26] = 60
+                    set_if_present(after_loras + 27, 'overwrite_switch', float)
+
+                    adm = parse_literal(config_data.get('adm_guidance'), tuple, None)
+                    if adm is None:
+                        adm = parse_literal(config_data.get('adm_guidance'), list, None)
+                    if isinstance(adm, (tuple, list)) and len(adm) >= 3:
+                        args[after_loras + 18] = float(adm[0])
+                        args[after_loras + 19] = float(adm[1])
+                        args[after_loras + 20] = float(adm[2])
+
+                    set_if_present(after_loras + 21, 'adaptive_cfg', float)
+                    set_if_present(after_loras + 22, 'clip_skip', int)
+                    set_if_present(after_loras + 38, 'refiner_swap_method', str)
+                    set_if_present(after_loras + 47, 'inpaint_engine_version', str)
+
+                    freeu = parse_literal(config_data.get('freeu'), tuple, None)
+                    if freeu is None:
+                        freeu = parse_literal(config_data.get('freeu'), list, None)
+                    if isinstance(freeu, (tuple, list)) and len(freeu) >= 4:
+                        args[after_loras + 40] = True
+                        args[after_loras + 41] = float(freeu[0])
+                        args[after_loras + 42] = float(freeu[1])
+                        args[after_loras + 43] = float(freeu[2])
+                        args[after_loras + 44] = float(freeu[3])
+
+                    return args
+
+                def enqueue_selected_generation_quality_config(selected_index, session_history, *generation_args):
+                    config_data, image_path, status = get_selected_generation_quality_config(selected_index, session_history)
+                    if len(config_data) == 0:
+                        return worker.AsyncTask(args=[]), False, gr.update(), gr.update(), gr.update(), gr.update(), gr.update(value=make_queue_panel_html()), False, status
+
+                    task_args = apply_config_to_generation_args(config_data, generation_args)
+                    task = worker.AsyncTask(args=task_args[1:])
+                    pending_count = worker.append_async_task(task)
+                    should_monitor = worker.begin_queue_monitor()
+                    print(f'[Queue] Added quality regeneration task. Pending tasks: {pending_count}')
+                    return task, should_monitor, \
+                        gr.update(visible=True, interactive=True), \
+                        gr.update(visible=False, interactive=False), \
+                        gr.update(visible=True, interactive=True), \
+                        gr.update(), \
+                        gr.update(value=make_queue_panel_html()), \
+                        True, \
+                        status
 
                 def remove_generation_from_history(selected_index, session_history):
                     session_history = list(session_history or [])
@@ -1902,7 +2093,7 @@ with shared.gradio_root:
                 delete_prompt_config_button.click(delete_prompt_config, inputs=prompt_config_selection,
                                                   outputs=[prompt_config_selection, prompt_config_status],
                                                   queue=False, show_progress=False)
-                load_prompt_config_button.click(load_prompt_config, inputs=[prompt_config_selection, state_is_generating, inpaint_mode],
+                load_prompt_config_button.click(load_prompt_config, inputs=[prompt_config_selection, prompt_config_load_mode, prompt, state_is_generating, inpaint_mode],
                                                 outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status],
                                                 queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
@@ -2051,22 +2242,10 @@ with shared.gradio_root:
                           enhance_uov_prompt_type]
                 ctrls += enhance_ctrls
 
-                regenerate_selected_quality_button.click(apply_selected_generation_quality_config,
-                                                         inputs=[selected_generation_quality_index, state_session_gallery,
-                                                                 state_is_generating, inpaint_mode],
-                                                         outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [selected_image_status],
-                                                         queue=False, show_progress=False) \
-                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}') \
-                    .then(fn=lambda: set_quick_preview_mode(False), outputs=quick_preview_mode,
-                          queue=False, show_progress=False) \
-                    .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed,
-                          queue=False, show_progress=False) \
-                    .then(fn=enqueue_generate_task, inputs=ctrls,
+                regenerate_selected_quality_button.click(enqueue_selected_generation_quality_config,
+                                                         inputs=[selected_generation_quality_index, state_session_gallery] + ctrls,
                           outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
-                                   gallery, queue_status_html, state_is_generating],
+                                   gallery, queue_status_html, state_is_generating, selected_image_status],
                           queue=False, show_progress=False) \
                     .then(fn=monitor_generate_queue, inputs=[state_queue_monitor, state_session_gallery],
                           outputs=[progress_html, progress_window, progress_gallery, gallery,

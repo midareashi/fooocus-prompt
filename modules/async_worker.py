@@ -22,6 +22,7 @@ class AsyncTask:
         self.results = []
         self.last_stop = False
         self.processing = False
+        self.completed = False
 
         self.performance_loras = []
 
@@ -140,9 +141,9 @@ class AsyncTask:
         self.vae_name = args.pop()
         self.overwrite_step = args.pop()
         if self.quick_preview:
-            self.overwrite_step = 1
-            self.steps = 1
-            self.original_steps = 1
+            self.overwrite_step = 10
+            self.steps = 10
+            self.original_steps = 10
         self.overwrite_switch = args.pop()
         self.overwrite_width = args.pop()
         self.overwrite_height = args.pop()
@@ -308,7 +309,9 @@ def get_queue_snapshot():
     with async_tasks_lock:
         pending = [get_task_summary(task) for task in async_tasks]
     return {
-        'active': get_task_summary(current_task) if current_task is not None else None,
+        'active': get_task_summary(current_task)
+        if current_task is not None and not getattr(current_task, 'completed', False)
+        else None,
         'pending': pending
     }
 
@@ -1873,10 +1876,12 @@ def worker():
                 handler(task)
                 if task.generate_image_grid:
                     build_image_wall(task)
+                task.completed = True
                 task.yields.append(['finish', task.results])
                 pipeline.prepare_text_encoder(async_call=True)
             except:
                 traceback.print_exc()
+                task.completed = True
                 task.yields.append(['finish', task.results])
             finally:
                 if pid in modules.patch.patch_settings:

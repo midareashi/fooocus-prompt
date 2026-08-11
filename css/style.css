@@ -106,6 +106,41 @@ div:has(> #positive_prompt) {
   min-width: min(1px, 100%) !important;
 }
 
+#fooocus_top_bar {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+#restart_instance_button {
+  max-width: 120px;
+  min-width: 88px !important;
+}
+
+#restart_instance_button,
+#restart_instance_button button,
+.fooocus_restart_button,
+.fooocus_restart_button button {
+  border: 1px solid rgba(251, 146, 60, 0.75) !important;
+  background: #c2410c !important;
+  color: #fff7ed !important;
+  font-weight: 700 !important;
+}
+
+#restart_instance_button:hover,
+#restart_instance_button button:hover,
+.fooocus_restart_button:hover,
+.fooocus_restart_button button:hover {
+  background: #ea580c !important;
+}
+
+#restart_instance_status {
+  min-width: 150px;
+  color: rgba(251, 191, 36, 0.95);
+  font-size: 13px;
+}
+
 #generation_image_panel {
   align-items: stretch;
 }
@@ -207,7 +242,8 @@ div:has(> #positive_prompt) {
   font-size: 13px;
 }
 
-.queue-remove-button {
+.queue-remove-button,
+.queue-stop-button {
   width: 100%;
   min-height: 28px;
   border: 1px solid rgba(248, 113, 113, 0.55);
@@ -217,7 +253,12 @@ div:has(> #positive_prompt) {
   cursor: pointer;
 }
 
-.queue-remove-button:hover {
+.queue-stop-button {
+  padding: 4px 8px;
+}
+
+.queue-remove-button:hover,
+.queue-stop-button:hover {
   background: rgba(185, 28, 28, 0.72);
 }
 
@@ -603,34 +644,44 @@ div:has(> #positive_prompt) {
 }
 
 .contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label,
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label,
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] label {
+.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label {
   /* max-width: calc(35% - 15px) !important; */ /* add this to enable 3 columns layout */
   flex: calc(50% - 5px) !important;
 }
 
 .contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label span,
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label span,
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] label span {
+.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label span {
   /* white-space:nowrap; */ /* add this to disable text wrapping (better choice for 3 columns layout) */
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_selections {
+.wildprompt_selections_tab .wildprompt_selections {
   min-height: 180px;
 }
 
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] {
+.wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] {
   overflow: auto;
   max-height: 260px;
   padding-right: 2px;
 }
 
-.contain .tabs .tabitem.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] {
+.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] {
   overflow: auto;
   max-height: 260px;
   padding-right: 2px;
+}
+
+.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] label {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+  align-items: flex-start;
+}
+
+.wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] label span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* styles preview tooltip */
