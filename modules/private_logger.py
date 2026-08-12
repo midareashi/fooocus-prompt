@@ -181,6 +181,8 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
     item += f"<td><a href=\"{only_name}\" target=\"_blank\"><img src='{only_name}' onerror=\"this.closest('.image-container').style.display='none';\" loading='lazy'/></a><div>{only_name}</div></td>"
     item += "<td><table class='metadata'>"
     for label, key, value in metadata:
+        if key == 'wildprompt_line_selections':
+            continue
         value_txt = str(value).replace('\n', ' </br> ')
         item += f"<tr><td class='label'>{label}</td><td class='value'>{value_txt}</td></tr>\n"
 

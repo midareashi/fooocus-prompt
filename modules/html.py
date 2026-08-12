@@ -1,10 +1,12 @@
 progress_html = '''
 <div class="loader-container">
   <div class="loader"></div>
-  <div class="progress-container">
-    <progress value="*number*" max="100"></progress>
+  <div class="progress-content">
+    <span>*text*</span>
+    <div class="progress-container">
+      <progress value="*number*" max="100"></progress>
+    </div>
   </div>
-  <span>*text*</span>
 </div>
 '''
 

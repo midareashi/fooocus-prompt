@@ -102,7 +102,7 @@ def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=Non
     return ', '.join(prompts)
 
 
-def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None):
+def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None, use_line_selections=True):
     prompts = []
     wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
 
@@ -110,7 +110,7 @@ def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None):
         return prompts
 
     try:
-        selected_lines = wildprompt_line_selections.get(wildprompt_selections[0], None)
+        selected_lines = wildprompt_line_selections.get(wildprompt_selections[0], None) if use_line_selections else None
         if isinstance(selected_lines, list) and len(selected_lines) == 0:
             return prompts
         prompts.extend(selected_lines if isinstance(selected_lines, list) else _load_wildprompt_lines(wildprompt_selections[0]))
