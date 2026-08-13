@@ -677,7 +677,6 @@ with shared.gradio_root:
                             gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
                                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                                  elem_id='final_gallery')
-                            history_link = gr.HTML(elem_id='history_link')
                             selected_image_status = gr.HTML()
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
@@ -1401,6 +1400,10 @@ with shared.gradio_root:
                                                      value=modules.config.default_prompt_negative)
                         seed_random = gr.Checkbox(label='Random', value=True)
                         image_seed = gr.Textbox(label='Seed', value=0, max_lines=1, visible=False) # workaround for https://github.com/gradio-app/gradio/issues/5354
+                        training_mode = gr.Checkbox(label='Training Mode',
+                                                    value=modules.config.default_training_mode,
+                                                    info='Creates a LoRA training .txt caption file next to each generated image.')
+                        history_link = gr.HTML(elem_id='history_link')
         
                         def random_checked(r):
                             return gr.update(visible=not r)
@@ -1655,10 +1658,6 @@ with shared.gradio_root:
                                     save_final_enhanced_image_only = gr.Checkbox(label='Save only final enhanced image',
                                                                                  value=modules.config.default_save_only_final_enhanced_image)
 
-                                training_mode = gr.Checkbox(label='Training Mode',
-                                                            value=modules.config.default_training_mode,
-                                                            info='Creates a LoRA training .txt caption file next to each generated image.')
-        
                                 if not args_manager.args.disable_metadata:
                                     save_metadata_to_images = gr.Checkbox(label='Save Metadata to Images', value=modules.config.default_save_metadata_to_images,
                                                                           info='Adds parameters to generated images allowing manual regeneration.')

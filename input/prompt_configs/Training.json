@@ -22,9 +22,16 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-13 10:24:57",
+  "person_likeness_enabled": false,
+  "person_likeness_class": "person",
+  "person_likeness_strength": 1,
+  "person_likeness_face_weight": 0,
+  "person_likeness_face_start": 0.55,
+  "person_likeness_paths": "[]",
+  "saved_at": "2026-08-13 13:07:35",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)",
   "lora_combined_1": "True : Trained\\girl_named_qq.safetensors : 1",
+  "lora_combined_2": "True : StS_age_slider_v1_initial_release.safetensors : -1",
   "lora_prompt_1": "girl_named_qq, (10 years old:1.2), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks"
 }
