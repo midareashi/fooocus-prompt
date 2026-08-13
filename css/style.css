@@ -3,7 +3,24 @@
 .loader-container {
   display: flex; /* Use flex to align items horizontally */
   align-items: center; /* Center items vertically within the container */
-  white-space: nowrap; /* Prevent line breaks within the container */
+  gap: 12px;
+  width: 100%;
+}
+
+.progress-content {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-content > span {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .loader {
@@ -32,8 +49,6 @@ progress {
 
 /* Style the progress bar container */
 .progress-container {
-  margin-left: 20px;
-  margin-right: 20px;
   flex-grow: 1; /* Allow the progress container to take up remaining space */
 }
 
@@ -57,22 +72,12 @@ progress::after {
   font-size: 14px; /* Set font size */
 }
 
-/* Style other texts */
-.loader-container > span {
-  margin-left: 5px; /* Add spacing between the progress bar and the text */
-}
-
 .progress-bar > .generating {
   display: none !important;
 }
 
 .progress-bar{
-  height: 30px !important;
-}
-
-.progress-bar span {
-    text-align: right;
-    width: 215px;
+  min-height: 56px !important;
 }
 div:has(> #positive_prompt) {
     border: none;
@@ -117,6 +122,19 @@ div:has(> #positive_prompt) {
 
 .generation_apply_hidden_control {
     display: none !important;
+}
+
+#history_link {
+  font-size: 13px;
+  line-height: 1.2;
+  margin: 6px 0 0;
+}
+
+#history_link .prose,
+#history_link p {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 #generation_history_panel .form:has(.generation_apply_hidden_control) {

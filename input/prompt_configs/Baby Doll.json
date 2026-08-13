@@ -1,7 +1,10 @@
 {
-  "prompt": "1girl, white stockings, (5 years old, young, loli, child:1.4), sheer babydoll lingerie, sitting on her bed, wearing sheer white lace stockings on her legs, looking into the camera with big eyes, full body shot, M legs, open legs, white lace thong, stocking feet, legs in the air, Spr3ad_influ3ncer_p0se\n\nchild bedroom, pink wallpaper, window curtains, stuffed animals, medium shot, posters on the walls, child drawings up on the wall",
-  "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label, closeup, portrait, frame",
-  "styles": "['Fooocus V2', 'Fooocus Negative']",
+  "prompt": "1girl, white stockings, sheer babydoll lingerie, wearing sheer white lace stockings, white lace thong,",
+  "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
+  "styles": "['Fooocus V2', 'Fooocus Photograph', 'Fooocus Negative']",
+  "wildprompts": "[]",
+  "wildprompt_generate_all": false,
+  "wildprompt_line_selections": "{}",
   "performance": "Speed",
   "steps": -1,
   "overwrite_switch": -1,
@@ -19,10 +22,7 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-10 13:33:29",
+  "saved_at": "2026-08-12 10:41:34",
   "version": "Fooocus v2.5.5",
-  "resolution": "(1152, 896)",
-  "lora_combined_1": "True : StS_age_slider_v1_initial_release.safetensors : -1",
-  "lora_combined_2": "True : M Legs.safetensors : 1",
-  "lora_prompt_1": "MinigirlPenisQuiron, minigirl"
+  "resolution": "(896, 1152)"
 }

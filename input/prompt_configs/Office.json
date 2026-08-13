@@ -1,8 +1,11 @@
 {
-  "prompt": "girl_named_qq, (10 years old:1.4), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks,\n\nblack pantyhose, tight black skirt, gold necklace, gold earrings, white dress shirt, high heel shoes, office girl, sitting on a wood desk, legs crossed, focus on legs, holding a folder, desk, city skyline out the window",
+  "prompt": "black pantyhose, tight black skirt, gold necklace, gold earrings, white dress shirt, high heel shoes, office girl, sitting on a wood desk, legs crossed, focus on legs, holding a folder, desk, city skyline out the window",
   "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
   "styles": "['Fooocus V2', 'Fooocus Photograph', 'Fooocus Negative']",
-  "performance": "Quality",
+  "wildprompts": "[]",
+  "wildprompt_generate_all": false,
+  "wildprompt_line_selections": "{}",
+  "performance": "Speed",
   "steps": -1,
   "overwrite_switch": -1,
   "guidance_scale": 3,
@@ -11,7 +14,7 @@
   "refiner_swap_method": "joint",
   "adaptive_cfg": 7,
   "clip_skip": 2,
-  "base_model": "XL\\Photo\\cyberrealisticXL_v70.safetensors",
+  "base_model": "cyberrealisticXL_v100.safetensors",
   "refiner_model": "None",
   "refiner_switch": 0.5,
   "sampler": "dpmpp_2m_sde_gpu",
@@ -19,8 +22,7 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-08 15:37:56",
+  "saved_at": "2026-08-12 10:15:21",
   "version": "Fooocus v2.5.5",
-  "resolution": "(896, 1152)",
-  "lora_combined_1": "True : Trained\\girl_named_qq_v2_sdxl_lora-000002.safetensors : 1"
+  "resolution": "(896, 1152)"
 }

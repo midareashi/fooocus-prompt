@@ -6,6 +6,7 @@ import html as html_lib
 import ast
 import time
 import re
+import threading
 import shared
 import modules.config
 import fooocus_version
@@ -354,6 +355,8 @@ def make_queue_panel_html():
             badges.append('<span class="queue-badge">Preview</span>')
         prompt = html_lib.escape(task.get('prompt', '(empty prompt)'))
         performance = html_lib.escape(str(task.get('performance') or ''))
+        steps = int(task.get("steps", 0) or 0)
+        total_steps = int(task.get("total_steps", 0) or 0)
         badge_html = ''.join(badges)
         action = '<button type="button" class="queue-stop-button">Stop Queue</button>' if status == 'active' else \
             f'<button type="button" class="queue-remove-button" data-queue-id="{int(task.get("id", 0))}">Remove</button>'
@@ -361,7 +364,7 @@ def make_queue_panel_html():
             f'<div class="queue-row queue-row-{status}">'
             f'<div><strong>{status.title()}</strong><span>{prompt}</span>{badge_html}</div>'
             f'<div>{int(task.get("images", 0) or 0)}</div>'
-            f'<div>{int(task.get("steps", 0) or 0)}<small>{performance}</small></div>'
+            f'<div>{total_steps}<small>{steps} per image</small><small>{performance}</small></div>'
             f'<div>{action}</div>'
             f'</div>'
         )
@@ -440,6 +443,7 @@ def monitor_generate_queue(should_monitor, session_history):
 
     try:
         while True:
+            worker.heartbeat_queue_monitor()
             active_task = worker.get_current_task()
             if active_task is not None and observed_task is not active_task:
                 observed_task = active_task
@@ -665,6 +669,7 @@ with shared.gradio_root:
                             gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
                                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                                  elem_id='final_gallery')
+                            history_link = gr.HTML(elem_id='history_link')
                             selected_image_status = gr.HTML()
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
@@ -837,6 +842,12 @@ with shared.gradio_root:
                             outputs=wildprompt_line_section_outputs,
                             queue=False,
                             show_progress=False
+                        ).then(
+                            wildprompt_sorter.encode_wildprompt_line_selections,
+                            inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                            outputs=wildprompt_line_selection_json,
+                            queue=False,
+                            show_progress=False
                         )
 
                         for wildprompt_line_selection in wildprompt_line_selection_ctrls:
@@ -856,6 +867,11 @@ with shared.gradio_root:
                             wildprompt_sorter.update_wildprompt_line_sections,
                             inputs=[wildprompt_selections, wildprompt_line_selection_json],
                             outputs=wildprompt_line_section_outputs,
+                            queue=False,
+                            show_progress=False).then(
+                            wildprompt_sorter.encode_wildprompt_line_selections,
+                            inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                            outputs=wildprompt_line_selection_json,
                             queue=False,
                             show_progress=False).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
@@ -1398,10 +1414,9 @@ with shared.gradio_root:
                         def update_history_link():
                             if args_manager.args.disable_image_log:
                                 return gr.update(value='')
-        
+
                             return gr.update(value=f'<a href="file={get_current_html_path(output_format)}" target="_blank">\U0001F4DA History Log</a>')
-        
-                        history_link = gr.HTML()
+
                         shared.gradio_root.load(update_history_link, outputs=history_link, queue=False, show_progress=False)
         
                     with gr.Tab(label='Styles', elem_classes=['style_selections_tab']):
@@ -1743,7 +1758,7 @@ with shared.gradio_root:
                             refresh_files_output += [preset_selection]
                         refresh_files.click(refresh_files_clicked, [], refresh_files_output + lora_ctrls,
                                             queue=False, show_progress=False)
-        
+
                 state_is_generating = gr.State(False)
                 state_queue_monitor = gr.State(False)
         
@@ -2023,14 +2038,14 @@ with shared.gradio_root:
                     except Exception:
                         return gr.update(value=session_history), session_history, gr.update(value=None), 'Select a history image to remove.'
 
-                    removed_path = session_history.pop(selected_index)
+                    session_history.pop(selected_index)
                     preview_indices = [
                         index for index, path in enumerate(session_history)
                         if isinstance(path, str) and bool(worker.get_generated_image_config(path).get('quick_preview', False))
                     ]
                     return gr.update(value=session_history), session_history, gr.update(value=None), \
                         gr.update(value=json.dumps(preview_indices)), \
-                        f'Removed {os.path.basename(str(removed_path))} from session history.'
+                        ''
 
                 def delete_generation_from_history(selected_index, session_history):
                     session_history = list(session_history or [])
@@ -2038,12 +2053,21 @@ with shared.gradio_root:
                     if image_path is None:
                         return gr.update(value=session_history), session_history, gr.update(value=None), 'Select a history image to delete.'
 
-                    status = f'Deleted {os.path.basename(image_path)} and removed it from session history.'
+                    def delete_after_gradio_postprocess(path):
+                        time.sleep(1.0)
+                        if os.path.exists(path) and os.path.isfile(path):
+                            try:
+                                os.remove(path)
+                            except Exception as e:
+                                print(f'[History] Could not delete {os.path.basename(path)}: {e}')
+
+                    status = ''
                     if os.path.exists(image_path) and os.path.isfile(image_path):
-                        try:
-                            os.remove(image_path)
-                        except Exception as e:
-                            status = f'Could not delete {os.path.basename(image_path)}: {e}'
+                        threading.Thread(
+                            target=delete_after_gradio_postprocess,
+                            args=(image_path,),
+                            daemon=True
+                        ).start()
                     else:
                         status = f'Image file was already missing: {os.path.basename(image_path)}'
 
@@ -2229,6 +2253,16 @@ with shared.gradio_root:
                           enhance_uov_prompt_type]
                 ctrls += enhance_ctrls
 
+                wildprompt_line_selection_inputs = [wildprompt_selections] + wildprompt_line_selection_ctrls
+                wildprompt_line_selection_arg_index = ctrls.index(wildprompt_line_selection_json)
+
+                def enqueue_generate_task_with_current_wildprompt_lines(*args):
+                    row_input_count = len(wildprompt_line_selection_inputs)
+                    line_selection_json = wildprompt_sorter.encode_wildprompt_line_selections(*args[:row_input_count])
+                    generation_args = list(args[row_input_count:])
+                    generation_args[wildprompt_line_selection_arg_index] = line_selection_json
+                    return enqueue_generate_task(*generation_args)
+
                 regenerate_selected_quality_button.click(enqueue_selected_generation_quality_config,
                                                          inputs=[selected_generation_quality_index, state_session_gallery] + ctrls,
                           outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
@@ -2287,8 +2321,13 @@ with shared.gradio_root:
                 generate_button.click(fn=lambda: set_quick_preview_mode(False), outputs=quick_preview_mode,
                                       queue=False, show_progress=False) \
                     .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed,
-                                      queue=False, show_progress=False) \
-                    .then(fn=enqueue_generate_task, inputs=ctrls,
+                          queue=False, show_progress=False) \
+                    .then(fn=wildprompt_sorter.encode_wildprompt_line_selections,
+                          inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                          outputs=wildprompt_line_selection_json,
+                          queue=False, show_progress=False) \
+                    .then(fn=enqueue_generate_task_with_current_wildprompt_lines,
+                          inputs=wildprompt_line_selection_inputs + ctrls,
                           outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
                                    gallery, queue_status_html, state_is_generating],
                           queue=False, show_progress=False) \
@@ -2308,7 +2347,12 @@ with shared.gradio_root:
                                            queue=False, show_progress=False) \
                     .then(fn=refresh_seed, inputs=[seed_random, image_seed], outputs=image_seed,
                           queue=False, show_progress=False) \
-                    .then(fn=enqueue_generate_task, inputs=ctrls,
+                    .then(fn=wildprompt_sorter.encode_wildprompt_line_selections,
+                          inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                          outputs=wildprompt_line_selection_json,
+                          queue=False, show_progress=False) \
+                    .then(fn=enqueue_generate_task_with_current_wildprompt_lines,
+                          inputs=wildprompt_line_selection_inputs + ctrls,
                           outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
                                    gallery, queue_status_html, state_is_generating],
                           queue=False, show_progress=False) \

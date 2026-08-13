@@ -1,4 +1,5 @@
 import threading
+import time
 
 from extras.inpaint_mask import generate_mask_from_image, SAMOptions
 from modules.patch import PatchSettings, patch_settings, patch_all
@@ -238,6 +239,8 @@ async_tasks_lock = threading.Lock()
 current_task = None
 queue_monitor_lock = threading.Lock()
 queue_monitor_running = False
+queue_monitor_last_heartbeat = 0.0
+QUEUE_MONITOR_STALE_SECONDS = 3.0
 next_async_task_id = 1
 generated_image_configs = {}
 generated_image_configs_lock = threading.Lock()
@@ -294,11 +297,14 @@ def get_task_summary(task):
     if len(prompt) > 96:
         prompt = prompt[:93] + '...'
 
+    steps = int(getattr(task, 'steps', 0) or 0)
+
     return {
         'id': getattr(task, 'queue_id', 0),
         'prompt': prompt or '(empty prompt)',
         'images': total_images,
-        'steps': int(getattr(task, 'steps', 0) or 0),
+        'steps': steps,
+        'total_steps': total_images * steps,
         'performance': getattr(getattr(task, 'performance_selection', None), 'value', ''),
         'quick_preview': bool(getattr(task, 'quick_preview', False)),
         'processing': bool(getattr(task, 'processing', False)),
@@ -338,20 +344,31 @@ def clear_pending_tasks():
 
 
 def begin_queue_monitor():
-    global queue_monitor_running
+    global queue_monitor_running, queue_monitor_last_heartbeat
 
     with queue_monitor_lock:
-        if queue_monitor_running:
+        now = time.time()
+        if queue_monitor_running and now - queue_monitor_last_heartbeat < QUEUE_MONITOR_STALE_SECONDS:
             return False
         queue_monitor_running = True
+        queue_monitor_last_heartbeat = now
         return True
 
 
+def heartbeat_queue_monitor():
+    global queue_monitor_last_heartbeat
+
+    with queue_monitor_lock:
+        if queue_monitor_running:
+            queue_monitor_last_heartbeat = time.time()
+
+
 def end_queue_monitor():
-    global queue_monitor_running
+    global queue_monitor_running, queue_monitor_last_heartbeat
 
     with queue_monitor_lock:
         queue_monitor_running = False
+        queue_monitor_last_heartbeat = 0.0
 
 
 def register_generated_image_config(path, config_data):
@@ -994,6 +1011,7 @@ def worker():
         if async_task.wildprompt_generate_all and len(async_task.wildprompt_selections) == 1:
             all_wildprompts = get_all_wildprompts(async_task.wildprompt_selections,
                                                   async_task.wildprompt_line_selections)
+            print(f'[Wildprompts] Generate All expanded {async_task.wildprompt_selections[0]} to {len(all_wildprompts)} prompt(s).')
 
         total_prompts = len(all_wildprompts) * image_number if len(all_wildprompts) > 0 else image_number
         for i in range(total_prompts):
@@ -1594,7 +1612,8 @@ def worker():
                          async_task.disable_intermediate_results)
 
         checkpoint_count = max(1, len(selected_base_model_names))
-        all_steps = steps * async_task.image_number * checkpoint_count
+        tasks_per_checkpoint = max(1, len(tasks) if not skip_prompt_processing else async_task.image_number)
+        all_steps = steps * tasks_per_checkpoint * checkpoint_count
 
         if async_task.enhance_checkbox and async_task.enhance_uov_method != flags.disabled.casefold():
             enhance_upscale_steps = async_task.performance_selection.steps()
@@ -1604,12 +1623,12 @@ def worker():
                 else:
                     enhance_upscale_steps = async_task.performance_selection.steps_uov()
             enhance_upscale_steps, _, _, _ = apply_overrides(async_task, enhance_upscale_steps, height, width)
-            enhance_upscale_steps_total = async_task.image_number * checkpoint_count * enhance_upscale_steps
+            enhance_upscale_steps_total = tasks_per_checkpoint * checkpoint_count * enhance_upscale_steps
             all_steps += enhance_upscale_steps_total
 
         if async_task.enhance_checkbox and len(async_task.enhance_ctrls) != 0:
             enhance_steps, _, _, _ = apply_overrides(async_task, async_task.original_steps, height, width)
-            all_steps += async_task.image_number * checkpoint_count * len(async_task.enhance_ctrls) * enhance_steps
+            all_steps += tasks_per_checkpoint * checkpoint_count * len(async_task.enhance_ctrls) * enhance_steps
 
         all_steps = max(all_steps, 1)
 
@@ -1633,15 +1652,18 @@ def worker():
         processing_start_time = time.perf_counter()
 
         preparation_steps = current_progress
-        total_count = async_task.image_number * checkpoint_count
+        total_count = tasks_per_checkpoint * checkpoint_count
 
         def callback(step, x0, x, total_steps, y):
             if step == 0:
                 async_task.callback_steps = 0
             async_task.callback_steps += (100 - preparation_steps) / float(all_steps)
+            completed_batch_steps = current_task_id * total_steps + step + 1
+            total_batch_steps = total_count * total_steps
             async_task.yields.append(['preview', (
                 int(current_progress + async_task.callback_steps),
-                f'Sampling step {step + 1}/{total_steps}, image {current_task_id + 1}/{total_count} ...', y)])
+                f'Image {current_task_id + 1}/{total_count} | Step {step + 1}/{total_steps} | Batch step {completed_batch_steps}/{total_batch_steps}',
+                y)])
 
         show_intermediate_results = total_count > 1 or async_task.should_enhance
         persist_image = not async_task.should_enhance or not async_task.save_final_enhanced_image_only
@@ -1674,7 +1696,7 @@ def worker():
                 print(f'Using {checkpoint_scheduler_name} scheduler.')
 
             for task_index, task in enumerate(checkpoint_tasks):
-                current_task_id = checkpoint_index * async_task.image_number + task_index
+                current_task_id = checkpoint_index * tasks_per_checkpoint + task_index
                 progressbar(async_task, current_progress,
                             f'Preparing task {current_task_id + 1}/{total_count} with {checkpoint_model_name} ...')
                 execution_start_time = time.perf_counter()
