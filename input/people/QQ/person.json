@@ -1,0 +1,16 @@
+{
+  "name": "QQ",
+  "enabled": true,
+  "subject": "woman",
+  "identity_strength": 1.0,
+  "face_weight": 0.9,
+  "face_weight_start": 0.3,
+  "image_count": 5,
+  "image_files": [
+    "01.png",
+    "02.png",
+    "03.png",
+    "04.png",
+    "05.png"
+  ]
+}
