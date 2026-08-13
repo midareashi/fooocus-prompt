@@ -465,6 +465,18 @@ def cleanup_prompt(prompt):
     return cleaned_prompt[:-2]
 
 
+def get_wildcard_words(placeholder, refresh=False):
+    if refresh:
+        modules.config.wildcard_filenames = modules.config.get_files_from_folder(modules.config.path_wildcards, ['.txt'])
+
+    matches = [x for x in modules.config.wildcard_filenames if os.path.splitext(os.path.basename(x))[0] == placeholder]
+    if len(matches) == 0:
+        return []
+
+    words = open(os.path.join(modules.config.path_wildcards, matches[0]), encoding='utf-8').read().splitlines()
+    return [x for x in words if x != '']
+
+
 def apply_wildcards(wildcard_text, rng, i, read_wildcards_in_order) -> str:
     for _ in range(modules.config.wildcards_max_bfs_depth):
         placeholders = re.findall(r'__([\w-]+)__', wildcard_text)
@@ -474,9 +486,10 @@ def apply_wildcards(wildcard_text, rng, i, read_wildcards_in_order) -> str:
         print(f'[Wildcards] processing: {wildcard_text}')
         for placeholder in placeholders:
             try:
-                matches = [x for x in modules.config.wildcard_filenames if os.path.splitext(os.path.basename(x))[0] == placeholder]
-                words = open(os.path.join(modules.config.path_wildcards, matches[0]), encoding='utf-8').read().splitlines()
-                words = [x for x in words if x != '']
+                words = get_wildcard_words(placeholder)
+                if len(words) == 0:
+                    print(f'[Wildcards] {placeholder}.txt missing or empty. Refreshing wildcard cache and retrying.')
+                    words = get_wildcard_words(placeholder, refresh=True)
                 assert len(words) > 0
                 if read_wildcards_in_order:
                     wildcard_text = wildcard_text.replace(f'__{placeholder}__', words[i % len(words)], 1)

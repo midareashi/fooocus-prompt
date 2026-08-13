@@ -1,0 +1,11 @@
+*.txt
+!animal.txt
+!artist.txt
+!caster.txt
+!color.txt
+!color_flower.txt
+!extended-color.txt
+!flower.txt
+!melee.txt
+!nationality.txt
+!rpg-race.txt

@@ -35,6 +35,36 @@ def _metadata_list_value(metadata, key):
     return []
 
 
+def _training_caption_from_metadata(metadata):
+    prompt = str(_metadata_value(metadata, 'prompt', '') or '')
+    tags = []
+    seen = set()
+    for line in prompt.splitlines():
+        for tag in line.split(','):
+            tag = tag.strip()
+            if tag == '':
+                continue
+            tag_key = tag.casefold()
+            if tag_key in seen:
+                continue
+            tags.append(tag)
+            seen.add(tag_key)
+    return ', '.join(tags)
+
+
+def write_training_caption(image_path, metadata):
+    caption = _training_caption_from_metadata(metadata)
+    caption_path = os.path.splitext(image_path)[0] + '.txt'
+    try:
+        with open(caption_path, 'w', encoding='utf-8') as f:
+            f.write(caption)
+            if caption != '':
+                f.write('\n')
+        print(f'Training caption saved at: {caption_path}')
+    except Exception as e:
+        print(f'Failed to save training caption at {caption_path}. Reason: {e}')
+
+
 def get_current_html_path(output_format=None):
     output_format = output_format if output_format else modules.config.default_output_format
     date_string, local_temp_filename, only_name = generate_temp_filename(folder=modules.config.path_outputs,
