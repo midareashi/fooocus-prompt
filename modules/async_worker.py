@@ -171,6 +171,7 @@ class AsyncTask:
         self.inpaint_advanced_masking_checkbox = args.pop()
         self.invert_mask_checkbox = args.pop()
         self.inpaint_erode_or_dilate = args.pop()
+        self.training_mode = args.pop()
         self.save_final_enhanced_image_only = args.pop() if not args_manager.args.disable_image_log else False
         self.save_metadata_to_images = args.pop() if not args_manager.args.disable_metadata else False
         self.metadata_scheme = MetadataScheme(
@@ -384,6 +385,13 @@ def get_generated_image_config(path):
         return generated_image_configs.get(path, {}).copy()
 
 
+def is_person_likeness_active(async_task):
+    return bool(
+        getattr(async_task, 'person_likeness_enabled', False) and
+        len(getattr(async_task, 'person_likeness_images', []) or []) > 0
+    )
+
+
 class EarlyReturnException(BaseException):
     pass
 
@@ -419,7 +427,7 @@ def worker():
     from extras.censor import default_censor
     from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
                                      random_style_name, apply_wildprompts, get_all_wildprompts)
-    from modules.private_logger import log
+    from modules.private_logger import log, write_training_caption
     from extras.expansion import safe_str
     from modules.util import (remove_empty_str, HWC3, resize_image, get_image_shape_ceil, set_image_shape_ceil,
                                get_shape_ceil, resample_image, erode_or_dilate, parse_lora_references_from_prompt,
@@ -608,6 +616,16 @@ def worker():
                 d.append(('FreeU', 'freeu',
                           str((async_task.freeu_b1, async_task.freeu_b2, async_task.freeu_s1, async_task.freeu_s2))))
 
+            if is_person_likeness_active(async_task):
+                d.append(('Person Likeness', 'person_likeness_enabled', async_task.person_likeness_enabled))
+                d.append(('Person Likeness Subject', 'person_likeness_class', async_task.person_likeness_class))
+                d.append(('Person Likeness Identity Strength', 'person_likeness_strength',
+                          async_task.person_likeness_strength))
+                d.append(('Person Likeness Face Weight', 'person_likeness_face_weight',
+                          async_task.person_likeness_face_weight))
+                d.append(('Person Likeness Face Weight Start At', 'person_likeness_face_start',
+                          async_task.person_likeness_face_start))
+
             for li, (n, w) in enumerate(loras):
                 if n != 'None':
                     d.append((f'LoRA {li + 1}', f'lora_combined_{li + 1}', f'{n} : {w}'))
@@ -621,8 +639,11 @@ def worker():
                                          loras, async_task.vae_name)
             d.append(('Metadata Scheme', 'metadata_scheme',
                       async_task.metadata_scheme.value if async_task.save_metadata_to_images else async_task.save_metadata_to_images))
+            d.append(('Training Mode', 'training_mode', async_task.training_mode))
             d.append(('Version', 'version', 'Fooocus v' + fooocus_version.version))
             image_path = log(x, d, metadata_parser, async_task.output_format, task, persist_image)
+            if async_task.training_mode:
+                write_training_caption(image_path, d)
             register_generated_image_config(image_path, {key: value for _, key, value in d})
             img_paths.append(image_path)
 
@@ -684,8 +705,7 @@ def worker():
             if async_task.debugging_cn_preprocessor:
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
         person_face_tasks = []
-        if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
-                isinstance(ip_adapter_face_path, str):
+        if is_person_likeness_active(async_task) and isinstance(ip_adapter_face_path, str):
             face_weight = max(
                 0.0,
                 min(
@@ -994,8 +1014,7 @@ def worker():
                                     use_synthetic_refiner=use_synthetic_refiner, vae_name=async_task.vae_name)
         pipeline.set_clip_skip(async_task.clip_skip)
         person_likeness_pixels = None
-        if async_task.input_image_checkbox and async_task.current_tab == 'person' and \
-                async_task.person_likeness_enabled and len(async_task.person_likeness_images) > 0:
+        if is_person_likeness_active(async_task):
             progressbar(async_task, current_progress, 'Downloading PhotoMaker model ...')
             photomaker_path = modules.config.downloading_photomaker()
             progressbar(async_task, current_progress, 'Loading PhotoMaker model ...')
@@ -1284,9 +1303,7 @@ def worker():
                         async_task.prompt = async_task.inpaint_additional_prompt + '\n' + async_task.prompt
                 goals.append('inpaint')
         if async_task.current_tab == 'ip' or \
-                (async_task.current_tab == 'person' and async_task.person_likeness_enabled and
-                 len(async_task.person_likeness_images) > 0 and
-                 float(async_task.person_likeness_face_weight) > 0) or \
+                (is_person_likeness_active(async_task) and float(async_task.person_likeness_face_weight) > 0) or \
                 async_task.mixing_image_prompt_and_vary_upscale or \
                 async_task.mixing_image_prompt_and_inpaint:
             goals.append('cn')
@@ -1300,9 +1317,7 @@ def worker():
             if len(async_task.cn_tasks[flags.cn_ip_face]) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
-            if async_task.current_tab == 'person' and async_task.person_likeness_enabled and \
-                    len(async_task.person_likeness_images) > 0 and \
-                    float(async_task.person_likeness_face_weight) > 0:
+            if is_person_likeness_active(async_task) and float(async_task.person_likeness_face_weight) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
         if async_task.current_tab == 'enhance' and async_task.enhance_input_image is not None:

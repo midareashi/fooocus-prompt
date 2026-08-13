@@ -22,7 +22,7 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-13 10:01:43",
+  "saved_at": "2026-08-13 10:24:57",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)",
   "lora_combined_1": "True : Trained\\girl_named_qq.safetensors : 1",

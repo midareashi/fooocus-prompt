@@ -256,7 +256,9 @@ def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_se
                         guidance_scale, sharpness, adm_scaler_positive, adm_scaler_negative, adm_scaler_end,
                         refiner_swap_method, adaptive_cfg, clip_skip, base_model, refiner_model, refiner_switch,
                         sampler_name, scheduler_name, vae_name, seed_random, image_seed, inpaint_engine,
-                        inpaint_mode, freeu_enabled, freeu_b1, freeu_b2, freeu_s1, freeu_s2, *lora_values):
+                        inpaint_mode, person_likeness_enabled, person_likeness_class, person_likeness_strength,
+                        person_likeness_face_weight, person_likeness_face_start, person_likeness_paths,
+                        freeu_enabled, freeu_b1, freeu_b2, freeu_s1, freeu_s2, *lora_values):
     lora_prompt_values = list(lora_values[-modules.config.default_max_lora_number:])
     lora_values = lora_values[:-modules.config.default_max_lora_number]
     resolution_numbers = re.findall(r'\d+', str(aspect_ratios_selection))
@@ -291,6 +293,12 @@ def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_se
         'vae': vae_name,
         'inpaint_engine_version': inpaint_engine,
         'inpaint_method': inpaint_mode,
+        'person_likeness_enabled': bool(person_likeness_enabled),
+        'person_likeness_class': person_likeness_class,
+        'person_likeness_strength': person_likeness_strength,
+        'person_likeness_face_weight': person_likeness_face_weight,
+        'person_likeness_face_start': person_likeness_face_start,
+        'person_likeness_paths': person_likeness_paths if isinstance(person_likeness_paths, str) else '[]',
         'saved_at': time.strftime('%Y-%m-%d %H:%M:%S'),
         'version': 'Fooocus v' + fooocus_version.version
     }
@@ -884,6 +892,128 @@ with shared.gradio_root:
 
                         wildprompt_refresh.click(handle_wildprompt_refresh_click, [], wildprompt_selections,
                                                  queue=False, show_progress=False)
+
+                    with gr.Accordion(label='Person Likeness', open=False):
+                        person_likeness_ctrls = []
+                        with gr.Row():
+                            saved_person_name = gr.Textbox(label='Name', placeholder='Person name')
+                            saved_person_selection = gr.Dropdown(
+                                label='Saved People',
+                                choices=list_saved_people(),
+                                value=None
+                            )
+                            save_person_button = gr.Button(value='Save Person', variant='secondary')
+                            load_person_button = gr.Button(value='Load Person', variant='secondary')
+                        saved_person_status = gr.HTML()
+                        person_likeness_files = gr.File(
+                            label='Drop Photos',
+                            file_count='multiple',
+                            file_types=['image'],
+                            type='file',
+                            elem_id='person_likeness_upload'
+                        )
+                        person_likeness_paths = gr.Textbox(
+                            value='[]',
+                            visible=False,
+                            elem_id='person_likeness_paths'
+                        )
+                        person_likeness_gallery = gr.Gallery(
+                            label='Selected Photos',
+                            show_label=True,
+                            elem_id='person_likeness_gallery',
+                            columns=6,
+                            object_fit='cover',
+                            height=330,
+                            allow_preview=False,
+                            show_download_button=False
+                        )
+                        person_likeness_refresh_button = gr.Button(
+                            value='Refresh Person Thumbnails',
+                            visible=False,
+                            elem_id='person_likeness_refresh_button'
+                        )
+                        with gr.Row():
+                            person_likeness_enabled = gr.Checkbox(label='Enable Person Likeness', value=True)
+                            person_likeness_class = gr.Radio(
+                                label='Subject',
+                                choices=flags.person_likeness_classes,
+                                value='person',
+                                container=False
+                            )
+                            person_likeness_strength = gr.Slider(
+                                label='Identity Strength',
+                                minimum=0.0,
+                                maximum=modules.config.default_person_likeness_strength_max,
+                                step=0.001,
+                                value=1.0
+                            )
+                            person_likeness_face_weight = gr.Slider(
+                                label='Face Weight',
+                                minimum=0.0,
+                                maximum=modules.config.default_person_likeness_face_weight_max,
+                                step=0.001,
+                                value=modules.config.default_person_likeness_face_weight
+                            )
+                            person_likeness_face_start = gr.Slider(
+                                label='Face Weight Start At',
+                                minimum=0.0,
+                                maximum=1.0,
+                                step=0.001,
+                                value=modules.config.default_person_likeness_face_start
+                            )
+                        person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
+                                                 person_likeness_strength,
+                                                 person_likeness_face_weight,
+                                                 person_likeness_face_start,
+                                                 person_likeness_paths]
+                        save_person_button.click(
+                            save_person_likeness,
+                            inputs=[saved_person_name, person_likeness_enabled, person_likeness_class,
+                                    person_likeness_strength, person_likeness_face_weight,
+                                    person_likeness_face_start, person_likeness_paths],
+                            outputs=[saved_person_selection, saved_person_status, person_likeness_paths,
+                                     person_likeness_gallery],
+                            queue=False,
+                            show_progress=False
+                        )
+                        load_person_button.click(
+                            load_person_likeness,
+                            inputs=[saved_person_selection],
+                            outputs=[person_likeness_enabled, person_likeness_class, person_likeness_strength,
+                                     person_likeness_face_weight, person_likeness_face_start,
+                                     person_likeness_paths, saved_person_status],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            preview_person_likeness_paths,
+                            inputs=person_likeness_paths,
+                            outputs=person_likeness_gallery,
+                            queue=False,
+                            show_progress=False
+                        )
+                        person_likeness_files.change(
+                            append_person_likeness_files,
+                            inputs=[person_likeness_files, person_likeness_paths],
+                            outputs=[person_likeness_paths, person_likeness_gallery, person_likeness_files],
+                            queue=False,
+                            show_progress=False
+                        )
+                        person_likeness_refresh_button.click(
+                            preview_person_likeness_paths,
+                            inputs=person_likeness_paths,
+                            outputs=person_likeness_gallery,
+                            queue=False,
+                            show_progress=False
+                        )
+                        person_likeness_paths.change(
+                            preview_person_likeness_paths,
+                            inputs=person_likeness_paths,
+                            outputs=person_likeness_gallery,
+                            queue=False,
+                            show_progress=False
+                        )
+                        gr.HTML('* Drop clear photos of the same person. Use one trigger phrase like "woman img", "man img", or "person img"; Fooocus will add it when omitted.')
+
                     with gr.Row(visible=modules.config.default_image_prompt_checkbox) as image_input_panel:
                         with gr.Tabs(selected=modules.config.default_selected_image_input_tab_id):
                             with gr.Tab(label='Upscale or Variation', id='uov_tab') as uov_tab:
@@ -893,126 +1023,6 @@ with shared.gradio_root:
                                     with gr.Column():
                                         uov_method = gr.Radio(label='Upscale or Variation:', choices=flags.uov_list, value=modules.config.default_uov_method)
                                         gr.HTML('<a href="https://github.com/lllyasviel/Fooocus/discussions/390" target="_blank">\U0001F4D4 Documentation</a>')
-                            with gr.Tab(label='Person Likeness', id='person_tab') as person_tab:
-                                person_likeness_ctrls = []
-                                with gr.Row():
-                                    saved_person_name = gr.Textbox(label='Name', placeholder='Person name')
-                                    saved_person_selection = gr.Dropdown(
-                                        label='Saved People',
-                                        choices=list_saved_people(),
-                                        value=None
-                                    )
-                                    save_person_button = gr.Button(value='Save Person', variant='secondary')
-                                    load_person_button = gr.Button(value='Load Person', variant='secondary')
-                                saved_person_status = gr.HTML()
-                                person_likeness_files = gr.File(
-                                    label='Drop Photos',
-                                    file_count='multiple',
-                                    file_types=['image'],
-                                    type='file',
-                                    elem_id='person_likeness_upload'
-                                )
-                                person_likeness_paths = gr.Textbox(
-                                    value='[]',
-                                    visible=False,
-                                    elem_id='person_likeness_paths'
-                                )
-                                person_likeness_gallery = gr.Gallery(
-                                    label='Selected Photos',
-                                    show_label=True,
-                                    elem_id='person_likeness_gallery',
-                                    columns=6,
-                                    object_fit='cover',
-                                    height=330,
-                                    allow_preview=False,
-                                    show_download_button=False
-                                )
-                                person_likeness_refresh_button = gr.Button(
-                                    value='Refresh Person Thumbnails',
-                                    visible=False,
-                                    elem_id='person_likeness_refresh_button'
-                                )
-                                with gr.Row():
-                                    person_likeness_enabled = gr.Checkbox(label='Enable Person Likeness', value=True)
-                                    person_likeness_class = gr.Radio(
-                                        label='Subject',
-                                        choices=flags.person_likeness_classes,
-                                        value='person',
-                                        container=False
-                                    )
-                                    person_likeness_strength = gr.Slider(
-                                        label='Identity Strength',
-                                        minimum=0.0,
-                                        maximum=modules.config.default_person_likeness_strength_max,
-                                        step=0.001,
-                                        value=1.0
-                                    )
-                                    person_likeness_face_weight = gr.Slider(
-                                        label='Face Weight',
-                                        minimum=0.0,
-                                        maximum=modules.config.default_person_likeness_face_weight_max,
-                                        step=0.001,
-                                        value=modules.config.default_person_likeness_face_weight
-                                    )
-                                    person_likeness_face_start = gr.Slider(
-                                        label='Face Weight Start At',
-                                        minimum=0.0,
-                                        maximum=1.0,
-                                        step=0.001,
-                                        value=modules.config.default_person_likeness_face_start
-                                    )
-                                person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
-                                                         person_likeness_strength,
-                                                         person_likeness_face_weight,
-                                                         person_likeness_face_start,
-                                                         person_likeness_paths]
-                                save_person_button.click(
-                                    save_person_likeness,
-                                    inputs=[saved_person_name, person_likeness_enabled, person_likeness_class,
-                                            person_likeness_strength, person_likeness_face_weight,
-                                            person_likeness_face_start, person_likeness_paths],
-                                    outputs=[saved_person_selection, saved_person_status, person_likeness_paths,
-                                             person_likeness_gallery],
-                                    queue=False,
-                                    show_progress=False
-                                )
-                                load_person_button.click(
-                                    load_person_likeness,
-                                    inputs=[saved_person_selection],
-                                    outputs=[person_likeness_enabled, person_likeness_class, person_likeness_strength,
-                                             person_likeness_face_weight, person_likeness_face_start,
-                                             person_likeness_paths, saved_person_status],
-                                    queue=False,
-                                    show_progress=False
-                                ).then(
-                                    preview_person_likeness_paths,
-                                    inputs=person_likeness_paths,
-                                    outputs=person_likeness_gallery,
-                                    queue=False,
-                                    show_progress=False
-                                )
-                                person_likeness_files.change(
-                                    append_person_likeness_files,
-                                    inputs=[person_likeness_files, person_likeness_paths],
-                                    outputs=[person_likeness_paths, person_likeness_gallery, person_likeness_files],
-                                    queue=False,
-                                    show_progress=False
-                                )
-                                person_likeness_refresh_button.click(
-                                    preview_person_likeness_paths,
-                                    inputs=person_likeness_paths,
-                                    outputs=person_likeness_gallery,
-                                    queue=False,
-                                    show_progress=False
-                                )
-                                person_likeness_paths.change(
-                                    preview_person_likeness_paths,
-                                    inputs=person_likeness_paths,
-                                    outputs=person_likeness_gallery,
-                                    queue=False,
-                                    show_progress=False
-                                )
-                                gr.HTML('* Drop clear photos of the same person. Use one trigger phrase like "woman img", "man img", or "person img"; Fooocus will add it when omitted.')
                             with gr.Tab(label='Image Prompt', id='ip_tab') as ip_tab:
                                 with gr.Row():
                                     ip_images = []
@@ -1348,7 +1358,6 @@ with shared.gradio_root:
         
                     current_tab = gr.Textbox(value='uov', visible=False)
                     uov_tab.select(lambda: 'uov', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
-                    person_tab.select(lambda: 'person', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
                     inpaint_tab.select(lambda: 'inpaint', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
                     ip_tab.select(lambda: 'ip', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
                     describe_tab.select(lambda: 'desc', outputs=current_tab, queue=False, _js=down_js, show_progress=False)
@@ -1645,6 +1654,10 @@ with shared.gradio_root:
                                 if not args_manager.args.disable_image_log:
                                     save_final_enhanced_image_only = gr.Checkbox(label='Save only final enhanced image',
                                                                                  value=modules.config.default_save_only_final_enhanced_image)
+
+                                training_mode = gr.Checkbox(label='Training Mode',
+                                                            value=modules.config.default_training_mode,
+                                                            info='Creates a LoRA training .txt caption file next to each generated image.')
         
                                 if not args_manager.args.disable_metadata:
                                     save_metadata_to_images = gr.Checkbox(label='Save Metadata to Images', value=modules.config.default_save_metadata_to_images,
@@ -1780,7 +1793,7 @@ with shared.gradio_root:
                     adm_scaler_positive, adm_scaler_negative, adm_scaler_end, refiner_swap_method, adaptive_cfg, clip_skip,
                     base_model, refiner_model, refiner_switch, sampler_name, scheduler_name, vae_name, seed_random,
                     image_seed, inpaint_engine, inpaint_mode
-                ] + freeu_ctrls + lora_ctrls + lora_prompt_ctrls
+                ] + person_likeness_ctrls + freeu_ctrls + lora_ctrls + lora_prompt_ctrls
         
                 def refresh_prompt_config_dropdown(selected=None):
                     return gr.update(choices=modules.prompt_config.list_prompt_configs(), value=selected)
@@ -1794,10 +1807,53 @@ with shared.gradio_root:
                     if modules.prompt_config.delete_prompt_config(name):
                         return refresh_prompt_config_dropdown(), f'Deleted prompt config: {name}'
                     return refresh_prompt_config_dropdown(), 'No prompt config was deleted.'
-        
+
+                person_likeness_outputs = person_likeness_ctrls + [person_likeness_gallery]
+
+                def person_likeness_config_to_ui_updates(config_data):
+                    person_keys = [
+                        'person_likeness_enabled',
+                        'person_likeness_class',
+                        'person_likeness_strength',
+                        'person_likeness_face_weight',
+                        'person_likeness_face_start',
+                        'person_likeness_paths'
+                    ]
+                    if not any(key in config_data for key in person_keys):
+                        return [gr.update()] * len(person_likeness_outputs)
+
+                    def get_bool_config(key, default):
+                        value = config_data.get(key, default)
+                        if isinstance(value, str):
+                            return value.strip().casefold() in ['true', '1', 'yes', 'on']
+                        return bool(value)
+
+                    enabled = get_bool_config('person_likeness_enabled', True)
+                    subject = str(config_data.get('person_likeness_class', 'person'))
+                    if subject not in flags.person_likeness_classes:
+                        subject = 'person'
+                    strength = clamp_float(config_data.get('person_likeness_strength', 1.0), 1.0, 0.0,
+                                           modules.config.default_person_likeness_strength_max)
+                    face_weight = clamp_float(config_data.get('person_likeness_face_weight',
+                                                              modules.config.default_person_likeness_face_weight),
+                                              modules.config.default_person_likeness_face_weight, 0.0,
+                                              modules.config.default_person_likeness_face_weight_max)
+                    face_start = clamp_float(config_data.get('person_likeness_face_start',
+                                                             modules.config.default_person_likeness_face_start),
+                                             modules.config.default_person_likeness_face_start, 0.0, 1.0)
+                    if 'person_likeness_paths' in config_data:
+                        paths = config_data.get('person_likeness_paths', '[]')
+                        paths = paths if isinstance(paths, str) else '[]'
+                        path_updates = [paths, preview_person_likeness_paths(paths)]
+                    else:
+                        path_updates = [gr.update(), gr.update()]
+                    return [enabled, subject, strength, face_weight, face_start] + path_updates
+
                 def prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, status):
                     if len(config_data) == 0:
-                        return [gr.update()] * (len(load_data_outputs) + len(lora_prompt_ctrls) + len(lora_note_buttons) + len(lora_note_add_buttons) + len(lora_note_editor_cols)) + [status]
+                        return [gr.update()] * (len(load_data_outputs) + len(person_likeness_outputs) +
+                                                len(lora_prompt_ctrls) + len(lora_note_buttons) +
+                                                len(lora_note_add_buttons) + len(lora_note_editor_cols)) + [status]
         
                     lora_prompts = []
                     lora_note_button_updates = []
@@ -1816,11 +1872,13 @@ with shared.gradio_root:
                         lora_note_button_updates.append(gr.update(visible=has_lora))
                         lora_note_add_button_updates.append(gr.update(visible=has_lora and has_note))
                         lora_note_editor_updates.append(gr.update(visible=False))
-                    return modules.meta_parser.load_parameter_button_click(config_data, is_generating, inpaint_mode) + lora_prompts + lora_note_button_updates + lora_note_add_button_updates + lora_note_editor_updates + [status]
+                    return modules.meta_parser.load_parameter_button_click(config_data, is_generating, inpaint_mode) + \
+                        person_likeness_config_to_ui_updates(config_data) + lora_prompts + lora_note_button_updates + \
+                        lora_note_add_button_updates + lora_note_editor_updates + [status]
 
                 def prompt_only_config_to_ui_updates(config_data, current_prompt, mode, status):
-                    update_count = len(load_data_outputs) + len(lora_prompt_ctrls) + len(lora_note_buttons) + \
-                        len(lora_note_add_buttons) + len(lora_note_editor_cols)
+                    update_count = len(load_data_outputs) + len(person_likeness_outputs) + len(lora_prompt_ctrls) + \
+                        len(lora_note_buttons) + len(lora_note_add_buttons) + len(lora_note_editor_cols)
                     updates = [gr.update()] * update_count
 
                     saved_prompt = str(config_data.get('prompt', config_data.get('Prompt', '')) or '')
@@ -1922,6 +1980,11 @@ with shared.gradio_root:
                             except Exception:
                                 pass
 
+                    def cast_bool_config(value):
+                        if isinstance(value, str):
+                            return value.strip().casefold() in ['true', '1', 'yes', 'on']
+                        return bool(value)
+
                     args[2] = False
                     set_if_present(3, 'prompt', str)
                     set_if_present(4, 'negative_prompt', str)
@@ -1943,6 +2006,12 @@ with shared.gradio_root:
                     set_if_present(21, 'refiner_switch', float)
                     lora_start = 22
                     after_loras = lora_start + modules.config.default_max_lora_number * 3
+                    set_if_present(after_loras + 2, 'person_likeness_enabled', cast_bool_config)
+                    set_if_present(after_loras + 3, 'person_likeness_class', str)
+                    set_if_present(after_loras + 4, 'person_likeness_strength', float)
+                    set_if_present(after_loras + 5, 'person_likeness_face_weight', float)
+                    set_if_present(after_loras + 6, 'person_likeness_face_start', float)
+                    set_if_present(after_loras + 7, 'person_likeness_paths', str)
 
                     resolution = parse_literal(config_data.get('resolution'), tuple, None)
                     if resolution is None:
@@ -2086,8 +2155,8 @@ with shared.gradio_root:
                                                   outputs=[prompt_config_selection, prompt_config_status],
                                                   queue=False, show_progress=False)
 
-                load_prompt_config_outputs = load_data_outputs + lora_prompt_ctrls + lora_note_buttons + \
-                    lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status]
+                load_prompt_config_outputs = load_data_outputs + person_likeness_outputs + lora_prompt_ctrls + \
+                    lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status]
 
                 def load_full_prompt_config(name, current_prompt, is_generating, inpaint_mode):
                     return load_prompt_config(name, 'Full Config', current_prompt, is_generating, inpaint_mode)
@@ -2117,7 +2186,10 @@ with shared.gradio_root:
                 apply_selected_image_config_button.click(apply_selected_generation_config,
                                                          inputs=[selected_generation_apply_index, state_session_gallery,
                                                                  state_is_generating, inpaint_mode],
-                                                         outputs=load_data_outputs + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [selected_image_status],
+                                                         outputs=load_data_outputs + person_likeness_outputs +
+                                                                 lora_prompt_ctrls + lora_note_buttons +
+                                                                 lora_note_add_buttons + lora_note_editor_cols +
+                                                                 [selected_image_status],
                                                          queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
@@ -2240,6 +2312,7 @@ with shared.gradio_root:
                 ctrls += [refiner_swap_method, controlnet_softness]
                 ctrls += freeu_ctrls
                 ctrls += inpaint_ctrls
+                ctrls += [training_mode]
         
                 if not args_manager.args.disable_image_log:
                     ctrls += [save_final_enhanced_image_only]
