@@ -20,6 +20,7 @@ import modules.wildprompt_sorter as wildprompt_sorter
 import modules.meta_parser
 import modules.prompt_config
 import modules.lora_notes
+import modules.history_db
 import args_manager
 import copy
 import launch
@@ -761,7 +762,104 @@ if isinstance(args_manager.args.preset, str):
 shared.gradio_root = gr.Blocks(title=title).queue()
 
 with shared.gradio_root:
-    with gr.Tabs(elem_id='generation_mode_tabs'):
+    with gr.Tabs(elem_id='generation_mode_tabs', selected='image_generation_tab'):
+        with gr.Tab(label='History', id='history_tab'):
+            history_visible_image_ids = gr.State([])
+            history_selected_image_ids = gr.State([])
+            history_selection_mode = gr.Textbox(value='single', elem_id='history_selection_mode',
+                                                visible=False)
+            history_day_selection_mode = gr.Textbox(value='single', elem_id='history_day_selection_mode',
+                                                    visible=False)
+            history_selected_image_ids_json = gr.Textbox(value='[]', elem_id='history_selected_image_ids_json',
+                                                         visible=False)
+            history_selected_days = gr.State([])
+            history_remove_selected_image_id = gr.Textbox(value='', elem_id='history_remove_selected_image_id',
+                                                          visible=False)
+            history_remove_selected_image_button = gr.Button(value='Remove Selected History Image',
+                                                             elem_id='history_remove_selected_image_button',
+                                                             visible=False)
+            history_delete_selected_image_id = gr.Textbox(value='', elem_id='history_delete_selected_image_id',
+                                                          visible=False)
+            history_delete_selected_image_button = gr.Button(value='Delete Selected History Image',
+                                                             elem_id='history_delete_selected_image_button',
+                                                             visible=False)
+            history_apply_selected_image_id = gr.Textbox(value='', elem_id='history_apply_selected_image_id',
+                                                         visible=False)
+            history_apply_selected_image_button = gr.Button(value='Apply Selected History Image Config',
+                                                            elem_id='history_apply_selected_image_button',
+                                                            visible=False)
+            history_toggle_favorite_image_id = gr.Textbox(value='', elem_id='history_toggle_favorite_image_id',
+                                                          visible=False)
+            history_toggle_favorite_button = gr.Button(value='Toggle History Favorite',
+                                                       elem_id='history_toggle_favorite_button',
+                                                       visible=False)
+            with gr.Row():
+                with gr.Column(scale=1, min_width=220):
+                    history_gallery = gr.Gallery(label='Thumbnails', show_label=True, object_fit='cover',
+                                                 columns=1, height=820, preview=False, allow_preview=False,
+                                                 elem_id='history_thumbnail_gallery',
+                                                 elem_classes=['image_gallery'])
+                with gr.Column(scale=4):
+                    history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
+                                                          object_fit='contain', columns=2, rows=2,
+                                                          height=820, preview=False, allow_preview=False,
+                                                          elem_id='history_selected_gallery',
+                                                          elem_classes=['image_gallery'])
+            history_status = gr.HTML()
+            with gr.Accordion(label='Filters', open=False):
+                with gr.Row():
+                    history_search = gr.Textbox(label='Positive Prompt Search', placeholder='Words in the positive prompt')
+                    history_refresh_button = gr.Button(value='Refresh', variant='secondary')
+                    history_requery_button = gr.Button(value='Re-query Outputs Folder', variant='secondary')
+                history_day_selection = gr.CheckboxGroup(label='Output Days', choices=[], value=[],
+                                                         elem_id='history_day_selection')
+                with gr.Row():
+                    history_filter_checkpoints = gr.Dropdown(label='Checkpoints', choices=[], value=[],
+                                                             multiselect=True)
+                    history_filter_loras = gr.Dropdown(label='LoRAs', choices=[], value=[],
+                                                       multiselect=True)
+                history_filter_favorites = gr.Checkbox(label='Favorites Only', value=False)
+                with gr.Row():
+                    history_stack_by_seed = gr.Checkbox(label='Group By Seed', value=False)
+                    history_seed_stack_selection = gr.Dropdown(label='Seed Group', choices=[], value=None)
+                    history_seed_stack_prompt = gr.Textbox(value='', visible=False)
+                history_filter_tag = gr.State('')
+                history_filter_status = gr.State('')
+                history_batch_selection = gr.Dropdown(label='Generation Batch', choices=[], value='All Images',
+                                                      visible=False)
+            with gr.Accordion(label='Selected Image Actions', open=False):
+                history_image_selection = gr.Dropdown(label='Images', choices=[], value=None)
+                history_favorite = gr.State(False)
+                history_rating = gr.State(0)
+                history_review_status = gr.State('')
+                history_tags = gr.State('')
+                history_note = gr.State('')
+                with gr.Row():
+                    history_load_full_button = gr.Button(value='Load Full Config', variant='secondary')
+                    history_replace_prompt_button = gr.Button(value='Replace Prompt', variant='secondary')
+                    history_append_prompt_button = gr.Button(value='Append Prompt', variant='secondary')
+                    history_save_curation_button = gr.Button(value='Save Curation', variant='secondary',
+                                                             visible=False)
+            with gr.Accordion(label='Batch Details', open=False, visible=False):
+                history_batch_rating = gr.State(0)
+                with gr.Row():
+                    history_batch_favorite = gr.Checkbox(label='Batch Favorite', value=False)
+                    history_batch_review_status = gr.Dropdown(label='Batch Status',
+                                                              choices=['', 'needs review', 'keeper', 'reject'],
+                                                              value='')
+                history_batch_tags = gr.Textbox(label='Batch Tags', placeholder='Comma separated tags')
+                history_batch_note = gr.Textbox(label='Batch Note', lines=2)
+                history_save_batch_curation_button = gr.Button(value='Save Batch', variant='secondary')
+            with gr.Accordion(label='Comparison Table', open=False, visible=False):
+                history_comparison_table = gr.Dataframe(
+                    label='Comparison',
+                    headers=['Checkpoint', 'Seed', 'Testing LoRA', 'Image ID', 'File', 'Favorite', 'Status', 'Tags'],
+                    datatype=['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str'],
+                    value=[],
+                    type='array',
+                    interactive=False,
+                    wrap=True
+                )
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
             state_session_gallery = gr.State([])
@@ -801,6 +899,12 @@ with shared.gradio_root:
                             regenerate_selected_quality_button = gr.Button(value='Regenerate Selected Preview at Quality',
                                                                            elem_id='regenerate_selected_quality_button',
                                                                            elem_classes='generation_apply_hidden_control')
+                            selected_generation_favorite_index = gr.Textbox(value='',
+                                                                            elem_id='selected_generation_favorite_index',
+                                                                            elem_classes='generation_apply_hidden_control')
+                            favorite_selected_generation_button = gr.Button(value='Favorite Selected Image',
+                                                                            elem_id='favorite_selected_generation_button',
+                                                                            elem_classes='generation_apply_hidden_control')
                             quick_preview_generation_indices = gr.Textbox(value='[]',
                                                                           elem_id='quick_preview_generation_indices',
                                                                           elem_classes='generation_apply_hidden_control')
@@ -820,6 +924,34 @@ with shared.gradio_root:
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
                     queue_status_html = gr.HTML(value=make_queue_panel_html(), elem_id='queue_status_panel')
+                    with gr.Row(elem_id='queue_batch_controls'):
+                        skip_button = gr.Button(label="Skip", value="Skip", elem_classes='type_row_half', elem_id='skip_button', visible=False)
+                        stop_button = gr.Button(label="Stop", value="Stop", elem_classes='type_row_half', elem_id='stop_button', visible=False)
+
+                    def stop_clicked(currentTask):
+                        import ldm_patched.modules.model_management as model_management
+                        worker.clear_pending_tasks()
+                        target_task = currentTask if currentTask.processing else worker.get_current_task()
+                        if target_task is None:
+                            target_task = currentTask
+                        target_task.last_stop = 'stop'
+                        if (target_task.processing):
+                            model_management.interrupt_current_processing()
+                        return target_task, gr.update(value=make_queue_panel_html())
+
+                    def skip_clicked(currentTask):
+                        import ldm_patched.modules.model_management as model_management
+                        target_task = currentTask if currentTask.processing else worker.get_current_task()
+                        if target_task is None:
+                            target_task = currentTask
+                        target_task.last_stop = 'skip'
+                        if (target_task.processing):
+                            model_management.interrupt_current_processing()
+                        return target_task
+
+                    stop_queue_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
+                    stop_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
+                    skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
                     with gr.Row():
                         with gr.Column(scale=17):
                             prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
@@ -832,35 +964,7 @@ with shared.gradio_root:
                         with gr.Column(scale=3, min_width=0):
                             generate_button = gr.Button(label="Generate", value="Generate", elem_classes='type_row', elem_id='generate_button', visible=True)
                             quick_preview_button = gr.Button(label="Quick Preview", value="Quick Preview", elem_classes='type_row', elem_id='quick_preview_button', visible=True)
-                            reset_button = gr.Button(label="Reconnect", value="Reconnect", elem_classes='type_row', elem_id='reset_button', visible=False)
                             load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
-                            skip_button = gr.Button(label="Skip", value="Skip", elem_classes='type_row_half', elem_id='skip_button', visible=False)
-                            stop_button = gr.Button(label="Stop", value="Stop", elem_classes='type_row_half', elem_id='stop_button', visible=False)
-        
-                            def stop_clicked(currentTask):
-                                import ldm_patched.modules.model_management as model_management
-                                worker.clear_pending_tasks()
-                                target_task = currentTask if currentTask.processing else worker.get_current_task()
-                                if target_task is None:
-                                    target_task = currentTask
-                                target_task.last_stop = 'stop'
-                                if (target_task.processing):
-                                    model_management.interrupt_current_processing()
-                                return target_task, gr.update(value=make_queue_panel_html())
-        
-                            def skip_clicked(currentTask):
-                                import ldm_patched.modules.model_management as model_management
-                                target_task = currentTask if currentTask.processing else worker.get_current_task()
-                                if target_task is None:
-                                    target_task = currentTask
-                                target_task.last_stop = 'skip'
-                                if (target_task.processing):
-                                    model_management.interrupt_current_processing()
-                                return target_task
-        
-                            stop_queue_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
-                            stop_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
-                            skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
                     with gr.Row(elem_classes='advanced_check_row'):
                         input_image_checkbox = gr.Checkbox(label='Input Image', value=modules.config.default_image_prompt_checkbox, container=False, elem_classes='min_check')
                         enhance_checkbox = gr.Checkbox(label='Enhance', value=modules.config.default_enhance_checkbox, container=False, elem_classes='min_check')
@@ -1719,6 +1823,8 @@ with shared.gradio_root:
                         with gr.Row():
                             refresh_files = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
                     with gr.Tab(label='Advanced'):
+                        reset_button = gr.Button(label="Reconnect", value="Reconnect", variant='secondary',
+                                                 elem_id='reset_button', visible=False)
                         guidance_scale = gr.Slider(label='Guidance Scale', minimum=1.0, maximum=30.0, step=0.01,
                                                    value=modules.config.default_cfg_scale,
                                                    info='Higher value means style is cleaner, vivider, and more artistic.')
@@ -2079,6 +2185,10 @@ with shared.gradio_root:
                     if image_path is None:
                         return {}, None
 
+                    config_data = modules.history_db.get_config_by_path(image_path)
+                    if len(config_data) > 0:
+                        return config_data, image_path
+
                     config_data = worker.get_generated_image_config(image_path)
                     if len(config_data) > 0:
                         return config_data, image_path
@@ -2112,6 +2222,27 @@ with shared.gradio_root:
                     config_data['wildprompt_generate_all'] = False
                     config_data['wildprompt_line_selections'] = '{}'
                     return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
+
+                def toggle_session_generation_favorite(selected_index, session_history):
+                    image_path = get_selected_generation_image_path(selected_index, session_history)
+                    if image_path is None:
+                        return 'Select a session history image first.'
+                    image_id = modules.history_db.get_image_id_by_path(image_path)
+                    if image_id is None:
+                        return 'This image is not in the history database yet.'
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(curation) == 0:
+                        return 'History image was not found.'
+                    next_favorite = not bool(curation.get('favorite', False))
+                    modules.history_db.update_image_curation(
+                        image_id,
+                        next_favorite,
+                        curation.get('rating', 0),
+                        curation.get('review_status', ''),
+                        curation.get('tags', ''),
+                        curation.get('note', '')
+                    )
+                    return f"{'Favorited' if next_favorite else 'Unfavorited'} {os.path.basename(image_path)}."
 
                 def parse_literal(value, expected_type, default):
                     if isinstance(value, expected_type):
@@ -2313,6 +2444,547 @@ with shared.gradio_root:
 
                 load_prompt_config_outputs = load_data_outputs + person_likeness_outputs + lora_prompt_ctrls + \
                     lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [prompt_config_status]
+                history_load_outputs = load_data_outputs + person_likeness_outputs + lora_prompt_ctrls + \
+                    lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [history_status]
+
+                def parse_history_id(selection):
+                    try:
+                        return int(str(selection or '').split('|', 1)[0].strip())
+                    except Exception:
+                        return None
+
+                def format_history_batch(row):
+                    prompt_preview = str(row.get('prompt', '') or '').replace('\n', ' ').strip()
+                    if len(prompt_preview) > 80:
+                        prompt_preview = prompt_preview[:77] + '...'
+                    favorite = 'fav | ' if row.get('favorite') else ''
+                    tags = str(row.get('tags') or '').strip()
+                    tags_text = f'{tags} | ' if tags != '' else ''
+                    return f"{row['id']} | {favorite}{tags_text}{row['created_at']} | {row['status']} | {row.get('generated_images', 0)}/{row.get('total_images') or '?'} | {prompt_preview}"
+
+                def history_batch_choices(rows):
+                    return ['All Images'] + [format_history_batch(row) for row in rows]
+
+                def format_history_seed_stack(row):
+                    prompt_preview = str(row.get('prompt', '') or '').replace('\n', ' ').strip()
+                    if len(prompt_preview) > 70:
+                        prompt_preview = prompt_preview[:67] + '...'
+                    return (
+                        f"{row.get('id')} | seed {row.get('seed')} | "
+                        f"{row.get('image_count', 0)} images | "
+                        f"{row.get('checkpoint_count', 0)} ckpt | {row.get('lora_count', 0)} LoRA | {prompt_preview}"
+                    )
+
+                def seed_stack_prompt_by_choice(choice):
+                    stack_id = parse_history_id(choice)
+                    if stack_id is None:
+                        return ''
+                    stacks = modules.history_db.list_seed_stacks()
+                    for row in stacks:
+                        if int(row.get('id')) == stack_id:
+                            return str(row.get('prompt', '') or '')
+                    return ''
+
+                def seed_stack_choices(search, favorite_only, review_status, tag, days, checkpoints, loras):
+                    rows = modules.history_db.list_seed_stacks(
+                        search=search,
+                        favorite_only=favorite_only,
+                        review_status=review_status,
+                        tag=tag,
+                        days=days,
+                        checkpoints=checkpoints,
+                        loras=loras
+                    )
+                    choices = [format_history_seed_stack(row) for row in rows]
+                    prompt_by_choice = {
+                        format_history_seed_stack(row): str(row.get('prompt', '') or '')
+                        for row in rows
+                    }
+                    return choices, prompt_by_choice
+
+                def format_history_image(row):
+                    missing = '' if row.get('file_exists') else 'missing | '
+                    favorite = 'fav | ' if row.get('favorite') else ''
+                    tags = str(row.get('tags') or '').strip()
+                    tags_text = f'{tags} | ' if tags != '' else ''
+                    seed = row.get('seed')
+                    seed_text = f'seed {seed}' if seed is not None else 'seed ?'
+                    return f"{row['id']} | {missing}{favorite}{tags_text}{row.get('filename', '')} | {seed_text} | {row.get('checkpoint', '')}"
+
+                def format_history_comparison(rows):
+                    table = []
+                    for row in rows:
+                        table.append([
+                            row.get('checkpoint', '') or '',
+                            str(row.get('seed')) if row.get('seed') is not None else '',
+                            row.get('testing_lora', '') or '',
+                            str(row.get('id', '') or ''),
+                            row.get('filename', '') or '',
+                            'yes' if row.get('favorite') else '',
+                            row.get('review_status', '') or '',
+                            row.get('tags', '') or ''
+                        ])
+                    return table
+
+                def format_history_gallery_items(rows):
+                    gallery_items = []
+                    for row in rows:
+                        if not row.get('file_exists') or not os.path.exists(row['path']):
+                            continue
+                        seed = row.get('seed')
+                        seed_text = f"seed {seed}" if seed is not None else 'seed ?'
+                        favorite_text = 'fav | ' if row.get('favorite') else ''
+                        label = f"{favorite_text}#{row.get('id')} | {seed_text}"
+                        checkpoint = str(row.get('checkpoint') or '').strip()
+                        if checkpoint != '':
+                            label += f" | {checkpoint}"
+                        gallery_items.append((row['path'], label))
+                    return gallery_items
+
+                def selected_history_gallery_items(image_ids):
+                    gallery_items = []
+                    for image_id in image_ids or []:
+                        summary = modules.history_db.get_image_summary(image_id)
+                        if len(summary) == 0 or not summary.get('file_exists') or not os.path.exists(summary['path']):
+                            continue
+                        seed = summary.get('seed')
+                        seed_text = f"seed {seed}" if seed is not None else 'seed ?'
+                        favorite_text = 'fav | ' if summary.get('favorite') else ''
+                        gallery_items.append((summary['path'], f"{favorite_text}#{summary.get('id')} | {seed_text}"))
+                    return gallery_items
+
+                def visible_history_gallery_items(image_ids):
+                    rows = []
+                    for image_id in image_ids or []:
+                        summary = modules.history_db.get_image_summary(image_id)
+                        if len(summary) > 0:
+                            rows.append(summary)
+                    return format_history_gallery_items(rows)
+
+                def history_image_choices_from_ids(image_ids):
+                    choices = []
+                    for image_id in image_ids or []:
+                        summary = modules.history_db.get_image_summary(image_id)
+                        if len(summary) > 0:
+                            choices.append(format_history_image(summary))
+                    return choices
+
+                def history_selected_ids_json(image_ids):
+                    try:
+                        return json.dumps([int(image_id) for image_id in (image_ids or [])])
+                    except Exception:
+                        return '[]'
+
+                def empty_image_curation(status):
+                    return gr.update(), False, 0, '', '', '', status
+
+                def empty_history_view(status):
+                    return gr.update(choices=['All Images'], value='All Images'), gr.update(choices=[], value=[]), \
+                        gr.update(choices=[], value=[]), gr.update(choices=[], value=[]), \
+                        gr.update(choices=[], value=None), '', [], gr.update(value=[]), [], [], '[]', gr.update(value=[]), \
+                        gr.update(choices=[], value=None), gr.update(value=[]), False, 0, '', '', '', \
+                        False, 0, '', '', '', status
+
+                def history_image_view(selection, search, favorite_only, review_status, tag, days,
+                                       checkpoints=None, loras=None, status_prefix=''):
+                    batch_id = parse_history_id(selection)
+                    is_all_images = batch_id is None
+                    batch_curation = {} if is_all_images else modules.history_db.get_batch_curation(batch_id)
+                    if is_all_images:
+                        rows = modules.history_db.list_images(
+                            search=search,
+                            favorite_only=favorite_only,
+                            review_status=review_status,
+                            tag=tag,
+                            days=days,
+                            checkpoints=checkpoints,
+                            loras=loras
+                        )
+                        comparison_rows = []
+                    else:
+                        rows = modules.history_db.list_batch_images(
+                            batch_id,
+                            favorite_only=favorite_only,
+                            review_status=review_status,
+                            tag=tag
+                        )
+                        comparison_rows = modules.history_db.list_batch_comparison_rows(batch_id)
+                    gallery_items = format_history_gallery_items(rows)
+                    visible_image_ids = [row['id'] for row in rows if row.get('file_exists') and os.path.exists(row['path'])]
+                    image_choices = [format_history_image(row) for row in rows]
+                    value = image_choices[0] if len(image_choices) > 0 else None
+                    image_id = parse_history_id(value)
+                    selected_image_ids = [image_id] if image_id is not None else []
+                    curation = modules.history_db.get_image_curation(image_id) if image_id is not None else {}
+                    missing_count = len([row for row in rows if not row.get('file_exists')])
+                    scope = 'all output images' if is_all_images else 'batch images'
+                    status = status_prefix + f'Loaded {len(rows)} {scope}.'
+                    if missing_count > 0:
+                        status += f' {missing_count} file(s) are missing on disk.'
+                    return gr.update(value=gallery_items), visible_image_ids, selected_image_ids, \
+                        history_selected_ids_json(selected_image_ids), \
+                        gr.update(value=selected_history_gallery_items(selected_image_ids)), \
+                        gr.update(choices=image_choices, value=value), gr.update(value=format_history_comparison(comparison_rows)), \
+                        bool(batch_curation.get('favorite', False)), int(batch_curation.get('rating', 0) or 0), \
+                        batch_curation.get('review_status', ''), batch_curation.get('tags', ''), \
+                        batch_curation.get('note', ''), \
+                        bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
+
+                def history_seed_group_view(seed_stack_selection, seed_stack_prompt, search, favorite_only,
+                                            review_status, tag, days, checkpoints, loras):
+                    stack_id = parse_history_id(seed_stack_selection)
+                    seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
+                    rows = modules.history_db.list_seed_stack_images(
+                        seed,
+                        prompt,
+                        search=search,
+                        favorite_only=favorite_only,
+                        review_status=review_status,
+                        tag=tag,
+                        days=days,
+                        checkpoints=checkpoints,
+                        loras=loras
+                    )
+                    selected_image_ids = [row['id'] for row in rows if row.get('file_exists') and os.path.exists(row['path'])]
+                    image_choices = [format_history_image(row) for row in rows]
+                    value = image_choices[0] if len(image_choices) > 0 else None
+                    image_id = parse_history_id(value)
+                    curation = modules.history_db.get_image_curation(image_id) if image_id is not None else {}
+                    status = f'Loaded {len(rows)} image(s) for seed group.'
+                    if stack_id is None:
+                        status = 'Select a seed group.'
+                    return selected_image_ids, history_selected_ids_json(selected_image_ids), \
+                        gr.update(value=selected_history_gallery_items(selected_image_ids)), \
+                        gr.update(choices=image_choices, value=value), \
+                        bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
+
+                def default_history_days(days):
+                    return days[:1] if len(days) > 0 else []
+
+                def normalize_history_days(selected_days, previous_days, selection_mode):
+                    all_days = modules.history_db.list_output_days()
+                    selected_days = [str(day) for day in (selected_days or []) if str(day or '') != '']
+                    previous_days = [str(day) for day in (previous_days or []) if str(day or '') != '']
+                    selection_mode = str(selection_mode or 'single').strip().casefold()
+                    selected_set = set(selected_days)
+                    previous_set = set(previous_days)
+                    added = [day for day in all_days if day in selected_set and day not in previous_set]
+                    removed = [day for day in all_days if day in previous_set and day not in selected_set]
+                    clicked = (added + removed)[0] if len(added + removed) > 0 else (selected_days[0] if len(selected_days) > 0 else None)
+                    if clicked is None:
+                        return []
+                    if selection_mode == 'ctrl':
+                        normalized = selected_days
+                    elif selection_mode == 'shift' and len(previous_days) > 0:
+                        anchor = previous_days[-1]
+                        try:
+                            anchor_index = all_days.index(anchor)
+                            clicked_index = all_days.index(clicked)
+                            start = min(anchor_index, clicked_index)
+                            end = max(anchor_index, clicked_index)
+                            normalized = all_days[start:end + 1]
+                        except Exception:
+                            normalized = [clicked]
+                    else:
+                        normalized = [clicked]
+                    return [day for day in all_days if day in set(normalized)]
+
+                def refresh_history(search, favorite_only, review_status, tag, checkpoints, loras):
+                    days = modules.history_db.list_output_days()
+                    filter_values = modules.history_db.list_filter_values()
+                    batches = modules.history_db.list_batches(
+                        search=search,
+                        favorite_only=favorite_only,
+                        review_status=review_status,
+                        tag=tag
+                    )
+                    choices = history_batch_choices(batches)
+                    if len(days) == 0 and len(choices) <= 1:
+                        return empty_history_view('No history batches found.')
+                    value = 'All Images'
+                    selected_days = default_history_days(days)
+                    stack_choices, prompt_by_stack = seed_stack_choices(
+                        search, favorite_only, review_status, tag, selected_days, checkpoints, loras
+                    )
+                    stack_value = stack_choices[0] if len(stack_choices) > 0 else None
+                    stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
+                    image_outputs = history_image_view(value, search, favorite_only, review_status, tag,
+                                                       selected_days, checkpoints, loras,
+                                                       f'Loaded {max(0, len(choices) - 1)} batch(es). ')
+                    return (gr.update(choices=choices, value=value), gr.update(choices=days, value=selected_days),
+                            gr.update(choices=filter_values['checkpoints'], value=checkpoints),
+                            gr.update(choices=filter_values['loras'], value=loras),
+                            gr.update(choices=stack_choices, value=stack_value), stack_prompt,
+                            selected_days) + image_outputs
+
+                def requery_history_outputs(search, favorite_only, review_status, tag, checkpoints, loras):
+                    result = modules.history_db.reconcile_outputs_folder()
+                    days = modules.history_db.list_output_days()
+                    filter_values = modules.history_db.list_filter_values()
+                    batches = modules.history_db.list_batches(
+                        search=search,
+                        favorite_only=favorite_only,
+                        review_status=review_status,
+                        tag=tag
+                    )
+                    choices = history_batch_choices(batches)
+                    status = (
+                        f"Re-query complete. Added {result['added']}, removed {result['removed']}, "
+                        f"unchanged {result['unchanged']}, imported batches {result['imported_batches']}, "
+                        f"removed batches {result['removed_batches']}, skipped {result['skipped']}, failed {result['failed']}."
+                    )
+                    if len(days) == 0 and len(choices) <= 1:
+                        return empty_history_view(status + ' No history batches found.')
+                    value = 'All Images'
+                    selected_days = default_history_days(days)
+                    stack_choices, prompt_by_stack = seed_stack_choices(
+                        search, favorite_only, review_status, tag, selected_days, checkpoints, loras
+                    )
+                    stack_value = stack_choices[0] if len(stack_choices) > 0 else None
+                    stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
+                    image_outputs = history_image_view(value, search, favorite_only, review_status, tag,
+                                                       selected_days, checkpoints, loras, status + ' ')
+                    return (gr.update(choices=choices, value=value), gr.update(choices=days, value=selected_days),
+                            gr.update(choices=filter_values['checkpoints'], value=checkpoints),
+                            gr.update(choices=filter_values['loras'], value=loras),
+                            gr.update(choices=stack_choices, value=stack_value), stack_prompt,
+                            selected_days) + image_outputs
+
+                def load_history_batch(selection, search, favorite_only, review_status, tag, days, checkpoints, loras):
+                    return history_image_view(selection, search, favorite_only, review_status, tag, days,
+                                              checkpoints, loras)
+
+                def load_history_days(selection, previous_days, selection_mode, batch_selection, search,
+                                      favorite_only, review_status, tag, checkpoints, loras):
+                    selected_days = normalize_history_days(selection, previous_days, selection_mode)
+                    stack_choices, prompt_by_stack = seed_stack_choices(
+                        search, favorite_only, review_status, tag, selected_days, checkpoints, loras
+                    )
+                    stack_value = stack_choices[0] if len(stack_choices) > 0 else None
+                    stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
+                    image_outputs = history_image_view(batch_selection, search, favorite_only, review_status, tag,
+                                                       selected_days, checkpoints, loras)
+                    return (gr.update(value=selected_days), selected_days,
+                            gr.update(choices=stack_choices, value=stack_value), stack_prompt) + image_outputs
+
+                def load_history_batch_curation(selection):
+                    batch_id = parse_history_id(selection)
+                    if batch_id is None:
+                        return False, 0, '', '', '', 'Select a history batch.'
+                    curation = modules.history_db.get_batch_curation(batch_id)
+                    if len(curation) == 0:
+                        return False, 0, '', '', '', 'History batch was not found.'
+                    return bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
+                        f'Loaded curation for history batch #{batch_id}.'
+
+                def load_history_image_curation(selection):
+                    image_id = parse_history_id(selection)
+                    if image_id is None:
+                        return False, 0, '', '', '', 'Select a history image.'
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(curation) == 0:
+                        return False, 0, '', '', '', 'History image was not found.'
+                    return bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
+                        f'Loaded curation for history image #{image_id}.'
+
+                def select_history_thumbnail(visible_image_ids, selected_image_ids, selection_mode, evt: gr.SelectData):
+                    try:
+                        index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                        clicked_index = int(index)
+                        image_id = int((visible_image_ids or [])[clicked_index])
+                    except Exception:
+                        return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', 'Select a thumbnail.'
+
+                    selected = [int(x) for x in (selected_image_ids or []) if x is not None]
+                    selection_mode = str(selection_mode or 'single').strip().casefold()
+                    if selection_mode == 'ctrl':
+                        if image_id in selected:
+                            selected = [x for x in selected if x != image_id]
+                        else:
+                            selected.append(image_id)
+                    elif selection_mode == 'shift' and len(selected) > 0:
+                        visible = [int(x) for x in (visible_image_ids or []) if x is not None]
+                        anchor = selected[-1]
+                        try:
+                            anchor_index = visible.index(anchor)
+                            start = min(anchor_index, clicked_index)
+                            end = max(anchor_index, clicked_index)
+                            selected = visible[start:end + 1]
+                        except Exception:
+                            selected = [image_id]
+                    elif image_id in selected and len(selected) == 1:
+                        selected = [x for x in selected if x != image_id]
+                    else:
+                        selected = [image_id]
+                    selected = selected[-4:]
+
+                    summary = modules.history_db.get_image_summary(image_id)
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(summary) == 0 or len(curation) == 0:
+                        return selected, history_selected_ids_json(selected), \
+                            gr.update(value=selected_history_gallery_items(selected)), gr.update(), \
+                            False, 0, '', '', '', 'History image was not found.'
+
+                    status = f'Selected {len(selected)}/4 image(s). Use Ctrl-click to add/remove one or Shift-click to select a range.'
+                    return selected, history_selected_ids_json(selected), \
+                        gr.update(value=selected_history_gallery_items(selected)), \
+                        gr.update(value=format_history_image(summary)), \
+                        bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
+
+                def select_history_comparison(table_rows, evt: gr.SelectData):
+                    try:
+                        row_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                        row = table_rows[int(row_index)]
+                        image_id = parse_history_id(row[3])
+                    except Exception:
+                        image_id = None
+                    if image_id is None:
+                        return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', 'Select a comparison row with an image id.'
+                    summary = modules.history_db.get_image_summary(image_id)
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(summary) == 0 or len(curation) == 0:
+                        return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', 'History image was not found.'
+                    selected = [image_id]
+                    return selected, history_selected_ids_json(selected), \
+                        gr.update(value=selected_history_gallery_items(selected)), \
+                        gr.update(value=format_history_image(summary)), \
+                        bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
+                        f'Selected history image #{image_id} from comparison.'
+
+                def remove_history_selected_image(selected_image_ids, remove_image_id):
+                    try:
+                        remove_image_id = int(str(remove_image_id or '').strip())
+                    except Exception:
+                        remove_image_id = None
+                    selected = [int(x) for x in (selected_image_ids or []) if x is not None]
+                    if remove_image_id is not None:
+                        selected = [image_id for image_id in selected if image_id != remove_image_id]
+                    status = f'Selected {len(selected)}/4 image(s).'
+                    return selected, history_selected_ids_json(selected), \
+                        gr.update(value=selected_history_gallery_items(selected)), status
+
+                def delete_history_selected_image(selected_image_ids, visible_image_ids, delete_image_id):
+                    try:
+                        delete_image_id = int(str(delete_image_id or '').strip())
+                    except Exception:
+                        delete_image_id = None
+                    if delete_image_id is None:
+                        return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), 'Select an image to delete.'
+                    deleted, path = modules.history_db.delete_image(delete_image_id, delete_file=True)
+                    selected = [int(x) for x in (selected_image_ids or []) if x is not None and int(x) != delete_image_id]
+                    visible = [int(x) for x in (visible_image_ids or []) if x is not None and int(x) != delete_image_id]
+                    choices = history_image_choices_from_ids(visible)
+                    next_choice = choices[0] if len(choices) > 0 else None
+                    status = f"Deleted {os.path.basename(path)}." if deleted and path else 'Could not delete selected image.'
+                    return gr.update(value=visible_history_gallery_items(visible)), visible, selected, \
+                        history_selected_ids_json(selected), gr.update(value=selected_history_gallery_items(selected)), \
+                        gr.update(choices=choices, value=next_choice), status
+
+                def toggle_history_image_favorite(image_id):
+                    image_id = parse_history_id(image_id)
+                    if image_id is None:
+                        return 'Select an image to favorite.'
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(curation) == 0:
+                        return 'History image was not found.'
+                    next_favorite = not bool(curation.get('favorite', False))
+                    modules.history_db.update_image_curation(
+                        image_id,
+                        next_favorite,
+                        curation.get('rating', 0),
+                        curation.get('review_status', ''),
+                        curation.get('tags', ''),
+                        curation.get('note', '')
+                    )
+                    return f"{'Favorited' if next_favorite else 'Unfavorited'} history image #{image_id}."
+
+                def load_history_image_config_by_id(image_id, current_prompt, is_generating, inpaint_mode):
+                    image_id = parse_history_id(image_id)
+                    if image_id is None:
+                        return prompt_config_to_ui_updates({}, is_generating, inpaint_mode, 'Select a history image first.')
+                    return load_history_image_config(str(image_id), 'Full Config', current_prompt, is_generating, inpaint_mode)
+
+                def apply_history_seed_group(group_by_seed, seed_stack_selection, seed_stack_prompt, search,
+                                             favorite_only, review_status, tag, days, checkpoints, loras):
+                    if not group_by_seed:
+                        return gr.update(), gr.update(), gr.update(), gr.update(), False, 0, '', '', '', 'Group By Seed is off.'
+                    return history_seed_group_view(
+                        seed_stack_selection,
+                        seed_stack_prompt,
+                        search,
+                        favorite_only,
+                        review_status,
+                        tag,
+                        days,
+                        checkpoints,
+                        loras
+                    )
+
+                def save_history_image_curation(selection, favorite, rating, review_status, tags, note, batch_selection,
+                                                filter_favorite_only, filter_review_status, filter_tag):
+                    image_id = parse_history_id(selection)
+                    if image_id is None:
+                        return gr.update(), gr.update(), gr.update(), 'Select a history image first.'
+                    if not modules.history_db.update_image_curation(image_id, favorite, rating, review_status, tags, note):
+                        return gr.update(), gr.update(), gr.update(), 'History image was not found.'
+                    batch_id = parse_history_id(batch_selection)
+                    if batch_id is None:
+                        summary = modules.history_db.get_image_summary(image_id)
+                        selected_update = gr.update(value=format_history_image(summary)) if len(summary) > 0 else gr.update()
+                        return selected_update, \
+                            gr.update(), gr.update(), f'Saved curation for history image #{image_id}.'
+                    rows = modules.history_db.list_batch_images(
+                        batch_id,
+                        favorite_only=filter_favorite_only,
+                        review_status=filter_review_status,
+                        tag=filter_tag
+                    )
+                    comparison_rows = modules.history_db.list_batch_comparison_rows(batch_id)
+                    image_choices = [format_history_image(row) for row in rows]
+                    selected_value = next((choice for choice in image_choices if parse_history_id(choice) == image_id), None)
+                    return gr.update(choices=image_choices, value=selected_value), gr.update(), \
+                        gr.update(value=format_history_comparison(comparison_rows)), \
+                        f'Saved curation for history image #{image_id}.'
+
+                def save_history_batch_curation(selection, favorite, rating, review_status, tags, note,
+                                                search, filter_favorite_only, filter_review_status, filter_tag):
+                    batch_id = parse_history_id(selection)
+                    if batch_id is None:
+                        return gr.update(), 'Select a history batch first.'
+                    if not modules.history_db.update_batch_curation(batch_id, favorite, rating, review_status, tags, note):
+                        return gr.update(), 'History batch was not found.'
+                    batches = modules.history_db.list_batches(
+                        search=search,
+                        favorite_only=filter_favorite_only,
+                        review_status=filter_review_status,
+                        tag=filter_tag
+                    )
+                    choices = [format_history_batch(row) for row in batches]
+                    selected_value = next((choice for choice in choices if parse_history_id(choice) == batch_id), None)
+                    return gr.update(choices=choices, value=selected_value), f'Saved curation for history batch #{batch_id}.'
+
+                def load_history_image_config(selection, mode, current_prompt, is_generating, inpaint_mode):
+                    image_id = parse_history_id(selection)
+                    if image_id is None:
+                        return prompt_config_to_ui_updates({}, is_generating, inpaint_mode, 'Select a history image first.')
+                    config_data = modules.history_db.get_config_by_image_id(image_id)
+                    if len(config_data) == 0:
+                        return prompt_config_to_ui_updates({}, is_generating, inpaint_mode, 'History image has no saved config.')
+                    if mode in ['Replace Prompt', 'Append Prompt']:
+                        return prompt_only_config_to_ui_updates(
+                            config_data,
+                            current_prompt,
+                            mode,
+                            f'{mode} from history image #{image_id}.'
+                        )
+                    return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode,
+                                                       f'Loaded config from history image #{image_id}.')
 
                 def load_full_prompt_config(name, current_prompt, is_generating, inpaint_mode):
                     return load_prompt_config(name, 'Full Config', current_prompt, is_generating, inpaint_mode)
@@ -2322,6 +2994,188 @@ with shared.gradio_root:
 
                 def append_prompt_from_config(name, current_prompt, is_generating, inpaint_mode):
                     return load_prompt_config(name, 'Append Prompt', current_prompt, is_generating, inpaint_mode)
+
+                def load_full_history_config(selection, current_prompt, is_generating, inpaint_mode):
+                    return load_history_image_config(selection, 'Full Config', current_prompt, is_generating, inpaint_mode)
+
+                def replace_prompt_from_history(selection, current_prompt, is_generating, inpaint_mode):
+                    return load_history_image_config(selection, 'Replace Prompt', current_prompt, is_generating, inpaint_mode)
+
+                def append_prompt_from_history(selection, current_prompt, is_generating, inpaint_mode):
+                    return load_history_image_config(selection, 'Append Prompt', current_prompt, is_generating, inpaint_mode)
+
+                history_filter_inputs = [
+                    history_search, history_filter_favorites, history_filter_status, history_filter_tag,
+                    history_filter_checkpoints, history_filter_loras
+                ]
+                history_refresh_outputs = [
+                    history_batch_selection, history_day_selection, history_filter_checkpoints,
+                    history_filter_loras, history_seed_stack_selection, history_seed_stack_prompt,
+                    history_selected_days,
+                    history_gallery, history_visible_image_ids,
+                    history_selected_image_ids, history_selected_image_ids_json,
+                    history_selected_gallery, history_image_selection,
+                    history_comparison_table, history_batch_favorite, history_batch_rating,
+                    history_batch_review_status, history_batch_tags, history_batch_note,
+                    history_favorite, history_rating, history_review_status, history_tags,
+                    history_note, history_status
+                ]
+
+                shared.gradio_root.load(refresh_history, inputs=history_filter_inputs,
+                                        outputs=history_refresh_outputs,
+                                        queue=False, show_progress=False)
+                history_refresh_button.click(refresh_history, inputs=history_filter_inputs,
+                                             outputs=history_refresh_outputs,
+                                             queue=False, show_progress=False)
+                history_requery_button.click(requery_history_outputs, inputs=history_filter_inputs,
+                                             outputs=history_refresh_outputs,
+                                             queue=False, show_progress=True)
+                history_batch_selection.change(load_history_batch,
+                                               inputs=[history_batch_selection, history_search,
+                                                       history_filter_favorites, history_filter_status,
+                                                       history_filter_tag, history_day_selection,
+                                                       history_filter_checkpoints, history_filter_loras],
+                                               outputs=[history_gallery, history_visible_image_ids,
+                                                        history_selected_image_ids, history_selected_image_ids_json,
+                                                        history_selected_gallery,
+                                                        history_image_selection, history_comparison_table,
+                                                        history_batch_favorite, history_batch_rating,
+                                                        history_batch_review_status, history_batch_tags,
+                                                        history_batch_note, history_favorite, history_rating,
+                                                        history_review_status, history_tags, history_note,
+                                                       history_status],
+                                               queue=False, show_progress=False)
+                for history_filter in [history_search, history_filter_favorites,
+                                       history_filter_checkpoints, history_filter_loras]:
+                    history_filter.change(refresh_history, inputs=history_filter_inputs,
+                                          outputs=history_refresh_outputs,
+                                          queue=False, show_progress=False)
+                history_day_selection.change(load_history_days,
+                                             inputs=[history_day_selection, history_selected_days,
+                                                     history_day_selection_mode, history_batch_selection,
+                                                     history_search, history_filter_favorites,
+                                                     history_filter_status, history_filter_tag,
+                                                     history_filter_checkpoints, history_filter_loras],
+                                             outputs=[history_day_selection, history_selected_days,
+                                                      history_seed_stack_selection, history_seed_stack_prompt,
+                                                      history_gallery, history_visible_image_ids,
+                                                      history_selected_image_ids, history_selected_image_ids_json,
+                                                      history_selected_gallery,
+                                                      history_image_selection, history_comparison_table,
+                                                      history_batch_favorite, history_batch_rating,
+                                                      history_batch_review_status, history_batch_tags,
+                                                      history_batch_note, history_favorite, history_rating,
+                                                      history_review_status, history_tags, history_note,
+                                                      history_status],
+                                             queue=False, show_progress=False)
+                history_stack_by_seed.change(apply_history_seed_group,
+                                             inputs=[history_stack_by_seed, history_seed_stack_selection,
+                                                     history_seed_stack_prompt, history_search,
+                                                     history_filter_favorites, history_filter_status,
+                                                     history_filter_tag, history_day_selection,
+                                                     history_filter_checkpoints, history_filter_loras],
+                                             outputs=[history_selected_image_ids, history_selected_image_ids_json,
+                                                      history_selected_gallery, history_image_selection,
+                                                      history_favorite, history_rating, history_review_status,
+                                                      history_tags, history_note, history_status],
+                                             queue=False, show_progress=False)
+                history_seed_stack_selection.change(
+                    lambda selection: seed_stack_prompt_by_choice(selection),
+                    inputs=history_seed_stack_selection,
+                    outputs=history_seed_stack_prompt,
+                    queue=False,
+                    show_progress=False
+                ).then(apply_history_seed_group,
+                       inputs=[history_stack_by_seed, history_seed_stack_selection,
+                               history_seed_stack_prompt, history_search, history_filter_favorites,
+                               history_filter_status, history_filter_tag, history_day_selection,
+                               history_filter_checkpoints, history_filter_loras],
+                       outputs=[history_selected_image_ids, history_selected_image_ids_json,
+                                history_selected_gallery, history_image_selection,
+                                history_favorite, history_rating, history_review_status,
+                                history_tags, history_note, history_status],
+                       queue=False, show_progress=False)
+                history_image_selection.change(load_history_image_curation, inputs=history_image_selection,
+                                               outputs=[history_favorite, history_rating, history_review_status,
+                                                        history_tags, history_note, history_status],
+                                               queue=False, show_progress=False)
+                history_gallery.select(select_history_thumbnail,
+                                       inputs=[history_visible_image_ids, history_selected_image_ids,
+                                               history_selection_mode],
+                                       outputs=[history_selected_image_ids, history_selected_image_ids_json,
+                                                history_selected_gallery,
+                                                history_image_selection, history_favorite, history_rating,
+                                                history_review_status, history_tags, history_note, history_status],
+                                       queue=False, show_progress=False)
+                history_comparison_table.select(select_history_comparison, inputs=history_comparison_table,
+                                                outputs=[history_selected_image_ids, history_selected_image_ids_json,
+                                                         history_selected_gallery,
+                                                         history_image_selection, history_favorite,
+                                                         history_rating, history_review_status,
+                                                         history_tags, history_note, history_status],
+                                                queue=False, show_progress=False)
+                history_remove_selected_image_button.click(remove_history_selected_image,
+                                                           inputs=[history_selected_image_ids,
+                                                                   history_remove_selected_image_id],
+                                                           outputs=[history_selected_image_ids,
+                                                                    history_selected_image_ids_json,
+                                                                    history_selected_gallery, history_status],
+                                                           queue=False, show_progress=False)
+                history_delete_selected_image_button.click(delete_history_selected_image,
+                                                           inputs=[history_selected_image_ids,
+                                                                   history_visible_image_ids,
+                                                                   history_delete_selected_image_id],
+                                                           outputs=[history_gallery, history_visible_image_ids,
+                                                                    history_selected_image_ids,
+                                                                    history_selected_image_ids_json,
+                                                                    history_selected_gallery,
+                                                                    history_image_selection, history_status],
+                                                           queue=False, show_progress=False)
+                history_apply_selected_image_button.click(load_history_image_config_by_id,
+                                                          inputs=[history_apply_selected_image_id, prompt,
+                                                                  state_is_generating, inpaint_mode],
+                                                          outputs=history_load_outputs,
+                                                          queue=False, show_progress=False) \
+                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
+                history_toggle_favorite_button.click(toggle_history_image_favorite,
+                                                     inputs=history_toggle_favorite_image_id,
+                                                     outputs=history_status,
+                                                     queue=False, show_progress=False)
+                history_save_curation_button.click(save_history_image_curation,
+                                                   inputs=[history_image_selection, history_favorite, history_rating,
+                                                           history_review_status, history_tags, history_note,
+                                                           history_batch_selection, history_filter_favorites,
+                                                           history_filter_status, history_filter_tag],
+                                                   outputs=[history_image_selection, history_gallery,
+                                                            history_comparison_table, history_status],
+                                                   queue=False, show_progress=False)
+                history_save_batch_curation_button.click(save_history_batch_curation,
+                                                         inputs=[history_batch_selection, history_batch_favorite,
+                                                                 history_batch_rating, history_batch_review_status,
+                                                                 history_batch_tags, history_batch_note,
+                                                                 history_search, history_filter_favorites,
+                                                                 history_filter_status, history_filter_tag],
+                                                         outputs=[history_batch_selection, history_status],
+                                                         queue=False, show_progress=False)
+                history_load_full_button.click(load_full_history_config,
+                                               inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                               outputs=history_load_outputs,
+                                               queue=False, show_progress=False) \
+                    .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
+                    .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
+                history_replace_prompt_button.click(replace_prompt_from_history,
+                                                    inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                                    outputs=history_load_outputs,
+                                                    queue=False, show_progress=False)
+                history_append_prompt_button.click(append_prompt_from_history,
+                                                   inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                                   outputs=history_load_outputs,
+                                                   queue=False, show_progress=False)
 
                 load_full_prompt_config_button.click(load_full_prompt_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
                                                      outputs=load_prompt_config_outputs,
@@ -2361,6 +3215,11 @@ with shared.gradio_root:
                                                    outputs=[gallery, state_session_gallery, state_selected_generation_index,
                                                             quick_preview_generation_indices, selected_image_status],
                                                    queue=False, show_progress=False)
+                favorite_selected_generation_button.click(toggle_session_generation_favorite,
+                                                          inputs=[selected_generation_favorite_index,
+                                                                  state_session_gallery],
+                                                          outputs=selected_image_status,
+                                                          queue=False, show_progress=False)
                 remove_queued_task_button.click(remove_queued_task,
                                                 inputs=selected_queue_remove_id,
                                                 outputs=[queue_status_html, selected_image_status],

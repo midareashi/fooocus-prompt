@@ -4,6 +4,7 @@ import time
 from extras.inpaint_mask import generate_mask_from_image, SAMOptions
 from modules.patch import PatchSettings, patch_settings, patch_all
 import modules.config
+import modules.history_db
 
 patch_all()
 
@@ -262,6 +263,12 @@ person_likeness_ip_adapter_cache = {}
 
 def append_async_task(task):
     global next_async_task_id
+    if getattr(task, 'args', None):
+        try:
+            task.history_batch_id = modules.history_db.create_batch_from_task(task)
+        except Exception as e:
+            task.history_batch_id = None
+            print(f'[History] Failed to create batch record: {e}')
     with async_tasks_lock:
         task.queue_id = next_async_task_id
         next_async_task_id += 1
@@ -661,6 +668,19 @@ def worker():
             if async_task.training_mode:
                 write_training_caption(image_path, d)
             register_generated_image_config(image_path, {key: value for _, key, value in d})
+            try:
+                modules.history_db.record_image(
+                    getattr(async_task, 'history_batch_id', None),
+                    image_path,
+                    d,
+                    task=task,
+                    loras=loras,
+                    width=width,
+                    height=height,
+                    image_index=task.get('history_image_index')
+                )
+            except Exception as e:
+                print(f'[History] Failed to record image {image_path}: {e}')
             img_paths.append(image_path)
 
         return img_paths
@@ -1749,6 +1769,7 @@ def worker():
 
                 for task_index, task in enumerate(checkpoint_tasks):
                     current_task_id = checkpoint_index * testing_lora_count * tasks_per_checkpoint + testing_lora_index * tasks_per_checkpoint + task_index
+                    task['history_image_index'] = current_task_id
                     progressbar(async_task, current_progress,
                                 f'Preparing task {current_task_id + 1}/{total_count} with {checkpoint_model_name} ...')
                     execution_start_time = time.perf_counter()
@@ -1949,17 +1970,20 @@ def worker():
             current_task = task
 
             try:
+                modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'running')
                 with ldm_patched.modules.model_management.interrupt_processing_mutex:
                     ldm_patched.modules.model_management.interrupt_processing = False
                 handler(task)
                 if task.generate_image_grid:
                     build_image_wall(task)
                 task.completed = True
+                modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'completed')
                 task.yields.append(['finish', task.results])
                 pipeline.prepare_text_encoder(async_call=True)
             except:
                 traceback.print_exc()
                 task.completed = True
+                modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'failed')
                 task.yields.append(['finish', task.results])
             finally:
                 if pid in modules.patch.patch_settings:

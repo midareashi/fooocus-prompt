@@ -1,0 +1,69 @@
+# History System - Completed
+
+## 2026-08-14
+
+- Created `tasks/history` task tracking folder.
+- Added `current.md`, `future.md`, and `completed.md`.
+- Reviewed the existing history/metadata flow:
+  - `modules/private_logger.py` writes generated images and `log.html`.
+  - `modules/async_worker.py` constructs metadata and has the best hook for durable image records.
+  - `webui.py` currently keeps session history in memory and falls back to parsing metadata from images.
+  - `modules/prompt_config.py` stores prompt configs separately as JSON files.
+- Drafted a SQLite-backed history architecture.
+- Drafted initial schema for batches, images, LoRAs, tags, notes, and prompt configs.
+- Identified implementation phases and UI features for persistent history.
+- Implemented `modules/history_db.py` with SQLite schema and helper functions.
+- Wired generation queueing to create persistent batch records.
+- Wired generated image saving to create persistent image and LoRA records.
+- Updated selected image config reload to query SQLite before fallback metadata parsing.
+- Added an initial History accordion for browsing batches/images and loading prompts/configs.
+- Verified DB initialization, batch/image insert/read, and Python compilation.
+- Added output folder re-query/reconcile from the History UI.
+- Verified re-query add/unchanged/remove behavior with a temporary PNG smoke test.
+- Added image curation fields and UI actions:
+  - favorite
+  - rating
+  - review status
+  - tags
+  - notes
+- Verified curation save/load behavior with a temporary PNG smoke test.
+- Added favorite/status/tag filters for history batches and batch images.
+- Verified history filter behavior with a temporary PNG smoke test.
+- Improved output folder re-query so newly discovered images are grouped into inferred imported batches by folder, core generation settings, and nearby timestamps.
+- Preserved the re-query rule that existing image records are not modified.
+- Added cleanup for empty imported batches after deleted files are removed.
+- Verified grouped import, unchanged re-query, and deleted-file cleanup with a temporary PNG smoke test.
+- Added `tests/test_history_db.py` coverage for grouped output re-query, unchanged existing rows, and cleanup of deleted imported files.
+- Added batch-level curation:
+  - favorite
+  - rating
+  - review status
+  - tags
+  - notes
+- Updated history filters so favorite/status/tag can match either batch-level curation or image-level curation.
+- Added test coverage for batch curation and batch-level filters.
+- Added a first-pass History comparison table showing checkpoint, seed, testing LoRA, image id, file, favorite, rating, status, and tags for the selected batch.
+- Added DB helper and test coverage for comparison row ordering by checkpoint, seed, testing LoRA, and image index.
+- Made comparison table rows selectable so clicking a row selects the matching history image and loads its curation fields.
+- Moved History out of the Image Generation settings area into its own top-level tab.
+- Fixed History tab refresh/re-query/filter loading so the selected batch's images, comparison table, and curation fields populate immediately.
+- Adjusted the History tab review layout to use a left thumbnail rail and a large selected-image preview area.
+- Added thumbnail multi-select behavior: clicking thumbnails toggles up to four selected images into a 2x2 preview grid.
+- Changed History to show all output images by default, with batch selection as an optional filter.
+- Added output-day toggles based on output folder names so the all-images view can be limited by day.
+- Disabled History gallery preview/lightbox behavior so thumbnail selection keeps the thumbnail rail visible.
+- Added modifier-aware History thumbnail selection: normal click selects one, Ctrl-click adds/removes one, and Shift-click selects a range.
+- Added highlighted outlines for selected History thumbnails.
+- Moved the History thumbnail rail and selected-image viewer to the top of the tab.
+- Collapsed filters, selected-image metadata/actions, batch details, and comparison table below the primary image review area.
+- Added remove buttons on each selected image so images can be removed from the selected 2x2 view without changing history records.
+- Added favorite star buttons on History thumbnails and selected images.
+- Removed visible rating controls and rating display from the History review UI.
+- Changed Output Days to default to only the most recent output folder.
+- Added modifier-aware Output Days selection: click selects one day, Ctrl/Cmd-click adds/removes one day, and Shift-click selects a day range.
+- Simplified visible History filters around the actual review workflow: positive prompt search, checkpoint, LoRA, favorites, and output day.
+- Hid batch details, batch status, comparison table, image tags, review status, and rating controls from the main History UI.
+- Added a favorite star button to the Image Generation session history gallery.
+- Updated favorite stars to show an outline star when inactive and a filled gold star when favorited.
+- Added selected-image overlay controls for Apply Config, Remove, Delete, and Favorite.
+- Added History "Group By Seed" review mode for testing runs, grouping images by positive prompt and seed across LoRAs/checkpoints.
