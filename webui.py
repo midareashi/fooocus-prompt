@@ -1915,8 +1915,14 @@ with shared.gradio_root:
                     return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, f'Loaded prompt config: {name}')
 
                 def select_generation_image(evt):
+                    if evt is None or not hasattr(evt, 'index') or evt.index is None:
+                        return gr.update(), gr.update()
                     selected_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
-                    return selected_index, f'Selected image #{int(selected_index) + 1}.'
+                    try:
+                        selected_index = int(selected_index)
+                    except Exception:
+                        return gr.update(), gr.update()
+                    return selected_index, f'Selected image #{selected_index + 1}.'
 
                 def get_selected_generation_image_path(selected_index, session_history):
                     session_history = list(session_history or [])

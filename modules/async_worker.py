@@ -1587,8 +1587,7 @@ def worker():
         if not skip_prompt_processing:
             tasks, use_expansion, loras, current_progress = process_prompt(async_task, async_task.prompt, async_task.negative_prompt,
                                                          base_model_additional_loras, async_task.image_number,
-                                                         async_task.disable_seed_increment or async_task.testing_mode,
-                                                         use_expansion, use_style, use_synthetic_refiner, current_progress,
+                                                         async_task.disable_seed_increment, use_expansion, use_style, use_synthetic_refiner, current_progress,
                                                          advance_progress=True, lora_override=initial_lora_override)
 
         if len(goals) > 0:
@@ -1738,7 +1737,7 @@ def worker():
                     checkpoint_tasks, _, checkpoint_loras, current_progress = process_prompt(
                         async_task, async_task.prompt, async_task.negative_prompt,
                         base_model_additional_loras, async_task.image_number,
-                        async_task.disable_seed_increment or async_task.testing_mode, use_expansion, use_style,
+                        async_task.disable_seed_increment, use_expansion, use_style,
                         use_synthetic_refiner, current_progress, advance_progress=False,
                         lora_override=testing_lora_override)
                     if 'cn' in goals:
