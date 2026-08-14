@@ -598,8 +598,9 @@ function installHistoryDaySelectionMode() {
 function installQueueButtons() {
     const removeButton = gradioApp().querySelector('#remove_queued_task_button');
     const stopButton = gradioApp().querySelector('#stop_queue_button');
+    const skipButton = gradioApp().querySelector('#skip_button');
     const panel = gradioApp().querySelector('#queue_status_panel');
-    if (!removeButton || !stopButton || !panel) return;
+    if (!removeButton || !stopButton || !skipButton || !panel) return;
 
     panel.querySelectorAll('.queue-remove-button').forEach(function(button) {
         if (button.dataset.boundQueueRemove) return;
@@ -620,6 +621,16 @@ function installQueueButtons() {
             event.preventDefault();
             event.stopPropagation();
             stopButton.click();
+        };
+    });
+
+    panel.querySelectorAll('.queue-skip-button').forEach(function(button) {
+        if (button.dataset.boundQueueSkip) return;
+        button.dataset.boundQueueSkip = 'true';
+        button.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            skipButton.click();
         };
     });
 }

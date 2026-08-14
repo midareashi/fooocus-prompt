@@ -194,9 +194,7 @@ div:has(> #positive_prompt) {
 }
 
 #queue_batch_controls {
-  justify-content: flex-end;
-  gap: 8px;
-  margin: -4px 0 12px;
+  display: none !important;
 }
 
 #queue_batch_controls .type_row_half {
@@ -221,7 +219,7 @@ div:has(> #positive_prompt) {
 .queue-panel-header,
 .queue-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 76px 96px 82px;
+  grid-template-columns: minmax(0, 1fr) 76px 96px 142px;
   align-items: center;
   gap: 8px;
 }
@@ -285,6 +283,7 @@ div:has(> #positive_prompt) {
 }
 
 .queue-remove-button,
+.queue-skip-button,
 .queue-stop-button {
   width: 100%;
   min-height: 28px;
@@ -299,9 +298,27 @@ div:has(> #positive_prompt) {
   padding: 4px 8px;
 }
 
+.queue-action-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.queue-skip-button {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: rgba(30, 64, 175, 0.45);
+  color: #dbeafe;
+  padding: 4px 8px;
+}
+
 .queue-remove-button:hover,
+.queue-skip-button:hover,
 .queue-stop-button:hover {
   background: rgba(185, 28, 28, 0.72);
+}
+
+.queue-skip-button:hover {
+  background: rgba(37, 99, 235, 0.72);
 }
 
 #final_gallery .thumbnail-item {

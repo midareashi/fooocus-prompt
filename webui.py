@@ -369,8 +369,18 @@ def make_queue_panel_html():
         steps = int(task.get("steps", 0) or 0)
         total_steps = int(task.get("total_steps", 0) or 0)
         badge_html = ''.join(badges)
-        action = '<button type="button" class="queue-stop-button">Stop Queue</button>' if status == 'active' else \
-            f'<button type="button" class="queue-remove-button" data-queue-id="{int(task.get("id", 0))}">Remove</button>'
+        if status == 'active':
+            action = (
+                '<div class="queue-action-group">'
+                '<button type="button" class="queue-skip-button">Skip</button>'
+                '<button type="button" class="queue-stop-button">Stop</button>'
+                '</div>'
+            )
+        else:
+            action = (
+                f'<button type="button" class="queue-remove-button" '
+                f'data-queue-id="{int(task.get("id", 0))}">Remove from Queue</button>'
+            )
         return (
             f'<div class="queue-row queue-row-{status}">'
             f'<div><strong>{status.title()}</strong><span>{prompt}</span>{badge_html}</div>'
@@ -399,7 +409,7 @@ def enqueue_generate_task(*args):
         print(f'[Queue] Added generation task. Pending tasks: {pending_count}')
 
     return task, should_monitor, \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(visible=False, interactive=False), \
         gr.update(visible=True, interactive=True), \
         gr.update(visible=True, interactive=True), \
@@ -446,9 +456,9 @@ def monitor_generate_queue(should_monitor, session_history):
         gr.update(visible=False, value=None), \
         gr.update(visible=True), \
         gr.update(), \
+        gr.update(visible=True, interactive=True), \
         gr.update(visible=False, interactive=False), \
-        gr.update(visible=True, interactive=True), \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(value=make_queue_panel_html()), \
         gr.update(value=get_quick_preview_indices()), \
         True
@@ -473,7 +483,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     gr.update(), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(visible=False, interactive=False), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
                     True
@@ -499,7 +509,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     gr.update(), \
                     gr.update(visible=True, interactive=True), \
                     gr.update(visible=False, interactive=False), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
                     True
@@ -519,7 +529,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     session_history, \
                     gr.update(visible=True, interactive=True), \
                     gr.update(visible=False, interactive=False), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
                     True
@@ -542,7 +552,7 @@ def monitor_generate_queue(should_monitor, session_history):
                     session_history, \
                     gr.update(visible=True, interactive=True), \
                     gr.update(visible=False, interactive=False), \
-                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
                     gr.update(value=make_queue_panel_html()), \
                     gr.update(value=get_quick_preview_indices()), \
                     True
@@ -614,16 +624,16 @@ def poll_generate_queue(task, is_generating, session_history):
                 visible=True,
                 value=modules.html.make_progress_html(1, f'Waiting for queued task ... ({pending_count} pending)')
             ), gr.update(), gr.update(), gr.update(), session_history, \
+                gr.update(visible=True, interactive=True), \
                 gr.update(visible=False, interactive=False), \
-                gr.update(visible=True, interactive=True), \
-                gr.update(visible=True, interactive=True), \
+                gr.update(visible=False, interactive=False), \
                 gr.update(value=make_queue_panel_html()), \
                 gr.update(value=get_quick_preview_indices()), \
                 True
         return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
+            gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
-            gr.update(visible=True, interactive=True), \
-            gr.update(visible=True, interactive=True), \
+            gr.update(visible=False, interactive=False), \
             gr.update(value=make_queue_panel_html()), \
             gr.update(value=get_quick_preview_indices()), \
             True
@@ -639,9 +649,9 @@ def poll_generate_queue(task, is_generating, session_history):
             gr.update(), \
             gr.update(visible=True), \
             session_history, \
+            gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
-            gr.update(visible=True, interactive=True), \
-            gr.update(visible=True, interactive=True), \
+            gr.update(visible=False, interactive=False), \
             gr.update(value=make_queue_panel_html()), \
             gr.update(value=get_quick_preview_indices()), \
             True
@@ -666,17 +676,17 @@ def poll_generate_queue(task, is_generating, session_history):
             gr.update(visible=False), \
             gr.update(visible=True, value=session_history), \
             session_history, \
-            gr.update(visible=is_finished, interactive=True), \
-            gr.update(visible=not is_finished, interactive=True), \
-            gr.update(visible=not is_finished, interactive=True), \
+            gr.update(visible=True, interactive=True), \
+            gr.update(visible=False, interactive=False), \
+            gr.update(visible=False, interactive=False), \
             gr.update(value=make_queue_panel_html()), \
             gr.update(value=get_quick_preview_indices()), \
             not is_finished
 
     return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
+        gr.update(visible=True, interactive=True), \
         gr.update(visible=False, interactive=False), \
-        gr.update(visible=True, interactive=True), \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(value=make_queue_panel_html()), \
         gr.update(value=get_quick_preview_indices()), \
         True
@@ -696,9 +706,9 @@ def reconnect_generate_queue(session_history):
     should_monitor = worker.begin_queue_monitor()
     print(f'[Queue] Reconnected to active generation task {getattr(active_task, "queue_id", 0)}.')
     return active_task, should_monitor, \
+        gr.update(visible=True, interactive=True), \
         gr.update(visible=False, interactive=False), \
-        gr.update(visible=True, interactive=True), \
-        gr.update(visible=True, interactive=True), \
+        gr.update(visible=False, interactive=False), \
         gr.update(visible=True, interactive=True), \
         gr.update(value=make_queue_panel_html()), \
         True
@@ -947,7 +957,6 @@ with shared.gradio_root:
 
                     def stop_clicked(currentTask):
                         import ldm_patched.modules.model_management as model_management
-                        worker.clear_pending_tasks()
                         target_task = currentTask if currentTask.processing else worker.get_current_task()
                         if target_task is None:
                             target_task = currentTask
@@ -2391,7 +2400,7 @@ with shared.gradio_root:
                     should_monitor = worker.begin_queue_monitor()
                     print(f'[Queue] Added quality regeneration task. Pending tasks: {pending_count}')
                     return task, should_monitor, \
-                        gr.update(visible=True, interactive=True), \
+                        gr.update(visible=False, interactive=False), \
                         gr.update(visible=False, interactive=False), \
                         gr.update(visible=True, interactive=True), \
                         gr.update(visible=True, interactive=True), \
@@ -2677,7 +2686,12 @@ with shared.gradio_root:
                         seed = summary.get('seed')
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
                         favorite_text = 'fav | ' if summary.get('favorite') else ''
-                        gallery_items.append((summary['path'], f"{favorite_text}#{summary.get('id')} | {seed_text}"))
+                        try:
+                            from PIL import Image
+                            image = Image.open(summary['path']).copy()
+                        except Exception:
+                            continue
+                        gallery_items.append((image, f"{favorite_text}#{summary.get('id')} | {seed_text}"))
                     return gallery_items
 
                 def visible_history_gallery_items(image_ids):
@@ -3733,7 +3747,7 @@ with shared.gradio_root:
                         else:
                             return gr.update(), gr.update(visible=True), gr.update(visible=False)
         
-                    return json.dumps(loaded_json), gr.update(visible=False), gr.update(visible=True)
+                    return json.dumps(loaded_json), gr.update(visible=True), gr.update(visible=True)
         
                 prompt.input(parse_meta, inputs=[prompt, state_is_generating], outputs=[prompt, generate_button, load_parameter_button], queue=False, show_progress=False)
         
