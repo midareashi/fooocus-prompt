@@ -88,6 +88,22 @@ div:has(> #positive_prompt) {
     background: var(--background-fill-primary);
 }
 
+#prompt_action_row {
+  align-items: stretch;
+}
+
+#prompt_action_row > .gradio-column:last-child {
+  display: grid !important;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+}
+
+#prompt_action_row #generate_button,
+#prompt_action_row #quick_preview_button {
+  height: 42px !important;
+  min-height: 42px !important;
+}
+
 .type_row {
   height: 84px !important;
 }

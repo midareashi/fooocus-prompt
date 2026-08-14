@@ -952,7 +952,7 @@ with shared.gradio_root:
                     stop_queue_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
                     stop_button.click(stop_clicked, inputs=currentTask, outputs=[currentTask, queue_status_html], queue=False, show_progress=False, _js='cancelGenerateForever')
                     skip_button.click(skip_clicked, inputs=currentTask, outputs=currentTask, queue=False, show_progress=False)
-                    with gr.Row():
+                    with gr.Row(elem_id='prompt_action_row'):
                         with gr.Column(scale=17):
                             prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
                                                 autofocus=True, lines=3)
