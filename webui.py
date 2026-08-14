@@ -1403,6 +1403,14 @@ with shared.gradio_root:
                         training_mode = gr.Checkbox(label='Training Mode',
                                                     value=modules.config.default_training_mode,
                                                     info='Creates a LoRA training .txt caption file next to each generated image.')
+                        testing_mode = gr.Checkbox(label='Testing Mode',
+                                                   value=modules.config.default_testing_mode,
+                                                   info='Generates Image Number images for each selected testing LoRA using the same seed.')
+                        testing_loras = gr.Dropdown(label='Testing LoRAs',
+                                                    choices=modules.config.lora_filenames,
+                                                    value=[],
+                                                    multiselect=True,
+                                                    visible=modules.config.default_testing_mode)
                         history_link = gr.HTML(elem_id='history_link')
         
                         def random_checked(r):
@@ -1422,6 +1430,8 @@ with shared.gradio_root:
         
                         seed_random.change(random_checked, inputs=[seed_random], outputs=[image_seed],
                                            queue=False, show_progress=False)
+                        testing_mode.change(lambda x: gr.update(visible=x), inputs=testing_mode,
+                                            outputs=testing_loras, queue=False, show_progress=False)
         
                         def update_history_link():
                             if args_manager.args.disable_image_log:
@@ -1758,6 +1768,7 @@ with shared.gradio_root:
                             results += [gr.update(choices=modules.config.model_filenames)]
                             results += [gr.update(choices=['None'] + modules.config.model_filenames)]
                             results += [gr.update(choices=[flags.default_vae] + modules.config.vae_filenames)]
+                            results += [gr.update(choices=modules.config.lora_filenames)]
                             if not args_manager.args.disable_preset_selection:
                                 results += [gr.update(choices=modules.config.available_presets)]
                             for i in range(modules.config.default_max_lora_number):
@@ -1765,7 +1776,7 @@ with shared.gradio_root:
                                             gr.update(choices=['None'] + modules.config.lora_filenames), gr.update()]
                             return results
         
-                        refresh_files_output = [base_model, multi_checkpoint_models, refiner_model, vae_name]
+                        refresh_files_output = [base_model, multi_checkpoint_models, refiner_model, vae_name, testing_loras]
                         if not args_manager.args.disable_preset_selection:
                             refresh_files_output += [preset_selection]
                         refresh_files.click(refresh_files_clicked, [], refresh_files_output + lora_ctrls,
@@ -2311,7 +2322,7 @@ with shared.gradio_root:
                 ctrls += [refiner_swap_method, controlnet_softness]
                 ctrls += freeu_ctrls
                 ctrls += inpaint_ctrls
-                ctrls += [training_mode]
+                ctrls += [training_mode, testing_mode, testing_loras]
         
                 if not args_manager.args.disable_image_log:
                     ctrls += [save_final_enhanced_image_only]

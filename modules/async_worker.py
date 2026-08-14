@@ -172,6 +172,17 @@ class AsyncTask:
         self.invert_mask_checkbox = args.pop()
         self.inpaint_erode_or_dilate = args.pop()
         self.training_mode = args.pop()
+        self.testing_mode = bool(args.pop())
+        self.testing_loras = args.pop()
+        if not isinstance(self.testing_loras, list):
+            self.testing_loras = []
+        self.testing_loras = [
+            str(x) for x in self.testing_loras
+            if isinstance(x, str) and x != 'None'
+        ]
+        if not self.testing_mode or len(self.testing_loras) == 0:
+            self.testing_loras = []
+        self.testing_lora_name = None
         self.save_final_enhanced_image_only = args.pop() if not args_manager.args.disable_image_log else False
         self.save_metadata_to_images = args.pop() if not args_manager.args.disable_metadata else False
         self.metadata_scheme = MetadataScheme(
@@ -282,6 +293,9 @@ def get_task_summary(task):
     checkpoint_count = len(getattr(task, 'multi_checkpoint_model_names', []) or [])
     if checkpoint_count > 1:
         total_images *= checkpoint_count
+    testing_lora_count = len(getattr(task, 'testing_loras', []) or [])
+    if testing_lora_count > 1:
+        total_images *= testing_lora_count
 
     wildprompt_selections = getattr(task, 'wildprompt_selections', []) or []
     if getattr(task, 'wildprompt_generate_all', False) and len(wildprompt_selections) == 1:
@@ -629,6 +643,8 @@ def worker():
             for li, (n, w) in enumerate(loras):
                 if n != 'None':
                     d.append((f'LoRA {li + 1}', f'lora_combined_{li + 1}', f'{n} : {w}'))
+            if async_task.testing_lora_name is not None:
+                d.append(('Testing LoRA', 'testing_lora', async_task.testing_lora_name))
 
             metadata_parser = None
             if async_task.save_metadata_to_images:
@@ -989,7 +1005,7 @@ def worker():
         return torch.from_numpy(np.ascontiguousarray(np.stack(normalized, axis=0))).float()
 
     def process_prompt(async_task, prompt, negative_prompt, base_model_additional_loras, image_number, disable_seed_increment, use_expansion, use_style,
-                       use_synthetic_refiner, current_progress, advance_progress=False):
+                       use_synthetic_refiner, current_progress, advance_progress=False, lora_override=None):
         prompts = remove_empty_str([safe_str(p) for p in prompt.splitlines()], default='')
         negative_prompts = remove_empty_str([safe_str(p) for p in negative_prompt.splitlines()], default='')
         prompt = prompts[0]
@@ -1004,7 +1020,8 @@ def worker():
         progressbar(async_task, current_progress, 'Loading models ...')
         lora_filenames = modules.util.remove_performance_lora(modules.config.lora_filenames,
                                                               async_task.performance_selection)
-        loras, prompt = parse_lora_references_from_prompt(prompt, async_task.loras,
+        prompt_loras = async_task.loras if lora_override is None else lora_override
+        loras, prompt = parse_lora_references_from_prompt(prompt, prompt_loras,
                                                           modules.config.default_max_lora_number,
                                                           lora_filenames=lora_filenames)
         loras += async_task.performance_loras
@@ -1556,11 +1573,23 @@ def worker():
         progressbar(async_task, current_progress, 'Initializing ...')
 
         loras = async_task.loras
+        selected_testing_loras = async_task.testing_loras if async_task.testing_mode else []
+        def with_testing_lora(base_loras, testing_lora_name):
+            testing_lora_override = base_loras.copy()
+            if testing_lora_name is not None and testing_lora_name not in [name for name, _ in testing_lora_override]:
+                testing_lora_override.append((testing_lora_name, 1.0))
+            return testing_lora_override
+
+        initial_lora_override = async_task.loras.copy()
+        if len(selected_testing_loras) > 0:
+            async_task.testing_lora_name = selected_testing_loras[0]
+            initial_lora_override = with_testing_lora(async_task.loras, selected_testing_loras[0])
         if not skip_prompt_processing:
             tasks, use_expansion, loras, current_progress = process_prompt(async_task, async_task.prompt, async_task.negative_prompt,
                                                          base_model_additional_loras, async_task.image_number,
-                                                         async_task.disable_seed_increment, use_expansion, use_style,
-                                                         use_synthetic_refiner, current_progress, advance_progress=True)
+                                                         async_task.disable_seed_increment or async_task.testing_mode,
+                                                         use_expansion, use_style, use_synthetic_refiner, current_progress,
+                                                         advance_progress=True, lora_override=initial_lora_override)
 
         if len(goals) > 0:
             current_progress += 1
@@ -1627,8 +1656,9 @@ def worker():
                          async_task.disable_intermediate_results)
 
         checkpoint_count = max(1, len(selected_base_model_names))
+        testing_lora_count = max(1, len(selected_testing_loras))
         tasks_per_checkpoint = max(1, len(tasks) if not skip_prompt_processing else async_task.image_number)
-        all_steps = steps * tasks_per_checkpoint * checkpoint_count
+        all_steps = steps * tasks_per_checkpoint * checkpoint_count * testing_lora_count
 
         if async_task.enhance_checkbox and async_task.enhance_uov_method != flags.disabled.casefold():
             enhance_upscale_steps = async_task.performance_selection.steps()
@@ -1638,12 +1668,12 @@ def worker():
                 else:
                     enhance_upscale_steps = async_task.performance_selection.steps_uov()
             enhance_upscale_steps, _, _, _ = apply_overrides(async_task, enhance_upscale_steps, height, width)
-            enhance_upscale_steps_total = tasks_per_checkpoint * checkpoint_count * enhance_upscale_steps
+            enhance_upscale_steps_total = tasks_per_checkpoint * checkpoint_count * testing_lora_count * enhance_upscale_steps
             all_steps += enhance_upscale_steps_total
 
         if async_task.enhance_checkbox and len(async_task.enhance_ctrls) != 0:
             enhance_steps, _, _, _ = apply_overrides(async_task, async_task.original_steps, height, width)
-            all_steps += tasks_per_checkpoint * checkpoint_count * len(async_task.enhance_ctrls) * enhance_steps
+            all_steps += tasks_per_checkpoint * checkpoint_count * testing_lora_count * len(async_task.enhance_ctrls) * enhance_steps
 
         all_steps = max(all_steps, 1)
 
@@ -1667,7 +1697,7 @@ def worker():
         processing_start_time = time.perf_counter()
 
         preparation_steps = current_progress
-        total_count = tasks_per_checkpoint * checkpoint_count
+        total_count = tasks_per_checkpoint * checkpoint_count * testing_lora_count
 
         def callback(step, x0, x, total_steps, y):
             if step == 0:
@@ -1691,59 +1721,70 @@ def worker():
                 print(f'Refiner disabled because base model and refiner are same.')
                 async_task.refiner_model_name = 'None'
 
-            if checkpoint_index == 0:
-                checkpoint_tasks = tasks
-                checkpoint_loras = loras
-                checkpoint_scheduler_name = final_scheduler_name
-            else:
-                progressbar(async_task, current_progress,
-                            f'Loading checkpoint {checkpoint_index + 1}/{checkpoint_count}: {checkpoint_model_name} ...')
-                checkpoint_tasks, _, checkpoint_loras, current_progress = process_prompt(
-                    async_task, async_task.prompt, async_task.negative_prompt,
-                    base_model_additional_loras, async_task.image_number,
-                    async_task.disable_seed_increment, use_expansion, use_style,
-                    use_synthetic_refiner, current_progress, advance_progress=False)
-                if 'cn' in goals:
-                    apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width, current_progress)
-                if async_task.freeu_enabled:
-                    apply_freeu(async_task)
-                checkpoint_scheduler_name = patch_samplers(async_task)
-                print(f'Using {checkpoint_scheduler_name} scheduler.')
+            testing_lora_names = selected_testing_loras if len(selected_testing_loras) > 0 else [None]
+            for testing_lora_index, testing_lora_name in enumerate(testing_lora_names):
+                async_task.testing_lora_name = testing_lora_name
+                testing_lora_override = with_testing_lora(async_task.loras, testing_lora_name)
 
-            for task_index, task in enumerate(checkpoint_tasks):
-                current_task_id = checkpoint_index * tasks_per_checkpoint + task_index
-                progressbar(async_task, current_progress,
-                            f'Preparing task {current_task_id + 1}/{total_count} with {checkpoint_model_name} ...')
-                execution_start_time = time.perf_counter()
+                if checkpoint_index == 0 and testing_lora_index == 0:
+                    checkpoint_tasks = tasks
+                    checkpoint_loras = loras
+                    checkpoint_scheduler_name = final_scheduler_name
+                else:
+                    load_label = f'Loading checkpoint {checkpoint_index + 1}/{checkpoint_count}: {checkpoint_model_name}'
+                    if testing_lora_name is not None:
+                        load_label += f' | Testing LoRA {testing_lora_index + 1}/{testing_lora_count}: {testing_lora_name}'
+                    progressbar(async_task, current_progress, load_label + ' ...')
+                    checkpoint_tasks, _, checkpoint_loras, current_progress = process_prompt(
+                        async_task, async_task.prompt, async_task.negative_prompt,
+                        base_model_additional_loras, async_task.image_number,
+                        async_task.disable_seed_increment or async_task.testing_mode, use_expansion, use_style,
+                        use_synthetic_refiner, current_progress, advance_progress=False,
+                        lora_override=testing_lora_override)
+                    if 'cn' in goals:
+                        apply_control_nets(async_task, height, ip_adapter_face_path, ip_adapter_path, width, current_progress)
+                    if async_task.freeu_enabled:
+                        apply_freeu(async_task)
+                    checkpoint_scheduler_name = patch_samplers(async_task)
+                    print(f'Using {checkpoint_scheduler_name} scheduler.')
 
-                try:
-                    imgs, img_paths, current_progress = process_task(
-                        all_steps, async_task, callback, controlnet_canny_path,
-                        controlnet_cpds_path, current_task_id,
-                        denoising_strength, checkpoint_scheduler_name, goals,
-                        initial_latent, async_task.steps, switch, task['c'],
-                        task['uc'], task, checkpoint_loras, tiled, use_expansion, width,
-                        height, current_progress, preparation_steps,
-                        total_count, show_intermediate_results,
-                        persist_image)
+                for task_index, task in enumerate(checkpoint_tasks):
+                    current_task_id = checkpoint_index * testing_lora_count * tasks_per_checkpoint + testing_lora_index * tasks_per_checkpoint + task_index
+                    progressbar(async_task, current_progress,
+                                f'Preparing task {current_task_id + 1}/{total_count} with {checkpoint_model_name} ...')
+                    execution_start_time = time.perf_counter()
 
-                    completed_tasks = current_task_id + 1
-                    current_progress = int(preparation_steps + (100 - preparation_steps) / float(all_steps) * async_task.steps * completed_tasks)
-                    images_to_enhance += imgs
+                    try:
+                        imgs, img_paths, current_progress = process_task(
+                            all_steps, async_task, callback, controlnet_canny_path,
+                            controlnet_cpds_path, current_task_id,
+                            denoising_strength, checkpoint_scheduler_name, goals,
+                            initial_latent, async_task.steps, switch, task['c'],
+                            task['uc'], task, checkpoint_loras, tiled, use_expansion, width,
+                            height, current_progress, preparation_steps,
+                            total_count, show_intermediate_results,
+                            persist_image)
 
-                except ldm_patched.modules.model_management.InterruptProcessingException:
-                    if async_task.last_stop == 'skip':
-                        print('User skipped')
-                        async_task.last_stop = False
-                        continue
-                    else:
-                        print('User stopped')
-                        should_stop_generation = True
-                        break
+                        completed_tasks = current_task_id + 1
+                        current_progress = int(preparation_steps + (100 - preparation_steps) / float(all_steps) * async_task.steps * completed_tasks)
+                        images_to_enhance += imgs
 
-                del task['c'], task['uc']  # Save memory
-                execution_time = time.perf_counter() - execution_start_time
-                print(f'Generating and saving time: {execution_time:.2f} seconds')
+                    except ldm_patched.modules.model_management.InterruptProcessingException:
+                        if async_task.last_stop == 'skip':
+                            print('User skipped')
+                            async_task.last_stop = False
+                            continue
+                        else:
+                            print('User stopped')
+                            should_stop_generation = True
+                            break
+
+                    del task['c'], task['uc']  # Save memory
+                    execution_time = time.perf_counter() - execution_start_time
+                    print(f'Generating and saving time: {execution_time:.2f} seconds')
+
+                if should_stop_generation:
+                    break
 
             if should_stop_generation:
                 break
