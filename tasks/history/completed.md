@@ -67,3 +67,4 @@
 - Updated favorite stars to show an outline star when inactive and a filled gold star when favorited.
 - Added selected-image overlay controls for Apply Config, Remove, Delete, and Favorite.
 - Added History "Group By Seed" review mode for testing runs, grouping images by positive prompt and seed across LoRAs/checkpoints.
+- Added focused DB test coverage for schema initialization, generation image recording, LoRA row persistence, reloadable config lookup, and embedded metadata fallback import.

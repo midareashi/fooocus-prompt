@@ -8,6 +8,7 @@ import unittest
 from types import SimpleNamespace
 
 from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 sys.path.append(str(pathlib.Path(__file__).parent.parent.resolve()))
 sys.argv = sys.argv[:1]
@@ -40,6 +41,42 @@ class TestHistoryDb(unittest.TestCase):
     def _batch_count(self):
         with history_db._connect() as conn:
             return conn.execute('SELECT COUNT(*) AS count FROM batches').fetchone()['count']
+
+    def test_schema_initializes_expected_tables_and_indexes(self):
+        history_db.init_db()
+
+        with history_db._connect() as conn:
+            tables = {
+                row['name']
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                ).fetchall()
+            }
+            indexes = {
+                row['name']
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'index'"
+                ).fetchall()
+            }
+
+        self.assertTrue({
+            'batches',
+            'images',
+            'image_loras',
+            'tags',
+            'image_tags',
+            'batch_tags',
+            'notes',
+            'prompt_configs',
+        }.issubset(tables))
+        self.assertTrue({
+            'idx_images_created_at',
+            'idx_images_batch_id',
+            'idx_images_checkpoint',
+            'idx_images_seed',
+            'idx_image_loras_name',
+            'idx_batches_created_at',
+        }.issubset(indexes))
 
     def test_reconcile_outputs_groups_new_images_and_keeps_existing_rows(self):
         output_folder = os.path.join(self.temp_dir, 'outputs')
@@ -366,6 +403,124 @@ class TestHistoryDb(unittest.TestCase):
         self.assertEqual(100, seed)
         self.assertEqual('same test prompt', prompt)
         self.assertEqual(2, len(stack_images))
+
+    def test_record_image_stores_reloadable_config_and_loras(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        image_path = os.path.join(output_folder, 'recorded.png')
+        self._create_image(image_path, time.time())
+        task = SimpleNamespace(
+            prompt='record prompt',
+            negative_prompt='record negative',
+            style_selections=['Fooocus V2'],
+            wildprompt_selections=[],
+            wildprompt_generate_all=False,
+            wildprompt_line_selections={},
+            performance_selection=SimpleNamespace(value='Quality'),
+            overwrite_step=30,
+            overwrite_switch=0.5,
+            cfg_scale=7,
+            sharpness=2,
+            adm_scaler_positive=1.5,
+            adm_scaler_negative=0.8,
+            adm_scaler_end=0.3,
+            refiner_swap_method='joint',
+            adaptive_cfg=7,
+            clip_skip=2,
+            base_model_name='checkpoint_a.safetensors',
+            refiner_model_name='None',
+            refiner_switch=0.5,
+            sampler_name='dpmpp_2m_sde_gpu',
+            scheduler_name='karras',
+            vae_name='Default',
+            seed=123,
+            aspect_ratios_selection='1024 1024',
+            quick_preview=False,
+            training_mode=False,
+            testing_mode=False,
+            testing_loras=[],
+            loras=[('portrait_lora.safetensors', 0.75)],
+            image_number=1,
+            multi_checkpoint_model_names=[]
+        )
+        batch_id = history_db.create_batch_from_task(task)
+
+        image_id = history_db.record_image(
+            batch_id,
+            image_path,
+            [
+                ('Prompt', 'prompt', 'record prompt'),
+                ('Negative Prompt', 'negative_prompt', 'record negative'),
+                ('Seed', 'seed', '123'),
+                ('Base Model', 'base_model', 'checkpoint_a.safetensors'),
+                ('Sampler', 'sampler', 'dpmpp_2m_sde_gpu'),
+                ('Scheduler', 'scheduler', 'karras'),
+                ('Steps', 'steps', 30),
+            ],
+            loras=[('portrait_lora.safetensors', 0.75)],
+            width=8,
+            height=8,
+            image_index=0
+        )
+
+        config = history_db.get_config_by_path(image_path)
+        summary = history_db.get_image_summary(image_id)
+        with history_db._connect() as conn:
+            lora_rows = conn.execute(
+                'SELECT name, weight, role FROM image_loras WHERE image_id = ?',
+                (image_id,)
+            ).fetchall()
+            image_row = conn.execute(
+                'SELECT width, height FROM images WHERE id = ?',
+                (image_id,)
+            ).fetchone()
+
+        self.assertEqual('record prompt', config['prompt'])
+        self.assertEqual('record negative', config['negative_prompt'])
+        self.assertEqual(30, config['steps'])
+        self.assertEqual('checkpoint_a.safetensors', summary['checkpoint'])
+        self.assertEqual(123, summary['seed'])
+        self.assertEqual(8, image_row['width'])
+        self.assertEqual(8, image_row['height'])
+        self.assertEqual(1, len(lora_rows))
+        self.assertEqual('portrait_lora.safetensors', lora_rows[0]['name'])
+        self.assertEqual(0.75, lora_rows[0]['weight'])
+        self.assertEqual('active', lora_rows[0]['role'])
+
+    def test_reconcile_imports_reloadable_config_from_embedded_metadata(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        image_path = os.path.join(output_folder, 'embedded.png')
+        os.makedirs(output_folder, exist_ok=True)
+        metadata = PngInfo()
+        metadata.add_text('parameters', history_db._json_dumps({
+            'prompt': 'embedded prompt',
+            'negative_prompt': 'embedded negative',
+            'seed': '456',
+            'steps': 10,
+            'sampler': 'dpmpp_2m_sde_gpu',
+            'scheduler': 'karras',
+            'guidance_scale': 7,
+        }))
+        Image.new('RGB', (12, 10), (30, 40, 50)).save(image_path, pnginfo=metadata)
+
+        result = history_db.reconcile_outputs_folder(output_folder)
+        image_id = history_db.get_image_id_by_path(image_path)
+        config = history_db.get_config_by_path(image_path)
+        summary = history_db.get_image_summary(image_id)
+        with history_db._connect() as conn:
+            image_row = conn.execute(
+                'SELECT width, height FROM images WHERE id = ?',
+                (image_id,)
+            ).fetchone()
+
+        self.assertEqual(1, result['added'])
+        self.assertEqual('embedded prompt', config['prompt'])
+        self.assertEqual('embedded negative', config['negative_prompt'])
+        self.assertEqual('456', str(config['seed']))
+        self.assertEqual(10, config['steps'])
+        self.assertEqual('embedded prompt', summary['prompt'])
+        self.assertEqual(456, summary['seed'])
+        self.assertEqual(12, image_row['width'])
+        self.assertEqual(10, image_row['height'])
 
 
 if __name__ == '__main__':
