@@ -1,5 +1,5 @@
 {
-  "prompt": "girl_named_qq, (10 years old:1.2), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks\n\nnatural skin texture, detailed eyes, detailed lips, realistic, 8k\n\nJapanese Lolita dress showcases a fitted bodice adorned with intricate lace, delicate ribbons, and bows, reminiscent of Victorian corsets. The skirt billows out in a voluminous silhouette, layered with ruffles and petticoats to create a charming bell-like shape. Delicate lace trims and printed motifs of roses and lace add a touch of whimsy and romance to the ensemble. Completing the look are lace stockings, dainty gloves, and a matching headpiece adorned with bows and flowers, evoking the nostalgic elegance of Victorian and Rococo fashion.",
+  "prompt": "girl_named_qq, (10 years old:1.2), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks\n\nnatural skin texture, detailed eyes, detailed lips, realistic, 8k\n\nGirl wearing a tight skirt with white pantyhose and pink and white air force one Nike sneakers, standing outside, city street, standing in front of a brick wall, graffiti, from below",
   "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
   "styles": "['Fooocus V2', 'Fooocus Negative']",
   "wildprompts": "[]",
@@ -28,8 +28,8 @@
   "person_likeness_face_weight": 0,
   "person_likeness_face_start": 0.55,
   "person_likeness_paths": "[]",
-  "saved_at": "2026-08-14 08:28:24",
+  "saved_at": "2026-08-14 10:25:34",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)",
-  "seed": "475236593"
+  "seed": "7789717485974139655"
 }
