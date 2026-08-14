@@ -795,14 +795,24 @@ with shared.gradio_root:
             history_toggle_favorite_button = gr.Button(value='Toggle History Favorite',
                                                        elem_id='history_toggle_favorite_button',
                                                        visible=False)
+            history_hide_thumbnail_image_id = gr.Textbox(value='', elem_id='history_hide_thumbnail_image_id',
+                                                         visible=False)
+            history_hide_thumbnail_button = gr.Button(value='Hide History Thumbnail',
+                                                      elem_id='history_hide_thumbnail_button',
+                                                      visible=False)
             with gr.Row():
                 with gr.Column(scale=1, min_width=220):
                     history_gallery = gr.Gallery(label='Thumbnails', show_label=True, object_fit='cover',
                                                  columns=1, height=820, preview=False, allow_preview=False,
                                                  elem_id='history_thumbnail_gallery',
                                                  elem_classes=['image_gallery'])
-                    history_stack_by_seed = gr.Checkbox(label='Stack Matching Seeds', value=False,
-                                                        elem_id='history_stack_by_seed')
+                    with gr.Row(elem_id='history_thumbnail_view_controls'):
+                        history_stack_by_seed = gr.Checkbox(label='Stack Matching Seeds', value=False,
+                                                            elem_id='history_stack_by_seed')
+                        history_thumbnail_visibility = gr.Radio(label='Thumbnail View',
+                                                                choices=['Visible', 'All', 'Hidden'],
+                                                                value='Visible',
+                                                                elem_id='history_thumbnail_visibility')
                 with gr.Column(scale=4):
                     history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
                                                           object_fit='contain', columns=2, rows=2,
@@ -2486,14 +2496,19 @@ with shared.gradio_root:
                     stack_id = parse_history_id(choice)
                     if stack_id is None:
                         return ''
-                    stacks = modules.history_db.list_seed_stacks()
-                    for row in stacks:
-                        if int(row.get('id')) == stack_id:
-                            return str(row.get('prompt', '') or '')
-                    return ''
+                    _, prompt = modules.history_db.get_seed_stack_key(stack_id)
+                    return prompt
+
+                def normalize_thumbnail_visibility(value):
+                    mode = str(value or 'Visible').strip().casefold()
+                    if mode == 'hidden':
+                        return 'hidden'
+                    if mode == 'all':
+                        return 'all'
+                    return 'visible'
 
                 def seed_stack_choices(search, favorite_only, review_status, tag, days, checkpoints, loras,
-                                       show_preview_images=False):
+                                       show_preview_images=False, thumbnail_visibility='visible'):
                     rows = modules.history_db.list_seed_stacks(
                         search=search,
                         favorite_only=favorite_only,
@@ -2502,7 +2517,8 @@ with shared.gradio_root:
                         days=days,
                         checkpoints=checkpoints,
                         loras=loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=normalize_thumbnail_visibility(thumbnail_visibility)
                     )
                     choices = [format_history_seed_stack(row) for row in rows]
                     prompt_by_choice = {
@@ -2514,11 +2530,12 @@ with shared.gradio_root:
                 def format_history_image(row):
                     missing = '' if row.get('file_exists') else 'missing | '
                     favorite = 'fav | ' if row.get('favorite') else ''
+                    hidden = 'hidden | ' if row.get('thumbnail_hidden') else ''
                     tags = str(row.get('tags') or '').strip()
                     tags_text = f'{tags} | ' if tags != '' else ''
                     seed = row.get('seed')
                     seed_text = f'seed {seed}' if seed is not None else 'seed ?'
-                    return f"{row['id']} | {missing}{favorite}{tags_text}{row.get('filename', '')} | {seed_text} | {row.get('checkpoint', '')}"
+                    return f"{row['id']} | {missing}{hidden}{favorite}{tags_text}{row.get('filename', '')} | {seed_text} | {row.get('checkpoint', '')}"
 
                 def format_history_comparison(rows):
                     table = []
@@ -2542,8 +2559,9 @@ with shared.gradio_root:
                             continue
                         seed = row.get('seed')
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
+                        hidden_text = 'hidden | ' if row.get('thumbnail_hidden') else ''
                         favorite_text = 'fav | ' if row.get('favorite') else ''
-                        label = f"{favorite_text}#{row.get('id')} | {seed_text}"
+                        label = f"{hidden_text}{favorite_text}#{row.get('id')} | {seed_text}"
                         checkpoint = str(row.get('checkpoint') or '').strip()
                         if checkpoint != '':
                             label += f" | {checkpoint}"
@@ -2623,7 +2641,8 @@ with shared.gradio_root:
                     return thumbnail_path
 
                 def format_history_seed_stack_gallery_items(rows, search, favorite_only, review_status, tag, days,
-                                                            checkpoints, loras, show_preview_images=False):
+                                                            checkpoints, loras, show_preview_images=False,
+                                                            thumbnail_visibility='visible'):
                     gallery_items = []
                     visible_stack_ids = []
                     for row in rows:
@@ -2638,6 +2657,7 @@ with shared.gradio_root:
                             checkpoints=checkpoints,
                             loras=loras,
                             show_preview_images=show_preview_images,
+                            thumbnail_visibility=normalize_thumbnail_visibility(thumbnail_visibility),
                             limit=8
                         )
                         thumbnail_path = history_stack_thumbnail_path(stack_rows)
@@ -2693,7 +2713,9 @@ with shared.gradio_root:
                         False, 0, '', '', '', status
 
                 def history_image_view(selection, search, favorite_only, review_status, tag, days,
-                                       checkpoints=None, loras=None, show_preview_images=False, status_prefix=''):
+                                       checkpoints=None, loras=None, show_preview_images=False,
+                                       thumbnail_visibility='visible', status_prefix=''):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     batch_id = parse_history_id(selection)
                     is_all_images = batch_id is None
                     batch_curation = {} if is_all_images else modules.history_db.get_batch_curation(batch_id)
@@ -2706,7 +2728,8 @@ with shared.gradio_root:
                             days=days,
                             checkpoints=checkpoints,
                             loras=loras,
-                            show_preview_images=show_preview_images
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility
                         )
                         comparison_rows = []
                     else:
@@ -2715,7 +2738,8 @@ with shared.gradio_root:
                             favorite_only=favorite_only,
                             review_status=review_status,
                             tag=tag,
-                            show_preview_images=show_preview_images
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility
                         )
                         comparison_rows = modules.history_db.list_batch_comparison_rows(batch_id)
                     gallery_items = format_history_gallery_items(rows)
@@ -2741,7 +2765,9 @@ with shared.gradio_root:
                         curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
 
                 def history_seed_group_view(seed_stack_selection, seed_stack_prompt, search, favorite_only,
-                                            review_status, tag, days, checkpoints, loras, show_preview_images=False):
+                                            review_status, tag, days, checkpoints, loras, show_preview_images=False,
+                                            thumbnail_visibility='visible'):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     stack_id = parse_history_id(seed_stack_selection)
                     seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
                     rows = modules.history_db.list_seed_stack_images(
@@ -2754,7 +2780,8 @@ with shared.gradio_root:
                         days=days,
                         checkpoints=checkpoints,
                         loras=loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     selected_image_ids = [row['id'] for row in rows if row.get('file_exists') and os.path.exists(row['path'])]
                     image_choices = [format_history_image(row) for row in rows]
@@ -2771,7 +2798,9 @@ with shared.gradio_root:
                         curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
 
                 def history_seed_stack_gallery_view(search, favorite_only, review_status, tag, days, checkpoints, loras,
-                                                    show_preview_images=False, status_prefix=''):
+                                                    show_preview_images=False, thumbnail_visibility='visible',
+                                                    status_prefix=''):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     stacks = modules.history_db.list_seed_stacks(
                         search=search,
                         favorite_only=favorite_only,
@@ -2780,11 +2809,13 @@ with shared.gradio_root:
                         days=days,
                         checkpoints=checkpoints,
                         loras=loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     gallery_items, visible_stack_ids = format_history_seed_stack_gallery_items(
                         stacks, search, favorite_only, review_status, tag, days, checkpoints, loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     selected_image_ids = []
                     image_choices = []
@@ -2803,7 +2834,8 @@ with shared.gradio_root:
                             days=days,
                             checkpoints=checkpoints,
                             loras=loras,
-                            show_preview_images=show_preview_images
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility
                         )
                         selected_image_ids = [
                             row['id'] for row in rows
@@ -2883,7 +2915,8 @@ with shared.gradio_root:
                     return [day for day in all_days if day in set(normalized)]
 
                 def refresh_history(search, favorite_only, review_status, tag, checkpoints, loras,
-                                    show_preview_images=False, group_by_seed=False):
+                                    show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible'):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = modules.history_db.list_output_days()
                     filter_values = modules.history_db.list_filter_values()
                     batches = modules.history_db.list_batches(
@@ -2899,7 +2932,8 @@ with shared.gradio_root:
                     selected_days = default_history_days(days)
                     stack_choices, prompt_by_stack = seed_stack_choices(
                         search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     stack_value = stack_choices[0] if len(stack_choices) > 0 else None
                     stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
@@ -2907,12 +2941,14 @@ with shared.gradio_root:
                         image_outputs = history_seed_stack_gallery_view(
                             search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
                             show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility,
                             status_prefix=f'Loaded {max(0, len(choices) - 1)} batch(es). '
                         )
                     else:
                         image_outputs = history_image_view(value, search, favorite_only, review_status, tag,
                                                            selected_days, checkpoints, loras,
                                                            show_preview_images=show_preview_images,
+                                                           thumbnail_visibility=thumbnail_visibility,
                                                            status_prefix=f'Loaded {max(0, len(choices) - 1)} batch(es). ')
                     return (gr.update(choices=choices, value=value),
                             gr.update(choices=history_day_choices(days), value=selected_days),
@@ -2922,7 +2958,8 @@ with shared.gradio_root:
                             selected_days) + image_outputs
 
                 def requery_history_outputs(search, favorite_only, review_status, tag, checkpoints, loras,
-                                            show_preview_images=False, group_by_seed=False):
+                                            show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible'):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     result = modules.history_db.reconcile_outputs_folder()
                     days = modules.history_db.list_output_days()
                     filter_values = modules.history_db.list_filter_values()
@@ -2935,6 +2972,7 @@ with shared.gradio_root:
                     choices = history_batch_choices(batches)
                     status = (
                         f"Re-query complete. Added {result['added']}, removed {result['removed']}, "
+                        f"updated metadata {result.get('updated', 0)}, "
                         f"unchanged {result['unchanged']}, imported batches {result['imported_batches']}, "
                         f"removed batches {result['removed_batches']}, skipped {result['skipped']}, failed {result['failed']}."
                     )
@@ -2944,19 +2982,23 @@ with shared.gradio_root:
                     selected_days = default_history_days(days)
                     stack_choices, prompt_by_stack = seed_stack_choices(
                         search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     stack_value = stack_choices[0] if len(stack_choices) > 0 else None
                     stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
                     if group_by_seed:
                         image_outputs = history_seed_stack_gallery_view(
                             search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
-                            show_preview_images=show_preview_images, status_prefix=status + ' '
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility,
+                            status_prefix=status + ' '
                         )
                     else:
                         image_outputs = history_image_view(value, search, favorite_only, review_status, tag,
                                                            selected_days, checkpoints, loras,
                                                            show_preview_images=show_preview_images,
+                                                           thumbnail_visibility=thumbnail_visibility,
                                                            status_prefix=status + ' ')
                     return (gr.update(choices=choices, value=value),
                             gr.update(choices=history_day_choices(days), value=selected_days),
@@ -2966,29 +3008,34 @@ with shared.gradio_root:
                             selected_days) + image_outputs
 
                 def load_history_batch(selection, search, favorite_only, review_status, tag, days, checkpoints, loras,
-                                       show_preview_images=False):
+                                       show_preview_images=False, thumbnail_visibility='Visible'):
                     return history_image_view(selection, search, favorite_only, review_status, tag, days,
-                                              checkpoints, loras, show_preview_images=show_preview_images)
+                                              checkpoints, loras, show_preview_images=show_preview_images,
+                                              thumbnail_visibility=thumbnail_visibility)
 
                 def load_history_days(selection, previous_days, selection_mode, batch_selection, search,
                                       favorite_only, review_status, tag, checkpoints, loras,
-                                      show_preview_images=False, group_by_seed=False):
+                                      show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible'):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     selected_days = normalize_history_days(selection, previous_days, selection_mode)
                     stack_choices, prompt_by_stack = seed_stack_choices(
                         search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
                     stack_value = stack_choices[0] if len(stack_choices) > 0 else None
                     stack_prompt = prompt_by_stack.get(stack_value, '') if stack_value else ''
                     if group_by_seed:
                         image_outputs = history_seed_stack_gallery_view(
                             search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
-                            show_preview_images=show_preview_images
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility
                         )
                     else:
                         image_outputs = history_image_view(batch_selection, search, favorite_only, review_status, tag,
                                                            selected_days, checkpoints, loras,
-                                                           show_preview_images=show_preview_images)
+                                                           show_preview_images=show_preview_images,
+                                                           thumbnail_visibility=thumbnail_visibility)
                     return (gr.update(value=selected_days), selected_days,
                             gr.update(choices=stack_choices, value=stack_value), stack_prompt) + image_outputs
 
@@ -3016,7 +3063,9 @@ with shared.gradio_root:
 
                 def select_history_thumbnail(visible_image_ids, selected_image_ids, selection_mode, search,
                                              favorite_only, review_status, tag, days, checkpoints, loras,
-                                             show_preview_images=False, evt: gr.SelectData = None):
+                                             show_preview_images=False, thumbnail_visibility='Visible',
+                                             evt: gr.SelectData = None):
+                    thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     try:
                         index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
                         clicked_index = int(index)
@@ -3037,7 +3086,8 @@ with shared.gradio_root:
                             days=days,
                             checkpoints=checkpoints,
                             loras=loras,
-                            show_preview_images=show_preview_images
+                            show_preview_images=show_preview_images,
+                            thumbnail_visibility=thumbnail_visibility
                         )
                         selected = [
                             row['id'] for row in rows
@@ -3164,6 +3214,32 @@ with shared.gradio_root:
                     )
                     return f"{'Favorited' if next_favorite else 'Unfavorited'} history image #{image_id}."
 
+                def hide_history_thumbnail(image_id, search, favorite_only, review_status, tag, checkpoints, loras,
+                                           show_preview_images=False, group_by_seed=False,
+                                           thumbnail_visibility='Visible'):
+                    image_id = parse_history_id(image_id)
+                    if image_id is None:
+                        return refresh_history(
+                            search, favorite_only, review_status, tag, checkpoints, loras,
+                            show_preview_images, group_by_seed, thumbnail_visibility
+                        )
+                    summary = modules.history_db.get_image_summary(image_id)
+                    next_hidden = not bool(summary.get('thumbnail_hidden')) if len(summary) > 0 else True
+                    saved = modules.history_db.set_image_thumbnail_hidden(image_id, next_hidden)
+                    status_prefix = (
+                        f"{'Hidden' if next_hidden else 'Restored'} history image #{image_id} "
+                        f"{'from' if next_hidden else 'to'} thumbnails. "
+                        if saved else
+                        'History image was not found. '
+                    )
+                    outputs = refresh_history(
+                        search, favorite_only, review_status, tag, checkpoints, loras,
+                        show_preview_images, group_by_seed, thumbnail_visibility
+                    )
+                    outputs = list(outputs)
+                    outputs[-1] = status_prefix + str(outputs[-1] or '')
+                    return tuple(outputs)
+
                 def load_history_image_config_by_id(image_id, current_prompt, is_generating, inpaint_mode):
                     image_id = parse_history_id(image_id)
                     if image_id is None:
@@ -3172,7 +3248,7 @@ with shared.gradio_root:
 
                 def apply_history_seed_group(group_by_seed, seed_stack_selection, seed_stack_prompt, search,
                                              favorite_only, review_status, tag, days, checkpoints, loras,
-                                             show_preview_images=False):
+                                             show_preview_images=False, thumbnail_visibility='Visible'):
                     if not group_by_seed:
                         return gr.update(), gr.update(), gr.update(), gr.update(), False, 0, '', '', '', 'Group By Seed is off.'
                     return history_seed_group_view(
@@ -3185,7 +3261,8 @@ with shared.gradio_root:
                         days,
                         checkpoints,
                         loras,
-                        show_preview_images=show_preview_images
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility
                     )
 
                 def save_history_image_curation(selection, favorite, rating, review_status, tags, note, batch_selection,
@@ -3269,7 +3346,7 @@ with shared.gradio_root:
                 history_filter_inputs = [
                     history_search, history_filter_favorites, history_filter_status, history_filter_tag,
                     history_filter_checkpoints, history_filter_loras, history_show_preview_images,
-                    history_stack_by_seed
+                    history_stack_by_seed, history_thumbnail_visibility
                 ]
                 history_refresh_outputs = [
                     history_batch_selection, history_day_selection, history_filter_checkpoints,
@@ -3298,7 +3375,7 @@ with shared.gradio_root:
                                                        history_filter_favorites, history_filter_status,
                                                        history_filter_tag, history_day_selection,
                                                        history_filter_checkpoints, history_filter_loras,
-                                                       history_show_preview_images],
+                                                       history_show_preview_images, history_thumbnail_visibility],
                                                outputs=[history_gallery, history_visible_image_ids,
                                                         history_selected_image_ids, history_selected_image_ids_json,
                                                         history_selected_gallery,
@@ -3311,7 +3388,7 @@ with shared.gradio_root:
                                                queue=False, show_progress=False)
                 for history_filter in [history_search, history_filter_favorites,
                                        history_filter_checkpoints, history_filter_loras,
-                                       history_show_preview_images]:
+                                       history_show_preview_images, history_thumbnail_visibility]:
                     history_filter.change(refresh_history, inputs=history_filter_inputs,
                                           outputs=history_refresh_outputs,
                                           queue=False, show_progress=False)
@@ -3321,7 +3398,8 @@ with shared.gradio_root:
                                                      history_search, history_filter_favorites,
                                                      history_filter_status, history_filter_tag,
                                                      history_filter_checkpoints, history_filter_loras,
-                                                     history_show_preview_images, history_stack_by_seed],
+                                                     history_show_preview_images, history_stack_by_seed,
+                                                     history_thumbnail_visibility],
                                              outputs=[history_day_selection, history_selected_days,
                                                       history_seed_stack_selection, history_seed_stack_prompt,
                                                       history_gallery, history_visible_image_ids,
@@ -3349,7 +3427,7 @@ with shared.gradio_root:
                                history_seed_stack_prompt, history_search, history_filter_favorites,
                                history_filter_status, history_filter_tag, history_day_selection,
                                history_filter_checkpoints, history_filter_loras,
-                               history_show_preview_images],
+                               history_show_preview_images, history_thumbnail_visibility],
                        outputs=[history_selected_image_ids, history_selected_image_ids_json,
                                 history_selected_gallery, history_image_selection,
                                 history_favorite, history_rating, history_review_status,
@@ -3365,7 +3443,7 @@ with shared.gradio_root:
                                                history_filter_favorites, history_filter_status,
                                                history_filter_tag, history_day_selection,
                                                history_filter_checkpoints, history_filter_loras,
-                                               history_show_preview_images],
+                                               history_show_preview_images, history_thumbnail_visibility],
                                        outputs=[history_selected_image_ids, history_selected_image_ids_json,
                                                 history_selected_gallery,
                                                 history_image_selection, history_favorite, history_rating,
@@ -3408,6 +3486,17 @@ with shared.gradio_root:
                                                      inputs=history_toggle_favorite_image_id,
                                                      outputs=history_status,
                                                      queue=False, show_progress=False)
+                history_hide_thumbnail_button.click(
+                    hide_history_thumbnail,
+                    inputs=[history_hide_thumbnail_image_id, history_search,
+                            history_filter_favorites, history_filter_status, history_filter_tag,
+                            history_filter_checkpoints, history_filter_loras,
+                            history_show_preview_images, history_stack_by_seed,
+                            history_thumbnail_visibility],
+                    outputs=history_refresh_outputs,
+                    queue=False,
+                    show_progress=False
+                )
                 history_save_curation_button.click(save_history_image_curation,
                                                    inputs=[history_image_selection, history_favorite, history_rating,
                                                            history_review_status, history_tags, history_note,

@@ -1,8 +1,10 @@
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
+import urllib.parse
 import uuid
 
 import modules.config
@@ -78,7 +80,8 @@ def init_db():
                     config_json TEXT NOT NULL,
                     favorite INTEGER NOT NULL DEFAULT 0,
                     rating INTEGER,
-                    review_status TEXT NOT NULL DEFAULT ''
+                    review_status TEXT NOT NULL DEFAULT '',
+                    thumbnail_hidden INTEGER NOT NULL DEFAULT 0
                 );
 
                 CREATE TABLE IF NOT EXISTS images (
@@ -167,11 +170,13 @@ def init_db():
             _ensure_column(conn, 'images', 'favorite', 'INTEGER NOT NULL DEFAULT 0')
             _ensure_column(conn, 'images', 'rating', 'INTEGER')
             _ensure_column(conn, 'images', 'review_status', "TEXT NOT NULL DEFAULT ''")
+            _ensure_column(conn, 'images', 'thumbnail_hidden', 'INTEGER NOT NULL DEFAULT 0')
             _ensure_column(conn, 'batches', 'favorite', 'INTEGER NOT NULL DEFAULT 0')
             _ensure_column(conn, 'batches', 'rating', 'INTEGER')
             _ensure_column(conn, 'batches', 'review_status', "TEXT NOT NULL DEFAULT ''")
             conn.execute('CREATE INDEX IF NOT EXISTS idx_images_favorite ON images(favorite)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_images_review_status ON images(review_status)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_images_thumbnail_hidden ON images(thumbnail_hidden)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_batches_favorite ON batches(favorite)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_batches_review_status ON batches(review_status)')
         _initialized = True
@@ -408,6 +413,178 @@ def _metadata_from_image(path):
         config = {}
 
     return config, width, height
+
+
+def _is_missing_config_value(value):
+    if value is None:
+        return True
+    if isinstance(value, str):
+        return value.strip() == ''
+    if isinstance(value, (list, tuple, dict)):
+        return len(value) == 0
+    return False
+
+
+def _merge_missing_config(primary, fallback):
+    merged = primary.copy() if isinstance(primary, dict) else {}
+    if not isinstance(fallback, dict):
+        return merged
+    for key, value in fallback.items():
+        if _is_missing_config_value(value):
+            continue
+        if key not in merged or _is_missing_config_value(merged.get(key)):
+            merged[key] = value
+    return merged
+
+
+def _parse_log_html_configs(log_path):
+    try:
+        with open(log_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception:
+        return {}
+
+    configs = {}
+    blocks = re.findall(
+        r'<div[^>]+class=["\']image-container["\'][\s\S]*?(?=<div[^>]+class=["\']image-container["\']|<!--fooocus-log-split-->|</body>|</html>)',
+        content,
+        flags=re.IGNORECASE
+    )
+    for block in blocks:
+        filename = None
+        for pattern in [
+            r'<a[^>]+href=["\']([^"\']+)["\']',
+            r'<img[^>]+src=["\']([^"\']+)["\']',
+        ]:
+            match = re.search(pattern, block, flags=re.IGNORECASE)
+            if match:
+                filename = os.path.basename(urllib.parse.unquote(match.group(1)))
+                break
+        if not filename:
+            continue
+
+        encoded = None
+        button_match = re.search(
+            r'to_clipboard\(["\']([^"\']+)["\']\)',
+            block,
+            flags=re.IGNORECASE
+        )
+        if button_match:
+            encoded = button_match.group(1)
+        if encoded is not None:
+            try:
+                parsed = json.loads(urllib.parse.unquote(encoded))
+                if isinstance(parsed, dict):
+                    configs[filename] = parsed
+                    continue
+            except Exception:
+                pass
+
+        table_config = {}
+        for label, value in re.findall(
+            r"<tr>\s*<td[^>]*class=['\"]label['\"][^>]*>([\s\S]*?)</td>\s*"
+            r"<td[^>]*class=['\"]value['\"][^>]*>([\s\S]*?)</td>\s*</tr>",
+            block,
+            flags=re.IGNORECASE
+        ):
+            key = _log_label_to_config_key(label)
+            if key:
+                table_config[key] = _clean_log_html_value(value)
+        if table_config:
+            configs[filename] = table_config
+    return configs
+
+
+def _clean_log_html_value(value):
+    text = re.sub(r'<\s*/?br\s*/?\s*>', '\n', str(value), flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', '', text)
+    return urllib.parse.unquote(text).replace(' </br> ', '\n').strip()
+
+
+def _log_label_to_config_key(label):
+    normalized = _clean_log_html_value(label).casefold()
+    mapping = {
+        'prompt': 'prompt',
+        'negative prompt': 'negative_prompt',
+        'seed': 'seed',
+        'base model': 'base_model',
+        'refiner model': 'refiner_model',
+        'sampler': 'sampler',
+        'scheduler': 'scheduler',
+        'vae': 'vae',
+        'performance': 'performance',
+        'steps': 'steps',
+        'guidance scale': 'guidance_scale',
+        'sharpness': 'sharpness',
+        'adm guidance': 'adm_guidance',
+        'styles': 'styles',
+        'metadata scheme': 'metadata_scheme',
+        'prompt expansion': 'prompt_expansion',
+    }
+    if normalized.startswith('lora '):
+        suffix = re.sub(r'[^0-9]', '', normalized)
+        if suffix:
+            return f'lora_combined_{suffix}'
+    return mapping.get(normalized)
+
+
+def _log_config_for_image(path, cache):
+    directory = os.path.abspath(os.path.dirname(path))
+    if directory not in cache:
+        log_path = os.path.join(directory, 'log.html')
+        cache[directory] = _parse_log_html_configs(log_path) if os.path.exists(log_path) else {}
+    return cache[directory].get(os.path.basename(path), {})
+
+
+def _config_has_core_metadata(config):
+    config = config if isinstance(config, dict) else {}
+    for key in ['prompt', 'negative_prompt', 'base_model', 'seed', 'sampler', 'scheduler']:
+        if not _is_missing_config_value(config.get(key)):
+            return True
+    return False
+
+
+def _update_image_metadata_row(conn, image_id, config):
+    config = config.copy() if isinstance(config, dict) else {}
+    metadata_json = _json_dumps(config)
+    conn.execute(
+        """
+        UPDATE images
+        SET seed = ?, checkpoint = ?, refiner = ?, sampler = ?, scheduler = ?, vae = ?,
+            prompt = ?, negative_prompt = ?, prompt_expansion = ?,
+            metadata_json = ?, config_json = ?
+        WHERE id = ?
+        """,
+        (
+            _safe_int(config.get('seed')),
+            str(config.get('base_model', '') or ''),
+            str(config.get('refiner_model', '') or ''),
+            str(config.get('sampler', '') or ''),
+            str(config.get('scheduler', '') or ''),
+            str(config.get('vae', '') or ''),
+            str(config.get('prompt', '') or ''),
+            str(config.get('negative_prompt', '') or ''),
+            str(config.get('prompt_expansion', '') or ''),
+            metadata_json,
+            metadata_json,
+            image_id
+        )
+    )
+    conn.execute('DELETE FROM image_loras WHERE image_id = ?', (image_id,))
+    for key, value in config.items():
+        if not str(key).startswith('lora_combined_'):
+            continue
+        parsed_lora = _parse_lora_value(value)
+        if parsed_lora is None:
+            continue
+        name, weight = parsed_lora
+        if name == 'None':
+            continue
+        position = _safe_int(str(key).replace('lora_combined_', '')) or 0
+        conn.execute(
+            'INSERT OR IGNORE INTO image_loras (image_id, name, weight, role, position) VALUES (?, ?, ?, ?, ?)',
+            (image_id, str(name), float(weight), 'active', position)
+        )
 
 
 def _insert_image_row(conn, batch_id, image_path, config, width=None, height=None, image_index=None):
@@ -698,6 +875,20 @@ def update_image_curation(image_id, favorite=False, rating=0, review_status='', 
     return True
 
 
+def set_image_thumbnail_hidden(image_id, hidden=True):
+    init_db()
+    try:
+        image_id = int(image_id)
+    except Exception:
+        return False
+    with _lock, _connect() as conn:
+        cursor = conn.execute(
+            'UPDATE images SET thumbnail_hidden = ? WHERE id = ?',
+            (1 if hidden else 0, image_id)
+        )
+    return cursor.rowcount is not None and cursor.rowcount > 0
+
+
 def get_batch_curation(batch_id):
     init_db()
     try:
@@ -803,20 +994,25 @@ def reconcile_outputs_folder(output_folder=None):
             disk_paths.add(os.path.abspath(os.path.join(root, filename)))
 
     with _connect() as conn:
-        rows = conn.execute('SELECT id, path FROM images').fetchall()
+        rows = conn.execute('SELECT id, path, config_json FROM images').fetchall()
     existing_paths = {
-        os.path.abspath(row['path']): row['id']
+        os.path.abspath(row['path']): {
+            'id': row['id'],
+            'config': _json_loads(row['config_json'], {})
+        }
         for row in rows
         if is_inside_output_folder(row['path'])
     }
     missing_paths = sorted([path for path in existing_paths if not os.path.exists(path)])
     new_paths = sorted([path for path in disk_paths if path not in existing_paths])
     unchanged = len(disk_paths) - len(new_paths)
+    log_config_cache = {}
 
     parsed_new_images = []
     for path in new_paths:
         try:
             config, width, height = _metadata_from_image(path)
+            config = _merge_missing_config(config, _log_config_for_image(path, log_config_cache))
             try:
                 mtime = os.path.getmtime(path)
             except Exception:
@@ -833,6 +1029,7 @@ def reconcile_outputs_folder(output_folder=None):
             failed += 1
 
     added = 0
+    updated = 0
     removed = 0
     imported_batches = 0
     removed_batches = 0
@@ -851,6 +1048,18 @@ def reconcile_outputs_folder(output_folder=None):
                     """
                 )
                 removed_batches = cursor.rowcount if cursor.rowcount is not None else 0
+
+            for path, existing in sorted(existing_paths.items()):
+                if path in missing_paths:
+                    continue
+                current_config = existing.get('config', {})
+                log_config = _log_config_for_image(path, log_config_cache)
+                merged_config = _merge_missing_config(current_config, log_config)
+                if merged_config != current_config and (
+                    not _config_has_core_metadata(current_config) or _config_has_core_metadata(log_config)
+                ):
+                    _update_image_metadata_row(conn, existing['id'], merged_config)
+                    updated += 1
 
             for group in import_groups:
                 batch_id = _create_import_batch(conn, output_folder, group)
@@ -875,6 +1084,7 @@ def reconcile_outputs_folder(output_folder=None):
     return {
         'output_folder': output_folder,
         'added': added,
+        'updated': updated,
         'removed': removed,
         'unchanged': unchanged,
         'skipped': skipped,
@@ -952,7 +1162,8 @@ def list_batches(limit=100, search='', favorite_only=False, review_status='', ta
     return [dict(row) for row in rows]
 
 
-def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', show_preview_images=False):
+def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', show_preview_images=False,
+                      thumbnail_visibility='visible'):
     init_db()
     try:
         batch_id = int(batch_id)
@@ -981,12 +1192,15 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
         params.append(f'%{tag}%')
     if not show_preview_images:
         where_clauses.append(_preview_image_filter_clause())
+    visibility_clause = _thumbnail_visibility_clause(thumbnail_visibility)
+    if visibility_clause:
+        where_clauses.append(visibility_clause)
     where = ' AND '.join(where_clauses)
     with _connect() as conn:
         rows = conn.execute(
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
-                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
+                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1114,8 +1328,18 @@ def _normalize_filter_list(values):
     return normalized
 
 
+def _thumbnail_visibility_clause(thumbnail_visibility):
+    mode = str(thumbnail_visibility or 'visible').strip().casefold()
+    if mode == 'hidden':
+        return 'images.thumbnail_hidden = 1'
+    if mode == 'all':
+        return ''
+    return 'images.thumbnail_hidden = 0'
+
+
 def _image_filter_where(search='', favorite_only=False, review_status='', tag='', days=None, batch_id=None,
-                        checkpoints=None, loras=None, show_preview_images=False):
+                        checkpoints=None, loras=None, show_preview_images=False,
+                        thumbnail_visibility='visible'):
     search = str(search or '').strip()
     review_status = str(review_status or '').strip()
     tag = str(tag or '').strip()
@@ -1175,6 +1399,9 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
         params += loras
     if not show_preview_images:
         where_clauses.append(_preview_image_filter_clause())
+    visibility_clause = _thumbnail_visibility_clause(thumbnail_visibility)
+    if visibility_clause:
+        where_clauses.append(visibility_clause)
     where = ' AND '.join(where_clauses) if len(where_clauses) > 0 else '1 = 1'
     return where, params
 
@@ -1195,17 +1422,19 @@ def _preview_image_filter_clause():
 
 
 def list_images(search='', favorite_only=False, review_status='', tag='', days=None,
-                checkpoints=None, loras=None, show_preview_images=False, limit=500):
+                checkpoints=None, loras=None, show_preview_images=False,
+                thumbnail_visibility='visible', limit=500):
     init_db()
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
                                         checkpoints=checkpoints, loras=loras,
-                                        show_preview_images=show_preview_images)
+                                        show_preview_images=show_preview_images,
+                                        thumbnail_visibility=thumbnail_visibility)
     params.append(int(limit))
     with _connect() as conn:
         rows = conn.execute(
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
-                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
+                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1231,11 +1460,13 @@ def list_images(search='', favorite_only=False, review_status='', tag='', days=N
 
 
 def list_seed_stacks(search='', favorite_only=False, review_status='', tag='', days=None,
-                     checkpoints=None, loras=None, show_preview_images=False, limit=200):
+                     checkpoints=None, loras=None, show_preview_images=False,
+                     thumbnail_visibility='visible', limit=200):
     init_db()
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
                                         checkpoints=checkpoints, loras=loras,
-                                        show_preview_images=show_preview_images)
+                                        show_preview_images=show_preview_images,
+                                        thumbnail_visibility=thumbnail_visibility)
     params.append(int(limit))
     with _connect() as conn:
         rows = conn.execute(
@@ -1280,7 +1511,8 @@ def list_seed_stacks(search='', favorite_only=False, review_status='', tag='', d
 
 
 def list_seed_stack_images(seed, prompt, search='', favorite_only=False, review_status='', tag='', days=None,
-                           checkpoints=None, loras=None, show_preview_images=False, limit=100):
+                           checkpoints=None, loras=None, show_preview_images=False,
+                           thumbnail_visibility='visible', limit=100):
     init_db()
     seed = _safe_int(seed)
     prompt = str(prompt or '')
@@ -1288,14 +1520,15 @@ def list_seed_stack_images(seed, prompt, search='', favorite_only=False, review_
         return []
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
                                         checkpoints=checkpoints, loras=loras,
-                                        show_preview_images=show_preview_images)
+                                        show_preview_images=show_preview_images,
+                                        thumbnail_visibility=thumbnail_visibility)
     where = f'({where}) AND images.seed = ? AND images.prompt = ?'
     params += [seed, prompt, int(limit)]
     with _connect() as conn:
         rows = conn.execute(
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
-                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
+                   checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1349,6 +1582,7 @@ def get_image_summary(image_id):
             """
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
+                   thumbnail_hidden,
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t

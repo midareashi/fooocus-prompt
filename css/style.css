@@ -314,15 +314,21 @@ div:has(> #positive_prompt) {
     border-radius: 6px;
 }
 
-#history_stack_by_seed {
+#history_thumbnail_view_controls {
     margin-top: 6px;
+    gap: 6px;
 }
 
-#history_stack_by_seed label {
+#history_stack_by_seed label,
+#history_thumbnail_visibility label {
     min-height: 30px !important;
     padding: 4px 8px !important;
     border-radius: 6px !important;
     font-size: 13px;
+}
+
+#history_thumbnail_visibility .wrap {
+    gap: 4px !important;
 }
 
 #history_thumbnail_gallery .thumbnail-item.history-thumbnail-selected {
@@ -380,6 +386,7 @@ div:has(> #positive_prompt) {
 }
 
 #history_thumbnail_gallery .history-favorite-toggle,
+#history_thumbnail_gallery .history-hide-thumbnail,
 #history_selected_gallery .history-favorite-toggle {
     position: absolute;
     top: 8px;
@@ -396,7 +403,14 @@ div:has(> #positive_prompt) {
     cursor: pointer;
 }
 
+#history_thumbnail_gallery .history-hide-thumbnail {
+    left: 44px;
+    font-size: 15px;
+    line-height: 24px;
+}
+
 #history_thumbnail_gallery .history-favorite-toggle:hover,
+#history_thumbnail_gallery .history-hide-thumbnail:hover,
 #history_selected_gallery .history-favorite-toggle:hover,
 #history_thumbnail_gallery .history-favorite-toggle.history-favorite-active,
 #history_selected_gallery .history-favorite-toggle.history-favorite-active {

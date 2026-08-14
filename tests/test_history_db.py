@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 import time
+import urllib.parse
 import unittest
 from types import SimpleNamespace
 
@@ -42,6 +43,23 @@ class TestHistoryDb(unittest.TestCase):
         with history_db._connect() as conn:
             return conn.execute('SELECT COUNT(*) AS count FROM batches').fetchone()['count']
 
+    def _write_log_html(self, folder, filename, config):
+        os.makedirs(folder, exist_ok=True)
+        payload = urllib.parse.quote(history_db._json_dumps(config), safe='')
+        with open(os.path.join(folder, 'log.html'), 'w', encoding='utf-8') as f:
+            f.write(
+                '<!DOCTYPE html><html><body><!--fooocus-log-split-->'
+                f'<div id="{filename.replace(".", "_")}" class="image-container">'
+                f'<hr><table><tr><td><a href="{filename}" target="_blank">'
+                f'<img src="{filename}" loading="lazy"/></a><div>{filename}</div></td>'
+                '<td><table class="metadata">'
+                '<tr><td class="label">Prompt</td><td class="value">log prompt</td></tr>'
+                '</table><br/>'
+                f'<button onclick="to_clipboard(\'{payload}\')">Copy to Clipboard</button>'
+                '</td></tr></table></div>'
+                '<!--fooocus-log-split--></body></html>'
+            )
+
     def test_schema_initializes_expected_tables_and_indexes(self):
         history_db.init_db()
 
@@ -57,6 +75,10 @@ class TestHistoryDb(unittest.TestCase):
                 for row in conn.execute(
                     "SELECT name FROM sqlite_master WHERE type = 'index'"
                 ).fetchall()
+            }
+            image_columns = {
+                row['name']
+                for row in conn.execute('PRAGMA table_info(images)').fetchall()
             }
 
         self.assertTrue({
@@ -76,7 +98,9 @@ class TestHistoryDb(unittest.TestCase):
             'idx_images_seed',
             'idx_image_loras_name',
             'idx_batches_created_at',
+            'idx_images_thumbnail_hidden',
         }.issubset(indexes))
+        self.assertIn('thumbnail_hidden', image_columns)
 
     def test_reconcile_outputs_groups_new_images_and_keeps_existing_rows(self):
         output_folder = os.path.join(self.temp_dir, 'outputs')
@@ -404,6 +428,80 @@ class TestHistoryDb(unittest.TestCase):
         self.assertEqual('same test prompt', prompt)
         self.assertEqual(2, len(stack_images))
 
+    def test_thumbnail_visibility_filters_images_and_seed_stacks(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        paths = [os.path.join(output_folder, f'image_{index}.png') for index in range(2)]
+        for index, path in enumerate(paths):
+            self._create_image(path, time.time() + index)
+        task = SimpleNamespace(
+            prompt='visibility prompt',
+            negative_prompt='',
+            style_selections=[],
+            wildprompt_selections=[],
+            wildprompt_generate_all=False,
+            wildprompt_line_selections={},
+            performance_selection=SimpleNamespace(value='Quality'),
+            overwrite_step=0,
+            overwrite_switch=0,
+            cfg_scale=7,
+            sharpness=2,
+            adm_scaler_positive=1.5,
+            adm_scaler_negative=0.8,
+            adm_scaler_end=0.3,
+            refiner_swap_method='joint',
+            adaptive_cfg=7,
+            clip_skip=2,
+            base_model_name='checkpoint_a.safetensors',
+            refiner_model_name='None',
+            refiner_switch=0.5,
+            sampler_name='dpmpp_2m_sde_gpu',
+            scheduler_name='karras',
+            vae_name='Default',
+            seed=100,
+            aspect_ratios_selection='1024 1024',
+            quick_preview=False,
+            training_mode=False,
+            testing_mode=False,
+            testing_loras=[],
+            loras=[],
+            image_number=2,
+            multi_checkpoint_model_names=[]
+        )
+        batch_id = history_db.create_batch_from_task(task)
+        image_ids = []
+        for path in paths:
+            image_ids.append(history_db.record_image(
+                batch_id,
+                path,
+                [
+                    ('Prompt', 'prompt', 'visibility prompt'),
+                    ('Negative Prompt', 'negative_prompt', ''),
+                    ('Seed', 'seed', '100'),
+                    ('Base Model', 'base_model', 'checkpoint_a.safetensors'),
+                ],
+                width=8,
+                height=8
+            ))
+
+        self.assertTrue(history_db.set_image_thumbnail_hidden(image_ids[0], True))
+
+        visible = history_db.list_images(thumbnail_visibility='visible')
+        all_images = history_db.list_images(thumbnail_visibility='all')
+        hidden = history_db.list_images(thumbnail_visibility='hidden')
+        visible_stacks = history_db.list_seed_stacks(thumbnail_visibility='visible')
+        all_stacks = history_db.list_seed_stacks(thumbnail_visibility='all')
+
+        self.assertEqual([image_ids[1]], [row['id'] for row in visible])
+        self.assertEqual({image_ids[0], image_ids[1]}, {row['id'] for row in all_images})
+        self.assertEqual([image_ids[0]], [row['id'] for row in hidden])
+        self.assertEqual(0, len(visible_stacks))
+        self.assertEqual(1, len(all_stacks))
+
+        self.assertTrue(history_db.set_image_thumbnail_hidden(image_ids[0], False))
+        visible_again = history_db.list_images(thumbnail_visibility='visible')
+
+        self.assertEqual({image_ids[0], image_ids[1]}, {row['id'] for row in visible_again})
+
     def test_record_image_stores_reloadable_config_and_loras(self):
         output_folder = os.path.join(self.temp_dir, 'outputs')
         image_path = os.path.join(output_folder, 'recorded.png')
@@ -521,6 +619,95 @@ class TestHistoryDb(unittest.TestCase):
         self.assertEqual(456, summary['seed'])
         self.assertEqual(12, image_row['width'])
         self.assertEqual(10, image_row['height'])
+
+    def test_reconcile_imports_missing_metadata_from_log_html(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        image_path = os.path.join(output_folder, 'old_image.png')
+        self._create_image(image_path, time.time())
+        self._write_log_html(output_folder, 'old_image.png', {
+            'prompt': 'log prompt',
+            'negative_prompt': 'log negative',
+            'seed': '789',
+            'base_model': 'log_checkpoint.safetensors',
+            'sampler': 'dpmpp_2m_sde_gpu',
+            'scheduler': 'karras',
+            'steps': 30,
+            'lora_combined_1': 'log_lora.safetensors : 0.65',
+        })
+
+        result = history_db.reconcile_outputs_folder(output_folder)
+        image_id = history_db.get_image_id_by_path(image_path)
+        config = history_db.get_config_by_path(image_path)
+        summary = history_db.get_image_summary(image_id)
+        with history_db._connect() as conn:
+            lora = conn.execute(
+                'SELECT name, weight FROM image_loras WHERE image_id = ?',
+                (image_id,)
+            ).fetchone()
+
+        self.assertEqual(1, result['added'])
+        self.assertEqual('log prompt', config['prompt'])
+        self.assertEqual('log negative', config['negative_prompt'])
+        self.assertEqual(30, config['steps'])
+        self.assertEqual('log_checkpoint.safetensors', summary['checkpoint'])
+        self.assertEqual(789, summary['seed'])
+        self.assertEqual('log_lora.safetensors', lora['name'])
+        self.assertEqual(0.65, lora['weight'])
+
+    def test_log_html_does_not_override_embedded_metadata(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        image_path = os.path.join(output_folder, 'embedded_with_log.png')
+        os.makedirs(output_folder, exist_ok=True)
+        metadata = PngInfo()
+        metadata.add_text('parameters', history_db._json_dumps({
+            'prompt': 'embedded wins',
+            'negative_prompt': 'embedded negative',
+            'seed': '111',
+            'base_model': 'embedded_checkpoint.safetensors',
+        }))
+        Image.new('RGB', (12, 10), (30, 40, 50)).save(image_path, pnginfo=metadata)
+        self._write_log_html(output_folder, 'embedded_with_log.png', {
+            'prompt': 'log should not replace',
+            'negative_prompt': 'log negative',
+            'seed': '222',
+            'base_model': 'log_checkpoint.safetensors',
+            'sampler': 'log_sampler',
+        })
+
+        result = history_db.reconcile_outputs_folder(output_folder)
+        config = history_db.get_config_by_path(image_path)
+        summary = history_db.get_image_summary(history_db.get_image_id_by_path(image_path))
+
+        self.assertEqual(1, result['added'])
+        self.assertEqual('embedded wins', config['prompt'])
+        self.assertEqual('embedded negative', config['negative_prompt'])
+        self.assertEqual('111', str(config['seed']))
+        self.assertEqual('log_checkpoint.safetensors', summary['checkpoint'])
+        self.assertEqual('log_sampler', config['sampler'])
+
+    def test_reconcile_enriches_existing_file_only_rows_from_log_html(self):
+        output_folder = os.path.join(self.temp_dir, 'outputs')
+        image_path = os.path.join(output_folder, 'existing_old_image.png')
+        self._create_image(image_path, time.time())
+
+        first = history_db.reconcile_outputs_folder(output_folder)
+        image_id = history_db.get_image_id_by_path(image_path)
+        self._write_log_html(output_folder, 'existing_old_image.png', {
+            'prompt': 'late log prompt',
+            'negative_prompt': 'late log negative',
+            'seed': '321',
+            'base_model': 'late_checkpoint.safetensors',
+        })
+        second = history_db.reconcile_outputs_folder(output_folder)
+        config = history_db.get_config_by_path(image_path)
+        summary = history_db.get_image_summary(image_id)
+
+        self.assertEqual(1, first['added'])
+        self.assertEqual(1, second['updated'])
+        self.assertEqual('late log prompt', config['prompt'])
+        self.assertEqual('late log negative', config['negative_prompt'])
+        self.assertEqual(321, summary['seed'])
+        self.assertEqual('late_checkpoint.safetensors', summary['checkpoint'])
 
 
 if __name__ == '__main__':

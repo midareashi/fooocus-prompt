@@ -392,6 +392,14 @@ function getHistoryToggleFavoriteButton() {
     return gradioApp().querySelector('#history_toggle_favorite_button');
 }
 
+function getHistoryHideThumbnailIdInput() {
+    return gradioApp().querySelector('#history_hide_thumbnail_image_id textarea, #history_hide_thumbnail_image_id input');
+}
+
+function getHistoryHideThumbnailButton() {
+    return gradioApp().querySelector('#history_hide_thumbnail_button');
+}
+
 function setHistorySelectionMode(event) {
     const input = getHistorySelectionModeInput();
     if (!input) return;
@@ -442,6 +450,10 @@ function historyItemIsFavorite(item) {
     return /\bfav\b/i.test(historyItemCaptionText(item));
 }
 
+function historyItemIsHidden(item) {
+    return /\bhidden\b/i.test(historyItemCaptionText(item));
+}
+
 function triggerHistoryFavoriteToggle(imageId) {
     const input = getHistoryToggleFavoriteIdInput();
     const button = getHistoryToggleFavoriteButton();
@@ -463,6 +475,7 @@ function triggerHistoryImageAction(input, button, imageId) {
 function ensureHistoryFavoriteButton(item, imageId) {
     if (imageId === null) {
         item.querySelector('.history-favorite-toggle')?.remove();
+        item.querySelector('.history-hide-thumbnail')?.remove();
         return;
     }
     let button = item.querySelector('.history-favorite-toggle');
@@ -487,6 +500,29 @@ function ensureHistoryFavoriteButton(item, imageId) {
     };
 }
 
+function ensureHistoryHideThumbnailButton(item, imageId) {
+    if (imageId === null) {
+        item.querySelector('.history-hide-thumbnail')?.remove();
+        return;
+    }
+    let button = item.querySelector('.history-hide-thumbnail');
+    if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'history-hide-thumbnail';
+        button.textContent = '\u{1F441}';
+        item.appendChild(button);
+    }
+    const title = historyItemIsHidden(item) ? 'Show in thumbnails' : 'Hide from thumbnails';
+    setAttributeIfChanged(button, 'aria-label', title);
+    setAttributeIfChanged(button, 'title', title);
+    button.onclick = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        triggerHistoryImageAction(getHistoryHideThumbnailIdInput(), getHistoryHideThumbnailButton(), imageId);
+    };
+}
+
 function installHistoryThumbnailSelection() {
     const gallery = gradioApp().querySelector('#history_thumbnail_gallery');
     if (!gallery) return;
@@ -504,6 +540,7 @@ function installHistoryThumbnailSelection() {
         }
         const imageId = getHistoryImageIdFromThumb(item);
         ensureHistoryFavoriteButton(item, imageId);
+        ensureHistoryHideThumbnailButton(item, imageId);
         item.classList.toggle('history-thumbnail-selected', imageId !== null && selectedIds.has(imageId));
     });
 }
