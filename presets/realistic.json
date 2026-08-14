@@ -1,5 +1,7 @@
 {
-    "path_checkpoints": "D:\\models\\checkpoints\\XL\\Photo",
+    "path_checkpoints": [
+        "C:\\Drive\\ML\\Fooocus\\models\\checkpoints"
+    ],
     "default_model": "cyberrealisticXL_v100.safetensors",
     "default_refiner": "None",
     "default_refiner_switch": 0.5,

@@ -246,17 +246,27 @@ function ensureGenerationHistoryButton(item, className, label, title, onClick) {
         button.textContent = label;
         item.appendChild(button);
     }
-    button.setAttribute('aria-label', title);
-    button.setAttribute('title', title);
+    setAttributeIfChanged(button, 'aria-label', title);
+    setAttributeIfChanged(button, 'title', title);
     button.onclick = onClick;
+}
+
+function setAttributeIfChanged(element, name, value) {
+    if (element && element.getAttribute(name) !== String(value)) {
+        element.setAttribute(name, value);
+    }
 }
 
 function setFavoriteStarState(button, isFavorite) {
     if (!button) return;
     button.classList.toggle('history-favorite-active', isFavorite);
-    button.textContent = isFavorite ? '\u2605' : '\u2606';
-    button.setAttribute('aria-label', isFavorite ? 'Remove favorite' : 'Add favorite');
-    button.setAttribute('title', isFavorite ? 'Remove favorite' : 'Add favorite');
+    const nextText = isFavorite ? '\u2605' : '\u2606';
+    const nextLabel = isFavorite ? 'Remove favorite' : 'Add favorite';
+    if (button.textContent !== nextText) {
+        button.textContent = nextText;
+    }
+    setAttributeIfChanged(button, 'aria-label', nextLabel);
+    setAttributeIfChanged(button, 'title', nextLabel);
 }
 
 function installGenerationHistoryApplyButtons() {
@@ -309,7 +319,7 @@ function installGenerationHistoryApplyButtons() {
                 deleteButton.click();
             }
         });
-        ensureGenerationHistoryButton(item, 'generation-history-favorite', '★', 'Favorite image', function(event) {
+        ensureGenerationHistoryButton(item, 'generation-history-favorite', '\u2605', 'Favorite image', function(event) {
             event.preventDefault();
             event.stopPropagation();
             const starButton = event.currentTarget;
@@ -451,18 +461,20 @@ function triggerHistoryImageAction(input, button, imageId) {
 }
 
 function ensureHistoryFavoriteButton(item, imageId) {
+    if (imageId === null) {
+        item.querySelector('.history-favorite-toggle')?.remove();
+        return;
+    }
     let button = item.querySelector('.history-favorite-toggle');
     if (!button) {
         button = document.createElement('button');
         button.type = 'button';
         button.className = 'history-favorite-toggle';
-        button.textContent = '★';
+        button.textContent = '\u2606';
         item.appendChild(button);
     }
     const isFavorite = historyItemIsFavorite(item);
     button.classList.toggle('history-favorite-active', isFavorite);
-    button.setAttribute('aria-label', isFavorite ? 'Remove favorite' : 'Add favorite');
-    button.setAttribute('title', isFavorite ? 'Remove favorite' : 'Add favorite');
     setFavoriteStarState(button, isFavorite);
     button.onclick = function(event) {
         event.preventDefault();
@@ -470,8 +482,6 @@ function ensureHistoryFavoriteButton(item, imageId) {
         if (triggerHistoryFavoriteToggle(imageId)) {
             const nextFavorite = !button.classList.contains('history-favorite-active');
             button.classList.toggle('history-favorite-active', nextFavorite);
-            button.setAttribute('aria-label', nextFavorite ? 'Remove favorite' : 'Add favorite');
-            button.setAttribute('title', nextFavorite ? 'Remove favorite' : 'Add favorite');
             setFavoriteStarState(button, nextFavorite);
         }
     };
@@ -507,8 +517,8 @@ function ensureHistorySelectedActionButton(item, className, label, title, imageI
         button.textContent = label;
         item.appendChild(button);
     }
-    button.setAttribute('aria-label', title);
-    button.setAttribute('title', title);
+    setAttributeIfChanged(button, 'aria-label', title);
+    setAttributeIfChanged(button, 'title', title);
     button.onclick = function(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -601,6 +611,21 @@ function scheduleAfterUiUpdateCallbacks() {
 }
 
 var executedOnLoaded = false;
+var uiInstallerTimeout = null;
+
+function runUiInstallers() {
+    installPersonLikenessRemoveButtons();
+    installGenerationHistoryApplyButtons();
+    installHistoryThumbnailSelection();
+    installHistorySelectedRemoveButtons();
+    installHistoryDaySelectionMode();
+    installQueueButtons();
+}
+
+function scheduleUiInstallers() {
+    clearTimeout(uiInstallerTimeout);
+    uiInstallerTimeout = setTimeout(runUiInstallers, 100);
+}
 
 document.addEventListener("DOMContentLoaded", function() {
     var mutationObserver = new MutationObserver(function(m) {
@@ -616,14 +641,10 @@ document.addEventListener("DOMContentLoaded", function() {
             uiCurrentTab = newTab;
             executeCallbacks(uiTabChangeCallbacks);
         }
-        installPersonLikenessRemoveButtons();
-        installGenerationHistoryApplyButtons();
-        installHistoryThumbnailSelection();
-        installHistorySelectedRemoveButtons();
-        installHistoryDaySelectionMode();
-        installQueueButtons();
+        scheduleUiInstallers();
     });
     mutationObserver.observe(gradioApp(), {childList: true, subtree: true});
+    scheduleUiInstallers();
     initStylePreviewOverlay();
 });
 

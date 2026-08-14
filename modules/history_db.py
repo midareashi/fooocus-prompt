@@ -952,7 +952,7 @@ def list_batches(limit=100, search='', favorite_only=False, review_status='', ta
     return [dict(row) for row in rows]
 
 
-def list_batch_images(batch_id, favorite_only=False, review_status='', tag=''):
+def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', show_preview_images=False):
     init_db()
     try:
         batch_id = int(batch_id)
@@ -979,6 +979,8 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag=''):
             """
         )
         params.append(f'%{tag}%')
+    if not show_preview_images:
+        where_clauses.append(_preview_image_filter_clause())
     where = ' AND '.join(where_clauses)
     with _connect() as conn:
         rows = conn.execute(
@@ -1023,19 +1025,52 @@ def list_output_days():
     days = []
     seen = set()
     for row in rows:
-        path = os.path.abspath(row['path'])
-        try:
-            relative = os.path.relpath(path, output_folder)
-        except Exception:
-            relative = path
-        first_part = relative.split(os.sep, 1)[0]
-        if first_part == '' or first_part == os.curdir or first_part == os.pardir:
-            first_part = os.path.basename(os.path.dirname(path))
-        if first_part == '' or first_part in seen:
+        day = _output_day_from_path(row['path'], output_folder)
+        if day == '' or day in seen:
             continue
-        seen.add(first_part)
-        days.append(first_part)
-    return days
+        seen.add(day)
+        days.append(day)
+    return sorted(days, key=_output_day_sort_key, reverse=True)
+
+
+def list_output_day_counts():
+    init_db()
+    output_folder = os.path.abspath(modules.config.path_outputs)
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT path
+            FROM images
+            WHERE file_exists = 1
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+    counts = {}
+    for row in rows:
+        day = _output_day_from_path(row['path'], output_folder)
+        if day == '':
+            continue
+        counts[day] = counts.get(day, 0) + 1
+    return counts
+
+
+def _output_day_sort_key(day):
+    try:
+        return time.strptime(str(day), '%Y-%m-%d')
+    except Exception:
+        return time.strptime('1900-01-01', '%Y-%m-%d')
+
+
+def _output_day_from_path(path, output_folder):
+    path = os.path.abspath(path)
+    try:
+        relative = os.path.relpath(path, output_folder)
+    except Exception:
+        relative = path
+    first_part = relative.split(os.sep, 1)[0]
+    if first_part == '' or first_part == os.curdir or first_part == os.pardir:
+        first_part = os.path.basename(os.path.dirname(path))
+    return first_part
 
 
 def list_filter_values():
@@ -1080,7 +1115,7 @@ def _normalize_filter_list(values):
 
 
 def _image_filter_where(search='', favorite_only=False, review_status='', tag='', days=None, batch_id=None,
-                        checkpoints=None, loras=None):
+                        checkpoints=None, loras=None, show_preview_images=False):
     search = str(search or '').strip()
     review_status = str(review_status or '').strip()
     tag = str(tag or '').strip()
@@ -1138,15 +1173,33 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
             """
         )
         params += loras
+    if not show_preview_images:
+        where_clauses.append(_preview_image_filter_clause())
     where = ' AND '.join(where_clauses) if len(where_clauses) > 0 else '1 = 1'
     return where, params
 
 
+def _preview_image_filter_clause():
+    return """
+    images.config_json NOT LIKE '%"steps": 10%'
+    AND images.config_json NOT LIKE '%"steps":10%'
+    AND images.config_json NOT LIKE '%"quick_preview": true%'
+    AND images.config_json NOT LIKE '%"quick_preview":true%'
+    AND NOT EXISTS (
+        SELECT 1
+        FROM batches preview_batch
+        WHERE preview_batch.id = images.batch_id
+          AND preview_batch.quick_preview = 1
+    )
+    """
+
+
 def list_images(search='', favorite_only=False, review_status='', tag='', days=None,
-                checkpoints=None, loras=None, limit=500):
+                checkpoints=None, loras=None, show_preview_images=False, limit=500):
     init_db()
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
-                                        checkpoints=checkpoints, loras=loras)
+                                        checkpoints=checkpoints, loras=loras,
+                                        show_preview_images=show_preview_images)
     params.append(int(limit))
     with _connect() as conn:
         rows = conn.execute(
@@ -1178,10 +1231,11 @@ def list_images(search='', favorite_only=False, review_status='', tag='', days=N
 
 
 def list_seed_stacks(search='', favorite_only=False, review_status='', tag='', days=None,
-                     checkpoints=None, loras=None, limit=200):
+                     checkpoints=None, loras=None, show_preview_images=False, limit=200):
     init_db()
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
-                                        checkpoints=checkpoints, loras=loras)
+                                        checkpoints=checkpoints, loras=loras,
+                                        show_preview_images=show_preview_images)
     params.append(int(limit))
     with _connect() as conn:
         rows = conn.execute(
@@ -1190,6 +1244,15 @@ def list_seed_stacks(search='', favorite_only=False, review_status='', tag='', d
                 MIN(images.id) AS id,
                 images.seed,
                 images.prompt,
+                (
+                    SELECT pi.path
+                    FROM images pi
+                    WHERE pi.seed = images.seed
+                      AND pi.prompt = images.prompt
+                      AND pi.file_exists = 1
+                    ORDER BY pi.created_at DESC, pi.id DESC
+                    LIMIT 1
+                ) AS preview_path,
                 COUNT(images.id) AS image_count,
                 COUNT(DISTINCT images.checkpoint) AS checkpoint_count,
                 (
@@ -1217,14 +1280,15 @@ def list_seed_stacks(search='', favorite_only=False, review_status='', tag='', d
 
 
 def list_seed_stack_images(seed, prompt, search='', favorite_only=False, review_status='', tag='', days=None,
-                           checkpoints=None, loras=None, limit=100):
+                           checkpoints=None, loras=None, show_preview_images=False, limit=100):
     init_db()
     seed = _safe_int(seed)
     prompt = str(prompt or '')
     if seed is None or prompt == '':
         return []
     where, params = _image_filter_where(search, favorite_only, review_status, tag, days,
-                                        checkpoints=checkpoints, loras=loras)
+                                        checkpoints=checkpoints, loras=loras,
+                                        show_preview_images=show_preview_images)
     where = f'({where}) AND images.seed = ? AND images.prompt = ?'
     params += [seed, prompt, int(limit)]
     with _connect() as conn:

@@ -127,6 +127,38 @@ div:has(> #positive_prompt) {
   min-width: min(1px, 100%) !important;
 }
 
+.history-day-picker {
+  max-width: 720px;
+}
+
+#history_day_selection .wrap,
+#history_day_selection .wrap.svelte-1p9xokt {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 6px;
+}
+
+#history_day_selection label {
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 6px 8px !important;
+  border-radius: 6px !important;
+}
+
+#history_day_selection label > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+#history_day_selection input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
 #generation_image_panel {
   align-items: stretch;
 }
@@ -280,6 +312,17 @@ div:has(> #positive_prompt) {
     position: relative;
     border: 2px solid transparent !important;
     border-radius: 6px;
+}
+
+#history_stack_by_seed {
+    margin-top: 6px;
+}
+
+#history_stack_by_seed label {
+    min-height: 30px !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-size: 13px;
 }
 
 #history_thumbnail_gallery .thumbnail-item.history-thumbnail-selected {
