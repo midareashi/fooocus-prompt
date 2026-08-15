@@ -18,6 +18,13 @@ function get_uiCurrentTab() {
     return gradioApp().querySelector('#tabs > .tab-nav > button.selected');
 }
 
+function gradioButton(selector) {
+    const element = gradioApp().querySelector(selector);
+    if (!element) return null;
+    if (element.matches('button')) return element;
+    return element.querySelector('button');
+}
+
 /**
  * Get the first currently visible top-level UI tab content (e.g. the div hosting the "txt2img" UI).
  */
@@ -184,7 +191,7 @@ function getGenerationFavoriteIndexInput() {
 }
 
 function getGenerationFavoriteButton() {
-    return gradioApp().querySelector('#favorite_selected_generation_button');
+    return gradioButton('#favorite_selected_generation_button');
 }
 
 function getQuickPreviewGenerationIndicesInput() {
@@ -193,18 +200,22 @@ function getQuickPreviewGenerationIndicesInput() {
     );
 }
 
-function setGenerationActionIndex(input, index) {
+function setHiddenActionValue(input, value) {
     if (!input) return false;
-    const value = String(index);
+    const stringValue = String(value);
     const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
     if (valueSetter) {
-        valueSetter.call(input, value);
+        valueSetter.call(input, stringValue);
     } else {
-        input.value = value;
+        input.value = stringValue;
     }
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
+}
+
+function setGenerationActionIndex(input, index) {
+    return setHiddenActionValue(input, index);
 }
 
 function setGenerationApplyIndex(index) {
@@ -234,7 +245,7 @@ function getQueueRemoveIdInput() {
 }
 
 function setQueueRemoveId(queueId) {
-    return setGenerationActionIndex(getQueueRemoveIdInput(), queueId);
+    return setHiddenActionValue(getQueueRemoveIdInput(), queueId);
 }
 
 function ensureGenerationHistoryButton(item, className, label, title, onClick) {
@@ -271,10 +282,10 @@ function setFavoriteStarState(button, isFavorite) {
 
 function installGenerationHistoryApplyButtons() {
     const gallery = gradioApp().querySelector('#final_gallery');
-    const applyButton = gradioApp().querySelector('#apply_selected_image_config_button');
-    const removeButton = gradioApp().querySelector('#remove_selected_image_button');
-    const deleteButton = gradioApp().querySelector('#delete_selected_image_button');
-    const qualityButton = gradioApp().querySelector('#regenerate_selected_quality_button');
+    const applyButton = gradioButton('#apply_selected_image_config_button');
+    const removeButton = gradioButton('#remove_selected_image_button');
+    const deleteButton = gradioButton('#delete_selected_image_button');
+    const qualityButton = gradioButton('#regenerate_selected_quality_button');
     const favoriteButton = getGenerationFavoriteButton();
     const previewIndicesInput = getQuickPreviewGenerationIndicesInput();
     if (!gallery || !applyButton || !removeButton || !deleteButton || !qualityButton || !favoriteButton) return;
@@ -360,12 +371,20 @@ function getHistorySelectedIdsInput() {
     return gradioApp().querySelector('#history_selected_image_ids_json textarea, #history_selected_image_ids_json input');
 }
 
+function getHistorySelectThumbnailIdInput() {
+    return gradioApp().querySelector('#history_select_thumbnail_image_id textarea, #history_select_thumbnail_image_id input');
+}
+
+function getHistorySelectThumbnailButton() {
+    return gradioButton('#history_select_thumbnail_button');
+}
+
 function getHistoryRemoveSelectedIdInput() {
     return gradioApp().querySelector('#history_remove_selected_image_id textarea, #history_remove_selected_image_id input');
 }
 
 function getHistoryRemoveSelectedButton() {
-    return gradioApp().querySelector('#history_remove_selected_image_button');
+    return gradioButton('#history_remove_selected_image_button');
 }
 
 function getHistoryDeleteSelectedIdInput() {
@@ -373,7 +392,7 @@ function getHistoryDeleteSelectedIdInput() {
 }
 
 function getHistoryDeleteSelectedButton() {
-    return gradioApp().querySelector('#history_delete_selected_image_button');
+    return gradioButton('#history_delete_selected_image_button');
 }
 
 function getHistoryApplySelectedIdInput() {
@@ -381,7 +400,7 @@ function getHistoryApplySelectedIdInput() {
 }
 
 function getHistoryApplySelectedButton() {
-    return gradioApp().querySelector('#history_apply_selected_image_button');
+    return gradioButton('#history_apply_selected_image_button');
 }
 
 function getHistoryToggleFavoriteIdInput() {
@@ -389,7 +408,7 @@ function getHistoryToggleFavoriteIdInput() {
 }
 
 function getHistoryToggleFavoriteButton() {
-    return gradioApp().querySelector('#history_toggle_favorite_button');
+    return gradioButton('#history_toggle_favorite_button');
 }
 
 function getHistoryHideThumbnailIdInput() {
@@ -397,33 +416,29 @@ function getHistoryHideThumbnailIdInput() {
 }
 
 function getHistoryHideThumbnailButton() {
-    return gradioApp().querySelector('#history_hide_thumbnail_button');
+    return gradioButton('#history_hide_thumbnail_button');
 }
 
 function setHistorySelectionMode(event) {
     const input = getHistorySelectionModeInput();
-    if (!input) return;
     let mode = 'single';
     if (event.shiftKey) {
         mode = 'shift';
     } else if (event.ctrlKey || event.metaKey) {
         mode = 'ctrl';
     }
-    input.value = mode;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    setHiddenActionValue(input, mode);
 }
 
 function setHistoryDaySelectionMode(event) {
     const input = getHistoryDaySelectionModeInput();
-    if (!input) return;
     let mode = 'single';
     if (event.shiftKey) {
         mode = 'shift';
     } else if (event.ctrlKey || event.metaKey) {
         mode = 'ctrl';
     }
-    input.value = mode;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    setHiddenActionValue(input, mode);
 }
 
 function getHistorySelectedIds() {
@@ -442,6 +457,14 @@ function getHistoryImageIdFromThumb(item) {
     return match ? Number(match[1]) : null;
 }
 
+function getHistorySelectionRefFromThumb(item) {
+    const caption = item.querySelector('.caption, .thumbnail-label, p, span')?.textContent || item.textContent || '';
+    const stackMatch = caption.match(/stack:(\d+)/i);
+    if (stackMatch) return `stack:${stackMatch[1]}`;
+    const imageId = getHistoryImageIdFromThumb(item);
+    return imageId === null ? '' : String(imageId);
+}
+
 function historyItemCaptionText(item) {
     return item.querySelector('.caption, .thumbnail-label, p, span')?.textContent || item.textContent || '';
 }
@@ -458,16 +481,14 @@ function triggerHistoryFavoriteToggle(imageId) {
     const input = getHistoryToggleFavoriteIdInput();
     const button = getHistoryToggleFavoriteButton();
     if (!input || !button || imageId === null) return false;
-    input.value = String(imageId);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (!setHiddenActionValue(input, imageId)) return false;
     button.click();
     return true;
 }
 
 function triggerHistoryImageAction(input, button, imageId) {
     if (!input || !button || imageId === null) return false;
-    input.value = String(imageId);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    if (!setHiddenActionValue(input, imageId)) return false;
     button.click();
     return true;
 }
@@ -535,7 +556,15 @@ function installHistoryThumbnailSelection() {
                 setHistorySelectionMode(event);
             }, true);
             item.addEventListener('click', function(event) {
+                if (event.target.closest('.history-favorite-toggle, .history-hide-thumbnail')) return;
                 setHistorySelectionMode(event);
+                const input = getHistorySelectThumbnailIdInput();
+                const button = getHistorySelectThumbnailButton();
+                const imageRef = getHistorySelectionRefFromThumb(item);
+                if (!input || !button || imageRef === '') return;
+                if (setHiddenActionValue(input, imageRef)) {
+                    button.click();
+                }
             }, true);
         }
         const imageId = getHistoryImageIdFromThumb(item);
@@ -596,9 +625,9 @@ function installHistoryDaySelectionMode() {
 }
 
 function installQueueButtons() {
-    const removeButton = gradioApp().querySelector('#remove_queued_task_button');
-    const stopButton = gradioApp().querySelector('#stop_queue_button');
-    const skipButton = gradioApp().querySelector('#skip_button');
+    const removeButton = gradioButton('#remove_queued_task_button');
+    const stopButton = gradioButton('#stop_queue_button');
+    const skipButton = gradioButton('#skip_button');
     const panel = gradioApp().querySelector('#queue_status_panel');
     if (!removeButton || !stopButton || !skipButton || !panel) return;
 
@@ -633,6 +662,29 @@ function installQueueButtons() {
             skipButton.click();
         };
     });
+}
+
+function isElementVisible(element) {
+    if (!element) return false;
+    const style = window.getComputedStyle(element);
+    return style.display !== 'none' && style.visibility !== 'hidden' && element.offsetParent !== null;
+}
+
+function generationPollNeeded() {
+    const panel = gradioApp().querySelector('#queue_status_panel');
+    const hasQueueRows = !!panel?.querySelector('.queue-row');
+    const progress = gradioApp().querySelector('#progress-bar');
+    const reconnectButton = gradioButton('#reset_button');
+    return hasQueueRows || isElementVisible(progress) || isElementVisible(reconnectButton);
+}
+
+function installGenerationPoller() {
+    if (window.fooocusGenerationPollerInstalled) return;
+    window.fooocusGenerationPollerInstalled = true;
+    window.setInterval(function() {
+        if (!generationPollNeeded()) return;
+        gradioButton('#poll_generate_button')?.click();
+    }, 1000);
 }
 
 function executeCallbacks(queue, arg) {
@@ -693,6 +745,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     mutationObserver.observe(gradioApp(), {childList: true, subtree: true});
     scheduleUiInstallers();
+    installGenerationPoller();
     initStylePreviewOverlay();
 });
 

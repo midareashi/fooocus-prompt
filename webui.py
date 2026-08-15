@@ -399,16 +399,25 @@ def make_queue_panel_html():
     return ''.join(rows)
 
 
+def get_generation_tracking_task(task):
+    active_task = worker.get_current_task()
+    if active_task is not None and not getattr(active_task, 'completed', False):
+        return active_task
+    return task
+
+
 def enqueue_generate_task(*args):
     task = get_task(*args)
     should_monitor = False
+    tracking_task = task
 
     if len(task.args) > 0:
         pending_count = worker.append_async_task(task)
         should_monitor = worker.begin_queue_monitor()
+        tracking_task = get_generation_tracking_task(task)
         print(f'[Queue] Added generation task. Pending tasks: {pending_count}')
 
-    return task, should_monitor, \
+    return tracking_task, should_monitor, \
         gr.update(visible=False, interactive=False), \
         gr.update(visible=False, interactive=False), \
         gr.update(visible=True, interactive=True), \
@@ -490,17 +499,17 @@ def monitor_generate_queue(should_monitor, session_history):
                 time.sleep(0.1)
                 continue
 
-            if len(observed_task.yields) == 0:
+            if worker.get_task_yield_count(observed_task) == 0:
                 time.sleep(0.01)
                 continue
 
-            flag, product = observed_task.yields.pop(0)
-            if flag == 'preview':
-                # help bad internet connection by skipping duplicated preview
-                if len(observed_task.yields) > 0:
-                    if observed_task.yields[0][0] == 'preview':
-                        continue
+            event = worker.get_latest_display_yield(preferred_task=observed_task, same_task_only=True)
+            if event is None:
+                time.sleep(0.01)
+                continue
 
+            observed_task, flag, product = event
+            if flag == 'preview':
                 percentage, title, image = product
                 yield gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
                     gr.update(visible=True, value=image) if image is not None else gr.update(), \
@@ -604,22 +613,37 @@ def poll_generate_queue(task, is_generating, session_history):
             gr.update(value=get_quick_preview_indices()), \
             False
 
-    if task is None or not hasattr(task, 'yields'):
-        return idle_updates()
-
     active_task = worker.get_current_task()
     pending_count = worker.get_pending_task_count()
+    task_yield_count = worker.get_task_yield_count(task)
+    if task_yield_count == 0 and active_task is not None and active_task is not task \
+            and not getattr(active_task, 'completed', False):
+        task = active_task
+        task_yield_count = worker.get_task_yield_count(task)
+
+    active_running = active_task is not None and not getattr(active_task, 'completed', False)
     task_is_active = active_task is task
-    task_is_pending = not task_is_active and pending_count > 0 and not getattr(task, 'completed', False)
-    if not is_generating and not task_is_active and not task_is_pending and len(task.yields) == 0:
+    task_is_pending = (
+        task is not None and hasattr(task, 'yields') and
+        not task_is_active and pending_count > 0 and not getattr(task, 'completed', False)
+    )
+
+    if not is_generating and not active_running and not task_is_pending and pending_count == 0 \
+            and task_yield_count == 0:
         return idle_updates()
 
     worker.heartbeat_queue_monitor()
 
-    if len(task.yields) == 0:
-        if getattr(task, 'completed', False):
+    event = worker.get_latest_display_yield(preferred_task=task, same_task_only=True) \
+        if task_yield_count > 0 else None
+    if event is None:
+        active_task = worker.get_current_task()
+        pending_count = worker.get_pending_task_count()
+        active_running = active_task is not None and not getattr(active_task, 'completed', False)
+        if not active_running and pending_count == 0:
+            worker.end_queue_monitor()
             return idle_updates()
-        if task_is_pending:
+        if not active_running and pending_count > 0:
             return gr.update(
                 visible=True,
                 value=modules.html.make_progress_html(1, f'Waiting for queued task ... ({pending_count} pending)')
@@ -638,11 +662,8 @@ def poll_generate_queue(task, is_generating, session_history):
             gr.update(value=get_quick_preview_indices()), \
             True
 
-    flag, product = task.yields.pop(0)
+    task, flag, product = event
     if flag == 'preview':
-        while len(task.yields) > 0 and task.yields[0][0] == 'preview':
-            flag, product = task.yields.pop(0)
-
         percentage, title, image = product
         return gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
             gr.update(visible=True, value=image) if image is not None else gr.update(), \
@@ -668,7 +689,10 @@ def poll_generate_queue(task, is_generating, session_history):
                 session_history.append(image_item)
 
         latest_image = get_latest_display_image(product)
-        is_finished = flag == 'finish'
+        active_task = worker.get_current_task()
+        active_running = active_task is not None and not getattr(active_task, 'completed', False)
+        has_more_work = active_running or worker.get_pending_task_count() > 0
+        is_finished = flag == 'finish' and not has_more_work
         if is_finished:
             worker.end_queue_monitor()
         return gr.update(visible=not is_finished), \
@@ -681,7 +705,7 @@ def poll_generate_queue(task, is_generating, session_history):
             gr.update(visible=False, interactive=False), \
             gr.update(value=make_queue_panel_html()), \
             gr.update(value=get_quick_preview_indices()), \
-            not is_finished
+            has_more_work
 
     return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
         gr.update(visible=True, interactive=True), \
@@ -695,6 +719,18 @@ def poll_generate_queue(task, is_generating, session_history):
 def reconnect_generate_queue(session_history):
     active_task = worker.get_current_task()
     if active_task is None:
+        latest_event = worker.get_latest_display_yield()
+        if latest_event is not None and latest_event[1] in ['results', 'finish']:
+            task = latest_event[0]
+            print(f'[Queue] Reconnected to completed generation task {getattr(task, "queue_id", 0)}.')
+            return task, False, \
+                gr.update(visible=True, interactive=True), \
+                gr.update(visible=False, interactive=False), \
+                gr.update(visible=False, interactive=False), \
+                gr.update(visible=False, interactive=False), \
+                gr.update(value=make_queue_panel_html()), \
+                True
+
         return worker.AsyncTask(args=[]), False, \
             gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
@@ -784,6 +820,11 @@ with shared.gradio_root:
                                                     visible=False)
             history_selected_image_ids_json = gr.Textbox(value='[]', elem_id='history_selected_image_ids_json',
                                                          visible=False)
+            history_select_thumbnail_image_id = gr.Textbox(value='', elem_id='history_select_thumbnail_image_id',
+                                                           visible=False)
+            history_select_thumbnail_button = gr.Button(value='Select History Thumbnail',
+                                                        elem_id='history_select_thumbnail_button',
+                                                        visible=False)
             history_selected_days = gr.State([])
             history_remove_selected_image_id = gr.Textbox(value='', elem_id='history_remove_selected_image_id',
                                                           visible=False)
@@ -1851,6 +1892,8 @@ with shared.gradio_root:
                     with gr.Tab(label='Advanced'):
                         reset_button = gr.Button(label="Reconnect", value="Reconnect", variant='secondary',
                                                  elem_id='reset_button', visible=False)
+                        poll_generate_button = gr.Button(label="Poll Generation", value="Poll Generation",
+                                                         elem_id='poll_generate_button', visible=False)
                         guidance_scale = gr.Slider(label='Guidance Scale', minimum=1.0, maximum=30.0, step=0.01,
                                                    value=modules.config.default_cfg_scale,
                                                    info='Higher value means style is cleaner, vivider, and more artistic.')
@@ -2398,8 +2441,9 @@ with shared.gradio_root:
                     task = worker.AsyncTask(args=task_args[1:])
                     pending_count = worker.append_async_task(task)
                     should_monitor = worker.begin_queue_monitor()
+                    tracking_task = get_generation_tracking_task(task)
                     print(f'[Queue] Added quality regeneration task. Pending tasks: {pending_count}')
-                    return task, should_monitor, \
+                    return tracking_task, should_monitor, \
                         gr.update(visible=False, interactive=False), \
                         gr.update(visible=False, interactive=False), \
                         gr.update(visible=True, interactive=True), \
@@ -3160,6 +3204,39 @@ with shared.gradio_root:
                         bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
                         curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), status
 
+                def select_history_thumbnail_by_ref(image_ref, visible_image_ids, selected_image_ids, selection_mode,
+                                                    search, favorite_only, review_status, tag, days, checkpoints, loras,
+                                                    show_preview_images=False, thumbnail_visibility='Visible'):
+                    image_ref = str(image_ref or '').strip()
+                    if image_ref == '':
+                        return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', 'Select a thumbnail.'
+
+                    clicked_index = None
+                    for index, visible_ref in enumerate(visible_image_ids or []):
+                        if str(visible_ref) == image_ref:
+                            clicked_index = index
+                            break
+                        try:
+                            if int(visible_ref) == int(image_ref):
+                                clicked_index = index
+                                break
+                        except Exception:
+                            pass
+                    if clicked_index is None:
+                        return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', 'Selected thumbnail is no longer visible.'
+
+                    class ThumbnailSelectEvent:
+                        def __init__(self, index):
+                            self.index = index
+
+                    return select_history_thumbnail(
+                        visible_image_ids, selected_image_ids, selection_mode, search,
+                        favorite_only, review_status, tag, days, checkpoints, loras,
+                        show_preview_images=show_preview_images,
+                        thumbnail_visibility=thumbnail_visibility,
+                        evt=ThumbnailSelectEvent(clicked_index)
+                    )
+
                 def select_history_comparison(table_rows, evt: gr.SelectData):
                     try:
                         row_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
@@ -3451,18 +3528,21 @@ with shared.gradio_root:
                                                outputs=[history_favorite, history_rating, history_review_status,
                                                         history_tags, history_note, history_status],
                                                queue=False, show_progress=False)
-                history_gallery.select(select_history_thumbnail,
-                                       inputs=[history_visible_image_ids, history_selected_image_ids,
-                                               history_selection_mode, history_search,
-                                               history_filter_favorites, history_filter_status,
-                                               history_filter_tag, history_day_selection,
-                                               history_filter_checkpoints, history_filter_loras,
-                                               history_show_preview_images, history_thumbnail_visibility],
-                                       outputs=[history_selected_image_ids, history_selected_image_ids_json,
-                                                history_selected_gallery,
-                                                history_image_selection, history_favorite, history_rating,
-                                                history_review_status, history_tags, history_note, history_status],
-                                       queue=False, show_progress=False)
+                history_select_thumbnail_button.click(select_history_thumbnail_by_ref,
+                                                      inputs=[history_select_thumbnail_image_id,
+                                                              history_visible_image_ids, history_selected_image_ids,
+                                                              history_selection_mode, history_search,
+                                                              history_filter_favorites, history_filter_status,
+                                                              history_filter_tag, history_day_selection,
+                                                              history_filter_checkpoints, history_filter_loras,
+                                                              history_show_preview_images, history_thumbnail_visibility],
+                                                      outputs=[history_selected_image_ids,
+                                                               history_selected_image_ids_json,
+                                                               history_selected_gallery,
+                                                               history_image_selection, history_favorite,
+                                                               history_rating, history_review_status,
+                                                               history_tags, history_note, history_status],
+                                                      queue=False, show_progress=False)
                 history_comparison_table.select(select_history_comparison, inputs=history_comparison_table,
                                                 outputs=[history_selected_image_ids, history_selected_image_ids_json,
                                                          history_selected_gallery,
@@ -3836,6 +3916,15 @@ with shared.gradio_root:
                                    state_session_gallery, generate_button, stop_button, skip_button,
                                    queue_status_html, quick_preview_generation_indices, state_is_generating],
                           queue=False, show_progress=False)
+
+                poll_generate_button.click(poll_generate_queue,
+                                           inputs=[currentTask, state_is_generating, state_session_gallery],
+                                           outputs=[progress_html, progress_window, progress_gallery, gallery,
+                                                    state_session_gallery, generate_button, stop_button, skip_button,
+                                                    queue_status_html, quick_preview_generation_indices,
+                                                    state_is_generating],
+                                           queue=False,
+                                           show_progress=False)
 
                 shared.gradio_root.load(poll_generate_queue,
                                         inputs=[currentTask, state_is_generating, state_session_gallery],

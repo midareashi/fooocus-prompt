@@ -250,6 +250,8 @@ class AsyncTask:
 async_tasks = []
 async_tasks_lock = threading.Lock()
 current_task = None
+display_tasks = []
+display_tasks_lock = threading.Lock()
 queue_monitor_lock = threading.Lock()
 queue_monitor_running = False
 queue_monitor_last_heartbeat = 0.0
@@ -290,6 +292,83 @@ def get_pending_task_count():
 
 def get_current_task():
     return current_task
+
+
+def _prune_display_tasks_locked():
+    active_task = current_task
+    display_tasks[:] = [
+        task for task in display_tasks
+        if task is active_task or len(getattr(task, 'yields', []) or []) > 0
+        or not getattr(task, 'completed', False)
+    ]
+    if len(display_tasks) > 8:
+        del display_tasks[:-8]
+
+
+def register_display_task(task):
+    if task is None or not hasattr(task, 'yields'):
+        return
+    with display_tasks_lock:
+        if task not in display_tasks:
+            display_tasks.append(task)
+        _prune_display_tasks_locked()
+
+
+def append_task_yield(task, flag, product):
+    if task is None or not hasattr(task, 'yields'):
+        return
+
+    with display_tasks_lock:
+        if task not in display_tasks:
+            display_tasks.append(task)
+        if flag == 'preview':
+            task.yields[:] = [item for item in task.yields if item[0] != 'preview']
+        elif flag == 'results':
+            task.yields[:] = [item for item in task.yields if item[0] != 'results']
+        elif flag == 'finish':
+            task.yields[:] = [item for item in task.yields if item[0] != 'finish']
+        task.yields.append([flag, product])
+        _prune_display_tasks_locked()
+
+
+def get_task_yield_count(task):
+    if task is None or not hasattr(task, 'yields'):
+        return 0
+
+    with display_tasks_lock:
+        return len(task.yields)
+
+
+def has_display_yields():
+    with display_tasks_lock:
+        _prune_display_tasks_locked()
+        return any(len(getattr(task, 'yields', []) or []) > 0 for task in display_tasks)
+
+
+def get_latest_display_yield(preferred_task=None, required_flag=None, same_task_only=False):
+    with display_tasks_lock:
+        candidates = []
+        if preferred_task is not None and hasattr(preferred_task, 'yields'):
+            candidates.append(preferred_task)
+
+        if not same_task_only:
+            for task in display_tasks:
+                if task not in candidates:
+                    candidates.append(task)
+            if current_task is not None and current_task not in candidates:
+                candidates.append(current_task)
+
+        for task in candidates:
+            if task is None or not hasattr(task, 'yields') or len(task.yields) == 0:
+                continue
+            for flag, product in reversed(task.yields):
+                if required_flag is not None and flag != required_flag:
+                    continue
+                _prune_display_tasks_locked()
+                return task, flag, product
+
+        _prune_display_tasks_locked()
+        return None
 
 
 def get_task_summary(task):
@@ -471,7 +550,7 @@ def worker():
 
     def progressbar(async_task, number, text):
         print(f'[Fooocus] {text}')
-        async_task.yields.append(['preview', (number, text, None)])
+        append_task_yield(async_task, 'preview', (number, text, None))
 
     def yield_result(async_task, imgs, progressbar_index, black_out_nsfw, censor=True, do_not_show_finished_images=False):
         if not isinstance(imgs, list):
@@ -486,7 +565,7 @@ def worker():
         if do_not_show_finished_images:
             return
 
-        async_task.yields.append(['results', async_task.results])
+        append_task_yield(async_task, 'results', async_task.results)
         return
 
     def build_image_wall(async_task):
@@ -1711,7 +1790,7 @@ def worker():
         final_scheduler_name = patch_samplers(async_task)
         print(f'Using {final_scheduler_name} scheduler.')
 
-        async_task.yields.append(['preview', (current_progress, 'Moving model to GPU ...', None)])
+        append_task_yield(async_task, 'preview', (current_progress, 'Moving model to GPU ...', None))
 
         processing_start_time = time.perf_counter()
 
@@ -1724,10 +1803,10 @@ def worker():
             async_task.callback_steps += (100 - preparation_steps) / float(all_steps)
             completed_batch_steps = current_task_id * total_steps + step + 1
             total_batch_steps = total_count * total_steps
-            async_task.yields.append(['preview', (
+            append_task_yield(async_task, 'preview', (
                 int(current_progress + async_task.callback_steps),
                 f'Image {current_task_id + 1}/{total_count} | Step {step + 1}/{total_steps} | Batch step {completed_batch_steps}/{total_batch_steps}',
-                y)])
+                y))
 
         show_intermediate_results = total_count > 1 or async_task.should_enhance
         persist_image = not async_task.should_enhance or not async_task.save_final_enhanced_image_only
@@ -1890,7 +1969,7 @@ def worker():
                     mask = 255 - mask
 
                 if async_task.debugging_enhance_masks_checkbox:
-                    async_task.yields.append(['preview', (current_progress, 'Loading ...', mask)])
+                    append_task_yield(async_task, 'preview', (current_progress, 'Loading ...', mask))
                     yield_result(async_task, mask, current_progress, async_task.black_out_nsfw, False,
                                  async_task.disable_intermediate_results)
                     async_task.enhance_stats[index] += 1
@@ -1968,6 +2047,7 @@ def worker():
         task = pop_async_task()
         if task is not None:
             current_task = task
+            register_display_task(task)
 
             try:
                 modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'running')
@@ -1978,13 +2058,13 @@ def worker():
                     build_image_wall(task)
                 task.completed = True
                 modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'completed')
-                task.yields.append(['finish', task.results])
+                append_task_yield(task, 'finish', task.results)
                 pipeline.prepare_text_encoder(async_call=True)
             except:
                 traceback.print_exc()
                 task.completed = True
                 modules.history_db.update_batch_status(getattr(task, 'history_batch_id', None), 'failed')
-                task.yields.append(['finish', task.results])
+                append_task_yield(task, 'finish', task.results)
             finally:
                 if pid in modules.patch.patch_settings:
                     del modules.patch.patch_settings[pid]
