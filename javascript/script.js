@@ -470,6 +470,10 @@ function getHistoryAppendPromptButton() {
     return gradioButton('#history_append_prompt_button');
 }
 
+function getHistorySendToInpaintButton() {
+    return gradioButton('#history_send_to_inpaint_button');
+}
+
 function setHistorySelectionMode(event) {
     const input = getHistorySelectionModeInput();
     let mode = 'single';
@@ -682,7 +686,8 @@ function ensureHistorySelectedConfigMenu(item, imageId) {
     const actions = [
         ['Load Full Config', getHistoryLoadFullButton],
         ['Replace Prompt', getHistoryReplacePromptButton],
-        ['Append Prompt', getHistoryAppendPromptButton]
+        ['Append Prompt', getHistoryAppendPromptButton],
+        ['Send to Inpaint', getHistorySendToInpaintButton]
     ];
     actions.forEach(function(action) {
         let menuButton = menu.querySelector(`button[data-history-config-action="${action[0]}"]`);

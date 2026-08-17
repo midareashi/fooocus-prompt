@@ -928,6 +928,9 @@ with shared.gradio_root:
             history_append_prompt_button = gr.Button(value='Append Prompt',
                                                      elem_id='history_append_prompt_button',
                                                      visible=False)
+            history_send_to_inpaint_button = gr.Button(value='Send to Inpaint',
+                                                       elem_id='history_send_to_inpaint_button',
+                                                       visible=False)
             history_save_curation_button = gr.Button(value='Save Curation',
                                                      elem_id='history_save_curation_button',
                                                      visible=False)
@@ -1402,7 +1405,7 @@ with shared.gradio_root:
                         gr.HTML('* Drop clear photos of the same person. Use one trigger phrase like "woman img", "man img", or "person img"; Fooocus will add it when omitted.')
 
                     with gr.Row(visible=modules.config.default_image_prompt_checkbox) as image_input_panel:
-                        with gr.Tabs(selected=modules.config.default_selected_image_input_tab_id):
+                        with gr.Tabs(selected=modules.config.default_selected_image_input_tab_id) as image_input_tabs:
                             with gr.Tab(label='Upscale or Variation', id='uov_tab') as uov_tab:
                                 with gr.Row():
                                     with gr.Column():
@@ -3849,6 +3852,17 @@ with shared.gradio_root:
                 def append_prompt_from_history(selection, current_prompt, is_generating, inpaint_mode):
                     return load_history_image_config(selection, 'Append Prompt', current_prompt, is_generating, inpaint_mode)
 
+                def send_history_image_to_inpaint(selection):
+                    image_id = parse_history_id(selection)
+                    if image_id is None:
+                        return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), 'Select a history image first.'
+                    summary = modules.history_db.get_image_summary(image_id)
+                    image_path = summary.get('path') if len(summary) > 0 else None
+                    if not image_path or not os.path.exists(image_path):
+                        return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), 'History image file was not found.'
+                    return True, gr.update(visible=True), 'inpaint', gr.update(selected='inpaint_tab'), image_path, \
+                        f'Sent {os.path.basename(image_path)} to Inpaint.'
+
                 history_filter_inputs = [
                     history_search, history_filter_favorites, history_filter_status, history_filter_tag,
                     history_filter_checkpoints, history_filter_loras, history_show_preview_images,
@@ -4046,6 +4060,15 @@ with shared.gradio_root:
                                                    inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
                                                    outputs=history_load_outputs,
                                                    queue=False, show_progress=False)
+                history_send_to_inpaint_button.click(
+                    send_history_image_to_inpaint,
+                    inputs=history_config_action_image_id,
+                    outputs=[input_image_checkbox, image_input_panel, current_tab, image_input_tabs,
+                             inpaint_input_image, history_status],
+                    queue=False,
+                    show_progress=False,
+                    _js='(x)=>{viewer_to_bottom(500); return x;}'
+                )
 
                 load_full_prompt_config_button.click(load_full_prompt_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
                                                      outputs=load_prompt_config_outputs,
