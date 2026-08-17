@@ -1,0 +1,15 @@
+{
+  "name": "Steve",
+  "enabled": true,
+  "subject": "man",
+  "identity_strength": 1.0,
+  "face_weight": 0.9,
+  "face_weight_start": 0.55,
+  "image_count": 4,
+  "image_files": [
+    "20260817_122024_01.png",
+    "20260817_122024_02.png",
+    "20260817_122024_03.png",
+    "20260817_122024_04.png"
+  ]
+}

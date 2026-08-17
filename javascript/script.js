@@ -430,6 +430,14 @@ function getHistoryApplySelectedButton() {
     return gradioButton('#history_apply_selected_image_button');
 }
 
+function getHistoryQualitySelectedIdInput() {
+    return gradioApp().querySelector('#history_quality_selected_image_id textarea, #history_quality_selected_image_id input');
+}
+
+function getHistoryQualitySelectedButton() {
+    return gradioButton('#history_quality_selected_image_button');
+}
+
 function getHistoryToggleFavoriteIdInput() {
     return gradioApp().querySelector('#history_toggle_favorite_image_id textarea, #history_toggle_favorite_image_id input');
 }
@@ -518,6 +526,10 @@ function historyItemIsFavorite(item) {
 
 function historyItemIsHidden(item) {
     return /\bhidden\b/i.test(historyItemCaptionText(item));
+}
+
+function historyItemIsPreview(item) {
+    return /\bpreview\b/i.test(historyItemCaptionText(item));
 }
 
 function triggerHistoryFavoriteToggle(imageId) {
@@ -711,6 +723,12 @@ function installHistorySelectedRemoveButtons() {
             getHistoryRemoveSelectedIdInput, getHistoryRemoveSelectedButton);
         ensureHistorySelectedActionButton(item, 'history-selected-delete', '\u{1F5D1}', 'Delete image file and history record', imageId,
             getHistoryDeleteSelectedIdInput, getHistoryDeleteSelectedButton);
+        if (historyItemIsPreview(item)) {
+            ensureHistorySelectedActionButton(item, 'history-selected-quality', 'Quality 60', 'Generate this preview at Quality, 60 steps', imageId,
+                getHistoryQualitySelectedIdInput, getHistoryQualitySelectedButton);
+        } else {
+            item.querySelector('.history-selected-quality')?.remove();
+        }
         ensureHistoryHideThumbnailButton(item, imageId, 'history-selected-hide');
     });
 }

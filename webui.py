@@ -433,11 +433,23 @@ def remove_queued_task(queue_id):
     return gr.update(value=make_queue_panel_html()), message
 
 
+def prune_missing_gallery_paths(gallery_items):
+    pruned = []
+    changed = False
+    for item in list(gallery_items or []):
+        if isinstance(item, str) and not os.path.exists(item):
+            changed = True
+            continue
+        pruned.append(item)
+    return pruned, changed
+
+
 def monitor_generate_queue(should_monitor, session_history):
-    session_history = list(session_history or [])
+    session_history, session_history_pruned = prune_missing_gallery_paths(session_history)
 
     if not should_monitor:
-        yield gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), \
+        yield gr.update(), gr.update(), gr.update(), \
+            gr.update(value=session_history) if session_history_pruned else gr.update(), session_history, \
             gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
         return
 
@@ -457,16 +469,24 @@ def monitor_generate_queue(should_monitor, session_history):
         image_items = list(image_items or [])
         for image_item in reversed(image_items):
             if isinstance(image_item, str):
-                return image_item
-        return image_items[-1] if len(image_items) > 0 else None
+                if os.path.exists(image_item):
+                    return image_item
+                continue
+            return image_item
+        return None
 
     def append_task_results_to_session_history(task):
         changed = False
         for image_item in list(getattr(task, 'results', []) or []):
             if isinstance(image_item, str):
+                if not os.path.exists(image_item):
+                    continue
                 if image_item not in session_history:
                     session_history.append(image_item)
                     changed = True
+            elif image_item not in session_history:
+                session_history.append(image_item)
+                changed = True
         return changed
 
     yield gr.update(visible=True, value=modules.html.make_progress_html(1, 'Waiting for task to start ...')), \
@@ -535,6 +555,8 @@ def monitor_generate_queue(should_monitor, session_history):
             if flag == 'results':
                 for image_item in product:
                     if isinstance(image_item, str):
+                        if not os.path.exists(image_item):
+                            continue
                         if image_item not in session_history:
                             session_history.append(image_item)
                     else:
@@ -558,6 +580,8 @@ def monitor_generate_queue(should_monitor, session_history):
 
                 for image_item in product:
                     if isinstance(image_item, str):
+                        if not os.path.exists(image_item):
+                            continue
                         if image_item not in session_history:
                             session_history.append(image_item)
                     else:
@@ -596,7 +620,7 @@ def monitor_generate_queue(should_monitor, session_history):
 
 
 def poll_generate_queue(task, is_generating, session_history):
-    session_history = list(session_history or [])
+    session_history, session_history_pruned = prune_missing_gallery_paths(session_history)
 
     def get_quick_preview_indices():
         indices = []
@@ -611,20 +635,29 @@ def poll_generate_queue(task, is_generating, session_history):
         image_items = list(image_items or [])
         for image_item in reversed(image_items):
             if isinstance(image_item, str):
-                return image_item
-        return image_items[-1] if len(image_items) > 0 else None
+                if os.path.exists(image_item):
+                    return image_item
+                continue
+            return image_item
+        return None
 
     def append_task_results_to_session_history(task):
         changed = False
         for image_item in list(getattr(task, 'results', []) or []):
             if isinstance(image_item, str):
+                if not os.path.exists(image_item):
+                    continue
                 if image_item not in session_history:
                     session_history.append(image_item)
                     changed = True
+            elif image_item not in session_history:
+                session_history.append(image_item)
+                changed = True
         return changed
 
     def idle_updates():
-        return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
+        return gr.update(), gr.update(), gr.update(), \
+            gr.update(value=session_history) if session_history_pruned else gr.update(), session_history, \
             gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
             gr.update(visible=False, interactive=False), \
@@ -703,6 +736,8 @@ def poll_generate_queue(task, is_generating, session_history):
 
         for image_item in product:
             if isinstance(image_item, str):
+                if not os.path.exists(image_item):
+                    continue
                 if image_item not in session_history:
                     session_history.append(image_item)
             else:
@@ -861,6 +896,11 @@ with shared.gradio_root:
             history_apply_selected_image_button = gr.Button(value='Apply Selected History Image Config',
                                                             elem_id='history_apply_selected_image_button',
                                                             visible=False)
+            history_quality_selected_image_id = gr.Textbox(value='', elem_id='history_quality_selected_image_id',
+                                                           visible=False)
+            history_quality_selected_image_button = gr.Button(value='Generate History Preview at Quality',
+                                                              elem_id='history_quality_selected_image_button',
+                                                              visible=False)
             history_toggle_favorite_image_id = gr.Textbox(value='', elem_id='history_toggle_favorite_image_id',
                                                           visible=False)
             history_toggle_favorite_button = gr.Button(value='Toggle History Favorite',
@@ -897,13 +937,17 @@ with shared.gradio_root:
                                                  columns=1, height=820, preview=False, allow_preview=False,
                                                  elem_id='history_thumbnail_gallery',
                                                  elem_classes=['image_gallery'])
-                    with gr.Row(elem_id='history_thumbnail_view_controls'):
+                    with gr.Column(elem_id='history_thumbnail_view_controls'):
                         history_stack_by_seed = gr.Checkbox(label='Stack Matching Seeds', value=False,
                                                             elem_id='history_stack_by_seed')
                         history_thumbnail_visibility = gr.Radio(label='Thumbnail View',
                                                                 choices=['Visible', 'All', 'Hidden'],
                                                                 value='Visible',
                                                                 elem_id='history_thumbnail_visibility')
+                        history_show_preview_images = gr.Radio(label='Preview Images',
+                                                               choices=['Finished only', 'Finished + previews', 'Previews only'],
+                                                               value='Finished only',
+                                                               elem_id='history_preview_visibility')
                 with gr.Column(scale=4):
                     history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
                                                           object_fit='contain', columns=2, rows=2,
@@ -929,7 +973,6 @@ with shared.gradio_root:
                                                        multiselect=True)
                 with gr.Row():
                     history_filter_favorites = gr.Checkbox(label='Favorites Only', value=False)
-                    history_show_preview_images = gr.Checkbox(label='Show Preview Images', value=False)
                 history_seed_stack_selection = gr.Dropdown(label='Seed Group', choices=[], value=None,
                                                            visible=False)
                 history_seed_stack_prompt = gr.Textbox(value='', visible=False)
@@ -2657,6 +2700,51 @@ with shared.gradio_root:
                         True, \
                         status
 
+                def get_history_image_quality_config(image_id):
+                    image_id = parse_history_id(image_id)
+                    if image_id is None:
+                        return {}, None, 'Select a preview image first.'
+                    summary = modules.history_db.get_image_summary(image_id)
+                    if len(summary) == 0:
+                        return {}, None, 'History image was not found.'
+                    if not history_row_is_preview(summary):
+                        return {}, None, 'Select a preview image to regenerate at Quality.'
+                    config_data = modules.history_db.get_config_by_image_id(image_id)
+                    if len(config_data) == 0:
+                        return {}, summary.get('path'), 'Selected preview image has no saved config.'
+
+                    config_data = config_data.copy()
+                    config_data['performance'] = flags.Performance.QUALITY.value
+                    config_data['steps'] = 60
+                    config_data['quick_preview'] = False
+                    config_data['image_number'] = 1
+                    config_data['wildprompts'] = '[]'
+                    config_data['wildprompt_generate_all'] = False
+                    config_data['wildprompt_line_selections'] = '{}'
+                    image_path = summary.get('path') or ''
+                    return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
+
+                def enqueue_history_image_quality_config(image_id, *generation_args):
+                    config_data, image_path, status = get_history_image_quality_config(image_id)
+                    if len(config_data) == 0:
+                        return worker.AsyncTask(args=[]), False, gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(value=make_queue_panel_html()), False, status
+
+                    task_args = apply_config_to_generation_args(config_data, generation_args)
+                    task = worker.AsyncTask(args=task_args[1:])
+                    pending_count = worker.append_async_task(task)
+                    should_monitor = worker.begin_queue_monitor()
+                    tracking_task = get_generation_tracking_task(task)
+                    print(f'[Queue] Added history preview quality regeneration task. Pending tasks: {pending_count}')
+                    return tracking_task, should_monitor, \
+                        gr.update(visible=False, interactive=False), \
+                        gr.update(visible=False, interactive=False), \
+                        gr.update(visible=True, interactive=True), \
+                        gr.update(visible=True, interactive=True), \
+                        gr.update(), \
+                        gr.update(value=make_queue_panel_html()), \
+                        True, \
+                        status
+
                 def remove_generation_from_history(selected_index, session_history):
                     session_history = list(session_history or [])
                     image_path = get_selected_generation_image_path(selected_index, session_history)
@@ -2812,6 +2900,9 @@ with shared.gradio_root:
                         return 'all'
                     return 'visible'
 
+                def history_row_is_preview(row):
+                    return bool(row.get('is_preview', False))
+
                 def seed_stack_choices(search, favorite_only, review_status, tag, days, checkpoints, loras,
                                        show_preview_images=False, thumbnail_visibility='visible'):
                     rows = modules.history_db.list_seed_stacks(
@@ -2840,11 +2931,12 @@ with shared.gradio_root:
                     missing = '' if row.get('file_exists') else 'missing | '
                     favorite = 'fav | ' if row.get('favorite') else ''
                     hidden = 'hidden | ' if row.get('thumbnail_hidden') else ''
+                    preview = 'preview | ' if history_row_is_preview(row) else ''
                     tags = str(row.get('tags') or '').strip()
                     tags_text = f'{tags} | ' if tags != '' else ''
                     seed = row.get('seed')
                     seed_text = f'seed {seed}' if seed is not None else 'seed ?'
-                    return f"{row['id']} | {missing}{hidden}{favorite}{tags_text}{row.get('filename', '')} | {seed_text} | {row.get('checkpoint', '')}"
+                    return f"{row['id']} | {missing}{hidden}{favorite}{preview}{tags_text}{row.get('filename', '')} | {seed_text} | {row.get('checkpoint', '')}"
 
                 def format_history_comparison(rows):
                     table = []
@@ -2870,7 +2962,8 @@ with shared.gradio_root:
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
                         hidden_text = 'hidden | ' if row.get('thumbnail_hidden') else ''
                         favorite_text = 'fav | ' if row.get('favorite') else ''
-                        label = f"{hidden_text}{favorite_text}#{row.get('id')} | {seed_text}"
+                        preview_text = 'preview | ' if history_row_is_preview(row) else ''
+                        label = f"{hidden_text}{favorite_text}{preview_text}#{row.get('id')} | {seed_text}"
                         checkpoint = str(row.get('checkpoint') or '').strip()
                         if checkpoint != '':
                             label += f" | {checkpoint}"
@@ -2949,33 +3042,51 @@ with shared.gradio_root:
                     canvas.save(thumbnail_path)
                     return thumbnail_path
 
-                def format_history_seed_stack_gallery_items(rows, search, favorite_only, review_status, tag, days,
-                                                            checkpoints, loras, show_preview_images=False,
-                                                            thumbnail_visibility='visible'):
+                def format_grouped_history_gallery_items(rows):
                     gallery_items = []
-                    visible_stack_ids = []
+                    visible_refs = []
+                    grouped = {}
                     for row in rows:
-                        stack_rows = modules.history_db.list_seed_stack_images(
-                            row.get('seed'),
-                            row.get('prompt', ''),
-                            search=search,
-                            favorite_only=favorite_only,
-                            review_status=review_status,
-                            tag=tag,
-                            days=days,
-                            checkpoints=checkpoints,
-                            loras=loras,
-                            show_preview_images=show_preview_images,
-                            thumbnail_visibility=normalize_thumbnail_visibility(thumbnail_visibility),
-                            limit=8
-                        )
-                        thumbnail_path = history_stack_thumbnail_path(stack_rows)
-                        if thumbnail_path is None:
+                        seed = row.get('seed')
+                        prompt_text = str(row.get('prompt') or '')
+                        key = (seed, prompt_text) if seed is not None and prompt_text != '' else None
+                        if key is not None:
+                            grouped.setdefault(key, []).append(row)
+
+                    emitted_groups = set()
+                    shared_stack_count = 0
+                    for row in rows:
+                        if not row.get('file_exists') or not os.path.exists(row.get('path', '')):
                             continue
-                        label = f"stack:{row.get('id')} | seed {row.get('seed')} | {row.get('image_count', 0)} images"
-                        gallery_items.append((thumbnail_path, label))
-                        visible_stack_ids.append(f"stack:{row.get('id')}")
-                    return gallery_items, visible_stack_ids
+                        seed = row.get('seed')
+                        prompt_text = str(row.get('prompt') or '')
+                        key = (seed, prompt_text) if seed is not None and prompt_text != '' else None
+                        group_rows = grouped.get(key, []) if key is not None else []
+                        if len(group_rows) > 1:
+                            if key in emitted_groups:
+                                continue
+                            emitted_groups.add(key)
+                            thumbnail_path = history_stack_thumbnail_path(group_rows)
+                            if thumbnail_path is None:
+                                continue
+                            stack_id = min(int(group_row.get('id')) for group_row in group_rows)
+                            label = f"stack:{stack_id} | seed {seed} | {len(group_rows)} images"
+                            gallery_items.append((thumbnail_path, label))
+                            visible_refs.append(f"stack:{stack_id}")
+                            shared_stack_count += 1
+                            continue
+
+                        seed_text = f"seed {seed}" if seed is not None else 'seed ?'
+                        hidden_text = 'hidden | ' if row.get('thumbnail_hidden') else ''
+                        favorite_text = 'fav | ' if row.get('favorite') else ''
+                        preview_text = 'preview | ' if history_row_is_preview(row) else ''
+                        label = f"{hidden_text}{favorite_text}{preview_text}#{row.get('id')} | {seed_text}"
+                        checkpoint = str(row.get('checkpoint') or '').strip()
+                        if checkpoint != '':
+                            label += f" | {checkpoint}"
+                        gallery_items.append((row['path'], label))
+                        visible_refs.append(row.get('id'))
+                    return gallery_items, visible_refs, shared_stack_count
 
                 def selected_history_gallery_items(image_ids):
                     gallery_items = []
@@ -2987,7 +3098,8 @@ with shared.gradio_root:
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
                         hidden_text = 'hidden | ' if summary.get('thumbnail_hidden') else ''
                         favorite_text = 'fav | ' if summary.get('favorite') else ''
-                        gallery_items.append((summary['path'], f"{hidden_text}{favorite_text}#{summary.get('id')} | {seed_text}"))
+                        preview_text = 'preview | ' if history_row_is_preview(summary) else ''
+                        gallery_items.append((summary['path'], f"{hidden_text}{favorite_text}{preview_text}#{summary.get('id')} | {seed_text}"))
                     return gallery_items
 
                 def visible_history_gallery_items(image_ids):
@@ -3127,19 +3239,27 @@ with shared.gradio_root:
                         show_preview_images=show_preview_images,
                         thumbnail_visibility=thumbnail_visibility
                     )
-                    gallery_items, visible_stack_ids = format_history_seed_stack_gallery_items(
-                        stacks, search, favorite_only, review_status, tag, days, checkpoints, loras,
+                    rows = modules.history_db.list_images(
+                        search=search,
+                        favorite_only=favorite_only,
+                        review_status=review_status,
+                        tag=tag,
+                        days=days,
+                        checkpoints=checkpoints,
+                        loras=loras,
                         show_preview_images=show_preview_images,
                         thumbnail_visibility=thumbnail_visibility
                     )
+                    gallery_items, visible_refs, shared_stack_count = format_grouped_history_gallery_items(rows)
                     selected_image_ids = []
                     image_choices = []
                     value = None
                     curation = {}
-                    if len(stacks) > 0:
-                        seed = stacks[0].get('seed')
-                        prompt = stacks[0].get('prompt', '')
-                        rows = modules.history_db.list_seed_stack_images(
+                    first_ref = visible_refs[0] if len(visible_refs) > 0 else None
+                    if isinstance(first_ref, str) and first_ref.startswith('stack:'):
+                        stack_id = parse_history_id(first_ref.replace('stack:', '', 1))
+                        seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
+                        selected_rows = modules.history_db.list_seed_stack_images(
                             seed,
                             prompt,
                             search=search,
@@ -3153,16 +3273,23 @@ with shared.gradio_root:
                             thumbnail_visibility=thumbnail_visibility
                         )
                         selected_image_ids = [
-                            row['id'] for row in rows
+                            row['id'] for row in selected_rows
                             if row.get('file_exists') and os.path.exists(row.get('path', ''))
                         ]
-                        image_choices = [format_history_image(row) for row in rows]
+                        image_choices = [format_history_image(row) for row in selected_rows]
+                    elif first_ref is not None:
+                        summary = modules.history_db.get_image_summary(first_ref)
+                        if len(summary) > 0:
+                            selected_image_ids = [summary['id']]
+                            image_choices = [format_history_image(summary)]
+
+                    if len(image_choices) > 0:
                         value = image_choices[0] if len(image_choices) > 0 else None
                         image_id = parse_history_id(value)
                         curation = modules.history_db.get_image_curation(image_id) if image_id is not None else {}
 
-                    status = status_prefix + f'Loaded {len(gallery_items)} seed stack(s).'
-                    return gr.update(value=gallery_items), visible_stack_ids, selected_image_ids, \
+                    status = status_prefix + f'Loaded {len(gallery_items)} grouped thumbnail(s). {shared_stack_count} shared seed stack(s).'
+                    return gr.update(value=gallery_items), visible_refs, selected_image_ids, \
                         history_selected_ids_json(selected_image_ids), \
                         gr.update(value=selected_history_gallery_items(selected_image_ids)), \
                         gr.update(choices=image_choices, value=value), gr.update(value=[]), \
@@ -3453,12 +3580,18 @@ with shared.gradio_root:
                         else:
                             selected.append(image_id)
                     elif selection_mode == 'shift' and len(selected) > 0:
-                        visible = [int(x) for x in (visible_image_ids or []) if x is not None]
+                        visible = []
+                        for visible_ref in visible_image_ids or []:
+                            try:
+                                visible.append(int(visible_ref))
+                            except Exception:
+                                pass
                         anchor = selected[-1]
                         try:
                             anchor_index = visible.index(anchor)
-                            start = min(anchor_index, clicked_index)
-                            end = max(anchor_index, clicked_index)
+                            clicked_visible_index = visible.index(image_id)
+                            start = min(anchor_index, clicked_visible_index)
+                            end = max(anchor_index, clicked_visible_index)
                             selected = visible[start:end + 1]
                         except Exception:
                             selected = [image_id]
@@ -4099,6 +4232,24 @@ with shared.gradio_root:
                                                          inputs=[selected_generation_quality_index, state_session_gallery] + ctrls,
                           outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
                                    reset_button, gallery, queue_status_html, state_is_generating, selected_image_status],
+                          queue=False, show_progress=False) \
+                    .then(fn=poll_generate_queue, inputs=[currentTask, state_is_generating, state_session_gallery],
+                          outputs=[progress_html, progress_window, progress_gallery, gallery,
+                                   state_session_gallery, generate_button, stop_button, skip_button,
+                                   queue_status_html, quick_preview_generation_indices, state_is_generating],
+                          queue=False, show_progress=False) \
+                    .then(fn=update_history_link, outputs=history_link) \
+                    .then(fn=lambda x: x, inputs=state_queue_monitor, outputs=state_queue_monitor,
+                          queue=False, show_progress=False,
+                          _js='(x)=>{if(x){playNotification();} return x;}') \
+                    .then(fn=lambda x: x, inputs=state_queue_monitor, outputs=state_queue_monitor,
+                          queue=False, show_progress=False,
+                          _js='(x)=>{if(x){refresh_grid_delayed();} return x;}')
+
+                history_quality_selected_image_button.click(enqueue_history_image_quality_config,
+                                                            inputs=[history_quality_selected_image_id] + ctrls,
+                          outputs=[currentTask, state_queue_monitor, stop_button, skip_button, generate_button,
+                                   reset_button, gallery, queue_status_html, state_is_generating, history_status],
                           queue=False, show_progress=False) \
                     .then(fn=poll_generate_queue, inputs=[currentTask, state_is_generating, state_session_gallery],
                           outputs=[progress_html, progress_window, progress_gallery, gallery,

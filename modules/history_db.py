@@ -1199,8 +1199,11 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
             """
         )
         params.append(f'%{tag}%')
-    if not show_preview_images:
+    preview_mode = _preview_filter_mode(show_preview_images)
+    if preview_mode == 'final':
         where_clauses.append(_preview_image_filter_clause())
+    elif preview_mode == 'only':
+        where_clauses.append(f'NOT ({_preview_image_filter_clause()})')
     visibility_clause = _thumbnail_visibility_clause(thumbnail_visibility)
     if visibility_clause:
         where_clauses.append(visibility_clause)
@@ -1210,6 +1213,7 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
+                   {_preview_image_select_expr()},
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1360,6 +1364,17 @@ def _thumbnail_visibility_clause(thumbnail_visibility):
     return 'images.thumbnail_hidden = 0'
 
 
+def _preview_filter_mode(show_preview_images=False):
+    mode = str(show_preview_images or '').strip().casefold()
+    if mode in ['only', 'preview', 'previews', 'previews only']:
+        return 'only'
+    if mode in ['both', 'all', 'include', 'include previews', 'finished + previews']:
+        return 'both'
+    if show_preview_images is True:
+        return 'both'
+    return 'final'
+
+
 def _image_filter_where(search='', favorite_only=False, review_status='', tag='', days=None, batch_id=None,
                         checkpoints=None, loras=None, show_preview_images=False,
                         thumbnail_visibility='visible'):
@@ -1426,8 +1441,11 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
             """
         )
         params += loras
-    if not show_preview_images:
+    preview_mode = _preview_filter_mode(show_preview_images)
+    if preview_mode == 'final':
         where_clauses.append(_preview_image_filter_clause())
+    elif preview_mode == 'only':
+        where_clauses.append(f'NOT ({_preview_image_filter_clause()})')
     visibility_clause = _thumbnail_visibility_clause(thumbnail_visibility)
     if visibility_clause:
         where_clauses.append(visibility_clause)
@@ -1450,6 +1468,10 @@ def _preview_image_filter_clause():
     """
 
 
+def _preview_image_select_expr():
+    return f'NOT ({_preview_image_filter_clause()}) AS is_preview'
+
+
 def list_images(search='', favorite_only=False, review_status='', tag='', days=None,
                 checkpoints=None, loras=None, show_preview_images=False,
                 thumbnail_visibility='visible', limit=500):
@@ -1464,6 +1486,7 @@ def list_images(search='', favorite_only=False, review_status='', tag='', days=N
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
+                   {_preview_image_select_expr()},
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1558,6 +1581,7 @@ def list_seed_stack_images(seed, prompt, search='', favorite_only=False, review_
             f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
+                   {_preview_image_select_expr()},
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t
@@ -1608,10 +1632,11 @@ def get_image_summary(image_id):
         return {}
     with _connect() as conn:
         row = conn.execute(
-            """
+            f"""
             SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
                    thumbnail_hidden,
+                   {_preview_image_select_expr()},
                    (
                        SELECT GROUP_CONCAT(t.name, ', ')
                        FROM tags t

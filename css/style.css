@@ -426,14 +426,16 @@ div:has(> #positive_prompt) {
 }
 
 #history_stack_by_seed label,
-#history_thumbnail_visibility label {
+#history_thumbnail_visibility label,
+#history_preview_visibility label {
     min-height: 30px !important;
     padding: 4px 8px !important;
     border-radius: 6px !important;
     font-size: 13px;
 }
 
-#history_thumbnail_visibility .wrap {
+#history_thumbnail_visibility .wrap,
+#history_preview_visibility .wrap {
     gap: 4px !important;
 }
 
@@ -493,9 +495,19 @@ div:has(> #positive_prompt) {
     top: 122px;
 }
 
+#history_selected_gallery .history-selected-quality {
+    top: 160px;
+    width: auto;
+    min-width: 74px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 26px;
+}
+
 #history_selected_gallery .history-selected-hide {
     position: absolute;
-    top: 160px;
+    top: 198px;
     right: 8px;
     z-index: 5;
     width: 32px;
