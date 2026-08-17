@@ -705,6 +705,12 @@ default_save_metadata_to_images = get_config_item_or_set_default(
     validator=lambda x: isinstance(x, bool),
     expected_type=bool
 )
+save_history_log_html = get_config_item_or_set_default(
+    key='save_history_log_html',
+    default_value=True,
+    validator=lambda x: isinstance(x, bool),
+    expected_type=bool
+)
 default_metadata_scheme = get_config_item_or_set_default(
     key='default_metadata_scheme',
     default_value=MetadataScheme.FOOOCUS.value,

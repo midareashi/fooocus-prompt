@@ -97,7 +97,7 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
     else:
         image.save(local_temp_filename)
 
-    if args_manager.args.disable_image_log:
+    if args_manager.args.disable_image_log or not modules.config.save_history_log_html:
         return local_temp_filename
 
     html_name = os.path.join(os.path.dirname(local_temp_filename), 'log.html')
