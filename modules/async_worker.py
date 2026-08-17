@@ -5,6 +5,7 @@ from extras.inpaint_mask import generate_mask_from_image, SAMOptions
 from modules.patch import PatchSettings, patch_settings, patch_all
 import modules.config
 import modules.history_db
+import modules.lora_notes
 
 patch_all()
 
@@ -1679,12 +1680,24 @@ def worker():
                 testing_lora_override.append((testing_lora_name, 1.0))
             return testing_lora_override
 
+        def prompt_with_testing_lora_note(prompt, testing_lora_name):
+            prompt = str(prompt or '').strip()
+            if testing_lora_name is None:
+                return prompt
+
+            lora_note = modules.lora_notes.load_lora_note(testing_lora_name)
+            if lora_note == '' or lora_note in prompt:
+                return prompt
+            return join_prompts(prompt, lora_note)
+
         initial_lora_override = async_task.loras.copy()
+        initial_prompt = async_task.prompt
         if len(selected_testing_loras) > 0:
             async_task.testing_lora_name = selected_testing_loras[0]
             initial_lora_override = with_testing_lora(async_task.loras, selected_testing_loras[0])
+            initial_prompt = prompt_with_testing_lora_note(async_task.prompt, selected_testing_loras[0])
         if not skip_prompt_processing:
-            tasks, use_expansion, loras, current_progress = process_prompt(async_task, async_task.prompt, async_task.negative_prompt,
+            tasks, use_expansion, loras, current_progress = process_prompt(async_task, initial_prompt, async_task.negative_prompt,
                                                          base_model_additional_loras, async_task.image_number,
                                                          async_task.disable_seed_increment, use_expansion, use_style, use_synthetic_refiner, current_progress,
                                                          advance_progress=True, lora_override=initial_lora_override)
@@ -1833,8 +1846,9 @@ def worker():
                     if testing_lora_name is not None:
                         load_label += f' | Testing LoRA {testing_lora_index + 1}/{testing_lora_count}: {testing_lora_name}'
                     progressbar(async_task, current_progress, load_label + ' ...')
+                    checkpoint_prompt = prompt_with_testing_lora_note(async_task.prompt, testing_lora_name)
                     checkpoint_tasks, _, checkpoint_loras, current_progress = process_prompt(
-                        async_task, async_task.prompt, async_task.negative_prompt,
+                        async_task, checkpoint_prompt, async_task.negative_prompt,
                         base_model_additional_loras, async_task.image_number,
                         async_task.disable_seed_increment, use_expansion, use_style,
                         use_synthetic_refiner, current_progress, advance_progress=False,
