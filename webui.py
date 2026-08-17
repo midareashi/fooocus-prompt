@@ -460,6 +460,15 @@ def monitor_generate_queue(should_monitor, session_history):
                 return image_item
         return image_items[-1] if len(image_items) > 0 else None
 
+    def append_task_results_to_session_history(task):
+        changed = False
+        for image_item in list(getattr(task, 'results', []) or []):
+            if isinstance(image_item, str):
+                if image_item not in session_history:
+                    session_history.append(image_item)
+                    changed = True
+        return changed
+
     yield gr.update(visible=True, value=modules.html.make_progress_html(1, 'Waiting for task to start ...')), \
         gr.update(visible=True, value=None), \
         gr.update(visible=False, value=None), \
@@ -511,11 +520,12 @@ def monitor_generate_queue(should_monitor, session_history):
             observed_task, flag, product = event
             if flag == 'preview':
                 percentage, title, image = product
+                session_history_changed = append_task_results_to_session_history(observed_task)
                 yield gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
                     gr.update(visible=True, value=image) if image is not None else gr.update(), \
                     gr.update(), \
-                    gr.update(visible=True), \
-                    gr.update(), \
+                    gr.update(visible=True, value=session_history) if session_history_changed else gr.update(visible=True), \
+                    session_history, \
                     gr.update(visible=True, interactive=True), \
                     gr.update(visible=False, interactive=False), \
                     gr.update(visible=False, interactive=False), \
@@ -604,6 +614,15 @@ def poll_generate_queue(task, is_generating, session_history):
                 return image_item
         return image_items[-1] if len(image_items) > 0 else None
 
+    def append_task_results_to_session_history(task):
+        changed = False
+        for image_item in list(getattr(task, 'results', []) or []):
+            if isinstance(image_item, str):
+                if image_item not in session_history:
+                    session_history.append(image_item)
+                    changed = True
+        return changed
+
     def idle_updates():
         return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
             gr.update(visible=True, interactive=True), \
@@ -665,10 +684,11 @@ def poll_generate_queue(task, is_generating, session_history):
     task, flag, product = event
     if flag == 'preview':
         percentage, title, image = product
+        session_history_changed = append_task_results_to_session_history(task)
         return gr.update(visible=True, value=modules.html.make_progress_html(percentage, title)), \
             gr.update(visible=True, value=image) if image is not None else gr.update(), \
             gr.update(), \
-            gr.update(visible=True), \
+            gr.update(visible=True, value=session_history) if session_history_changed else gr.update(visible=True), \
             session_history, \
             gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
