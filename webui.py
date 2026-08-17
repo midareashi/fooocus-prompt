@@ -851,6 +851,26 @@ with shared.gradio_root:
             history_hide_thumbnail_button = gr.Button(value='Hide History Thumbnail',
                                                       elem_id='history_hide_thumbnail_button',
                                                       visible=False)
+            history_config_action_image_id = gr.Textbox(value='', elem_id='history_config_action_image_id',
+                                                        visible=False)
+            history_image_selection = gr.Dropdown(label='Images', choices=[], value=None, visible=False)
+            history_favorite = gr.State(False)
+            history_rating = gr.State(0)
+            history_review_status = gr.State('')
+            history_tags = gr.State('')
+            history_note = gr.State('')
+            history_load_full_button = gr.Button(value='Load Full Config',
+                                                 elem_id='history_load_full_button',
+                                                 visible=False)
+            history_replace_prompt_button = gr.Button(value='Replace Prompt',
+                                                      elem_id='history_replace_prompt_button',
+                                                      visible=False)
+            history_append_prompt_button = gr.Button(value='Append Prompt',
+                                                     elem_id='history_append_prompt_button',
+                                                     visible=False)
+            history_save_curation_button = gr.Button(value='Save Curation',
+                                                     elem_id='history_save_curation_button',
+                                                     visible=False)
             with gr.Row():
                 with gr.Column(scale=1, min_width=220):
                     history_gallery = gr.Gallery(label='Thumbnails', show_label=True, object_fit='cover',
@@ -870,8 +890,9 @@ with shared.gradio_root:
                                                           height=820, preview=False, allow_preview=False,
                                                           elem_id='history_selected_gallery',
                                                           elem_classes=['image_gallery'])
-            history_status = gr.HTML()
-            with gr.Accordion(label='Filters', open=False):
+            history_status = gr.HTML(visible=False)
+            with gr.Group():
+                gr.Markdown('Filters')
                 with gr.Row():
                     history_search = gr.Textbox(label='Positive Prompt Search', placeholder='Words in the positive prompt')
                     history_refresh_button = gr.Button(value='Refresh', variant='secondary')
@@ -895,19 +916,6 @@ with shared.gradio_root:
                 history_filter_status = gr.State('')
                 history_batch_selection = gr.Dropdown(label='Generation Batch', choices=[], value='All Images',
                                                       visible=False)
-            with gr.Accordion(label='Selected Image Actions', open=False):
-                history_image_selection = gr.Dropdown(label='Images', choices=[], value=None)
-                history_favorite = gr.State(False)
-                history_rating = gr.State(0)
-                history_review_status = gr.State('')
-                history_tags = gr.State('')
-                history_note = gr.State('')
-                with gr.Row():
-                    history_load_full_button = gr.Button(value='Load Full Config', variant='secondary')
-                    history_replace_prompt_button = gr.Button(value='Replace Prompt', variant='secondary')
-                    history_append_prompt_button = gr.Button(value='Append Prompt', variant='secondary')
-                    history_save_curation_button = gr.Button(value='Save Curation', variant='secondary',
-                                                             visible=False)
             with gr.Accordion(label='Batch Details', open=False, visible=False):
                 history_batch_rating = gr.State(0)
                 with gr.Row():
@@ -973,6 +981,12 @@ with shared.gradio_root:
                             favorite_selected_generation_button = gr.Button(value='Favorite Selected Image',
                                                                             elem_id='favorite_selected_generation_button',
                                                                             elem_classes='generation_apply_hidden_control')
+                            selected_generation_detail_index = gr.Textbox(value='',
+                                                                          elem_id='selected_generation_detail_index',
+                                                                          elem_classes='generation_apply_hidden_control')
+                            show_selected_generation_detail_button = gr.Button(value='Show Selected Image Details',
+                                                                               elem_id='show_selected_generation_detail_button',
+                                                                               elem_classes='generation_apply_hidden_control')
                             quick_preview_generation_indices = gr.Textbox(value='[]',
                                                                           elem_id='quick_preview_generation_indices',
                                                                           elem_classes='generation_apply_hidden_control')
@@ -988,7 +1002,7 @@ with shared.gradio_root:
                             gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
                                                  elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
                                                  elem_id='final_gallery')
-                            selected_image_status = gr.HTML()
+                            selected_image_status = gr.HTML(elem_id='selected_generation_details')
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
                     queue_status_html = gr.HTML(value=make_queue_panel_html(), elem_id='queue_status_panel')
@@ -2228,21 +2242,16 @@ with shared.gradio_root:
                         return prompt_only_config_to_ui_updates(config_data, current_prompt, mode, f'{action}: {name}')
                     return prompt_config_to_ui_updates(config_data, is_generating, inpaint_mode, f'Loaded prompt config: {name}')
 
-                def select_generation_image(evt: gr.SelectData):
-                    if evt is None or not hasattr(evt, 'index') or evt.index is None:
-                        return gr.update(), gr.update()
-                    selected_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                def normalize_generation_index(selected_index):
                     try:
-                        selected_index = int(selected_index)
+                        return int(selected_index)
                     except Exception:
-                        return gr.update(), gr.update()
-                    return selected_index, f'Selected image #{selected_index + 1}.'
+                        return None
 
                 def get_selected_generation_image_path(selected_index, session_history):
                     session_history = list(session_history or [])
-                    try:
-                        selected_index = int(selected_index)
-                    except Exception:
+                    selected_index = normalize_generation_index(selected_index)
+                    if selected_index is None:
                         return None
                     if selected_index < 0 or selected_index >= len(session_history):
                         return None
@@ -2268,6 +2277,180 @@ with shared.gradio_root:
 
                     metadata_parser = modules.meta_parser.get_metadata_parser(metadata_scheme)
                     return metadata_parser.to_json(parameters), image_path
+
+                def is_empty_generation_detail_value(value):
+                    if value is None:
+                        return True
+                    if isinstance(value, str):
+                        return value == ''
+                    if isinstance(value, (list, tuple, set, dict)):
+                        return len(value) == 0
+                    return False
+
+                def selected_generation_config_value(config_data, summary, *keys):
+                    for key in keys:
+                        if isinstance(config_data, dict):
+                            value = config_data.get(key)
+                            if not is_empty_generation_detail_value(value):
+                                return value
+                        if isinstance(summary, dict):
+                            value = summary.get(key)
+                            if not is_empty_generation_detail_value(value):
+                                return value
+                    return ''
+
+                def stringify_generation_detail(value):
+                    if is_empty_generation_detail_value(value):
+                        return ''
+                    if isinstance(value, (list, tuple)):
+                        return ', '.join([
+                            stringify_generation_detail(item)
+                            for item in value
+                            if not is_empty_generation_detail_value(item)
+                        ])
+                    if isinstance(value, dict):
+                        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+                    return str(value)
+
+                def format_generation_detail_value(value, empty='Not recorded', multiline=False):
+                    text = stringify_generation_detail(value).strip()
+                    if text == '':
+                        return f'<span class="generation-detail-muted">{html_lib.escape(empty)}</span>'
+                    escaped = html_lib.escape(text)
+                    if multiline:
+                        escaped = escaped.replace('\n', '<br>')
+                    return escaped
+
+                def parse_generation_lora_value(value):
+                    if not isinstance(value, str):
+                        return None
+                    parts = [part.strip() for part in value.split(' : ')]
+                    if len(parts) == 3:
+                        if parts[0].casefold() not in ['true', '1', 'yes', 'on']:
+                            return None
+                        name = parts[1]
+                        weight = parts[2]
+                    elif len(parts) >= 2:
+                        name = parts[0]
+                        weight = parts[1]
+                    else:
+                        return None
+                    if name == '' or name == 'None':
+                        return None
+                    return {'name': name, 'weight': weight, 'role': 'active'}
+
+                def get_generation_lora_details(config_data, image_path):
+                    loras = []
+                    if isinstance(config_data, dict):
+                        for index in range(modules.config.default_max_lora_number):
+                            parsed = parse_generation_lora_value(config_data.get(f'lora_combined_{index + 1}'))
+                            if parsed is not None:
+                                loras.append(parsed)
+                        testing_lora = stringify_generation_detail(config_data.get('testing_lora')).strip()
+                        if testing_lora not in ['', 'None']:
+                            loras.append({'name': testing_lora, 'weight': '1.0', 'role': 'testing'})
+
+                    if len(loras) == 0:
+                        image_id = modules.history_db.get_image_id_by_path(image_path)
+                        if image_id is not None:
+                            loras = modules.history_db.get_image_loras(image_id)
+                    return loras
+
+                def format_generation_loras(loras):
+                    if len(loras or []) == 0:
+                        return '<span class="generation-detail-muted">None recorded</span>'
+                    formatted = []
+                    for lora in loras:
+                        name = html_lib.escape(str(lora.get('name', '') or ''))
+                        weight = html_lib.escape(str(lora.get('weight', '') or ''))
+                        role = str(lora.get('role', 'active') or 'active')
+                        if name == '':
+                            continue
+                        suffix = f' ({weight})' if weight != '' else ''
+                        if role == 'testing':
+                            formatted.append(f'Testing: {name}{suffix}')
+                        else:
+                            formatted.append(f'{name}{suffix}')
+                    return '<br>'.join(formatted) if len(formatted) > 0 else '<span class="generation-detail-muted">None recorded</span>'
+
+                def generation_detail_row(label, value, multiline=False, full=False):
+                    classes = 'generation-detail-row'
+                    if full:
+                        classes += ' generation-detail-row-full'
+                    if multiline:
+                        classes += ' generation-detail-row-multiline'
+                    return (
+                        f'<div class="{classes}">'
+                        f'<div class="generation-detail-label">{html_lib.escape(label)}</div>'
+                        f'<div class="generation-detail-value">{format_generation_detail_value(value, multiline=multiline)}</div>'
+                        f'</div>'
+                    )
+
+                def format_selected_generation_details(selected_index, session_history):
+                    selected_index = normalize_generation_index(selected_index)
+                    if selected_index is None:
+                        return ''
+                    image_path = get_selected_generation_image_path(selected_index, session_history)
+                    if image_path is None:
+                        return '<div class="generation-detail-panel generation-detail-empty">Selected image is no longer in session history.</div>'
+
+                    config_data, _ = get_selected_generation_config(selected_index, session_history)
+                    image_id = modules.history_db.get_image_id_by_path(image_path)
+                    summary = modules.history_db.get_image_summary(image_id) if image_id is not None else {}
+                    filename = summary.get('filename') or os.path.basename(image_path)
+                    prompt_text = selected_generation_config_value(config_data, summary, 'prompt')
+                    checkpoint = selected_generation_config_value(config_data, summary, 'base_model', 'checkpoint')
+                    refiner = selected_generation_config_value(config_data, summary, 'refiner_model', 'refiner')
+                    loras = get_generation_lora_details(config_data, image_path)
+
+                    title_parts = [f'Selected image #{selected_index + 1}']
+                    if image_id is not None:
+                        title_parts.append(f'History #{image_id}')
+                    header = html_lib.escape(' | '.join(title_parts))
+
+                    rows = [
+                        generation_detail_row('Prompt', prompt_text, multiline=True, full=True),
+                        generation_detail_row('Checkpoint', checkpoint, full=True),
+                    ]
+                    if stringify_generation_detail(refiner).strip() not in ['', 'None']:
+                        rows.append(generation_detail_row('Refiner', refiner, full=True))
+                    rows.extend([
+                        (
+                            '<div class="generation-detail-row generation-detail-row-full generation-detail-row-multiline">'
+                            '<div class="generation-detail-label">LoRA</div>'
+                            f'<div class="generation-detail-value">{format_generation_loras(loras)}</div>'
+                            '</div>'
+                        ),
+                        generation_detail_row('Seed', selected_generation_config_value(config_data, summary, 'seed')),
+                        generation_detail_row('Steps', selected_generation_config_value(config_data, summary, 'steps')),
+                        generation_detail_row('Sampler', selected_generation_config_value(config_data, summary, 'sampler')),
+                        generation_detail_row('Scheduler', selected_generation_config_value(config_data, summary, 'scheduler')),
+                        generation_detail_row('VAE', selected_generation_config_value(config_data, summary, 'vae')),
+                        generation_detail_row('Resolution', selected_generation_config_value(config_data, summary, 'resolution')),
+                        generation_detail_row('Performance', selected_generation_config_value(config_data, summary, 'performance')),
+                        generation_detail_row('File', filename),
+                    ])
+
+                    return (
+                        '<div class="generation-detail-panel">'
+                        f'<div class="generation-detail-title">{header}</div>'
+                        '<div class="generation-detail-grid">'
+                        + ''.join(rows) +
+                        '</div>'
+                        '</div>'
+                    )
+
+                def select_generation_image_by_index(selected_index, session_history):
+                    selected_index = normalize_generation_index(selected_index)
+                    if selected_index is None:
+                        return gr.update(), ''
+                    return selected_index, format_selected_generation_details(selected_index, session_history)
+
+                def select_generation_image(session_history, evt: gr.SelectData):
+                    if evt is None or not hasattr(evt, 'index') or evt.index is None:
+                        return gr.update(), gr.update()
+                    selected_index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                    return select_generation_image_by_index(selected_index, session_history)
 
                 def apply_selected_generation_config(selected_index, session_history, is_generating, inpaint_mode):
                     config_data, image_path = get_selected_generation_config(selected_index, session_history)
@@ -2580,6 +2763,10 @@ with shared.gradio_root:
                     }
                     return choices, prompt_by_choice
 
+                def effective_history_days(days):
+                    days = [str(day) for day in (days or []) if str(day or '').strip() != '']
+                    return [] if '__all__' in days else days
+
                 def format_history_image(row):
                     missing = '' if row.get('file_exists') else 'missing | '
                     favorite = 'fav | ' if row.get('favorite') else ''
@@ -2729,13 +2916,9 @@ with shared.gradio_root:
                             continue
                         seed = summary.get('seed')
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
+                        hidden_text = 'hidden | ' if summary.get('thumbnail_hidden') else ''
                         favorite_text = 'fav | ' if summary.get('favorite') else ''
-                        try:
-                            from PIL import Image
-                            image = Image.open(summary['path']).copy()
-                        except Exception:
-                            continue
-                        gallery_items.append((image, f"{favorite_text}#{summary.get('id')} | {seed_text}"))
+                        gallery_items.append((summary['path'], f"{hidden_text}{favorite_text}#{summary.get('id')} | {seed_text}"))
                     return gallery_items
 
                 def visible_history_gallery_items(image_ids):
@@ -2774,6 +2957,7 @@ with shared.gradio_root:
                                        checkpoints=None, loras=None, show_preview_images=False,
                                        thumbnail_visibility='visible', status_prefix=''):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
+                    days = effective_history_days(days)
                     batch_id = parse_history_id(selection)
                     is_all_images = batch_id is None
                     batch_curation = {} if is_all_images else modules.history_db.get_batch_curation(batch_id)
@@ -2826,6 +3010,7 @@ with shared.gradio_root:
                                             review_status, tag, days, checkpoints, loras, show_preview_images=False,
                                             thumbnail_visibility='visible'):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
+                    days = effective_history_days(days)
                     stack_id = parse_history_id(seed_stack_selection)
                     seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
                     rows = modules.history_db.list_seed_stack_images(
@@ -2859,6 +3044,7 @@ with shared.gradio_root:
                                                     show_preview_images=False, thumbnail_visibility='visible',
                                                     status_prefix=''):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
+                    days = effective_history_days(days)
                     stacks = modules.history_db.list_seed_stacks(
                         search=search,
                         favorite_only=favorite_only,
@@ -2936,7 +3122,10 @@ with shared.gradio_root:
                 def history_day_choices(days):
                     counts = modules.history_db.list_output_day_counts()
                     sorted_days = sorted(days, key=history_day_sort_key, reverse=True)
-                    return [(format_history_day_label(day, counts), day) for day in sorted_days]
+                    total_count = sum(int(count or 0) for count in counts.values())
+                    return [(f'All Days ({total_count})', '__all__')] + [
+                        (format_history_day_label(day, counts), day) for day in sorted_days
+                    ]
 
                 def history_day_sort_key(day):
                     try:
@@ -2946,16 +3135,21 @@ with shared.gradio_root:
 
                 def normalize_history_days(selected_days, previous_days, selection_mode):
                     all_days = modules.history_db.list_output_days()
+                    all_choices = ['__all__'] + all_days
                     selected_days = [str(day) for day in (selected_days or []) if str(day or '') != '']
                     previous_days = [str(day) for day in (previous_days or []) if str(day or '') != '']
                     selection_mode = str(selection_mode or 'single').strip().casefold()
                     selected_set = set(selected_days)
                     previous_set = set(previous_days)
-                    added = [day for day in all_days if day in selected_set and day not in previous_set]
-                    removed = [day for day in all_days if day in previous_set and day not in selected_set]
+                    added = [day for day in all_choices if day in selected_set and day not in previous_set]
+                    removed = [day for day in all_choices if day in previous_set and day not in selected_set]
                     clicked = (added + removed)[0] if len(added + removed) > 0 else (selected_days[0] if len(selected_days) > 0 else None)
                     if clicked is None:
                         return []
+                    if clicked == '__all__':
+                        return ['__all__'] if '__all__' in selected_set else []
+                    selected_days = [day for day in selected_days if day != '__all__']
+                    previous_days = [day for day in previous_days if day != '__all__']
                     if selection_mode == 'ctrl':
                         normalized = selected_days
                     elif selection_mode == 'shift' and len(previous_days) > 0:
@@ -2973,7 +3167,8 @@ with shared.gradio_root:
                     return [day for day in all_days if day in set(normalized)]
 
                 def refresh_history(search, favorite_only, review_status, tag, checkpoints, loras,
-                                    show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible'):
+                                    show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible',
+                                    selected_days_state=None):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = modules.history_db.list_output_days()
                     filter_values = modules.history_db.list_filter_values()
@@ -2987,7 +3182,11 @@ with shared.gradio_root:
                     if len(days) == 0 and len(choices) <= 1:
                         return empty_history_view('No history batches found.')
                     value = 'All Images'
-                    selected_days = default_history_days(days)
+                    selected_days = [str(day) for day in (selected_days_state or []) if str(day or '') != '']
+                    valid_day_values = set(days + ['__all__'])
+                    selected_days = [day for day in selected_days if day in valid_day_values]
+                    if len(selected_days) == 0:
+                        selected_days = default_history_days(days)
                     stack_choices, prompt_by_stack = seed_stack_choices(
                         search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
                         show_preview_images=show_preview_images,
@@ -3016,7 +3215,8 @@ with shared.gradio_root:
                             selected_days) + image_outputs
 
                 def requery_history_outputs(search, favorite_only, review_status, tag, checkpoints, loras,
-                                            show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible'):
+                                            show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible',
+                                            selected_days_state=None):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     result = modules.history_db.reconcile_outputs_folder()
                     days = modules.history_db.list_output_days()
@@ -3037,7 +3237,11 @@ with shared.gradio_root:
                     if len(days) == 0 and len(choices) <= 1:
                         return empty_history_view(status + ' No history batches found.')
                     value = 'All Images'
-                    selected_days = default_history_days(days)
+                    selected_days = [str(day) for day in (selected_days_state or []) if str(day or '') != '']
+                    valid_day_values = set(days + ['__all__'])
+                    selected_days = [day for day in selected_days if day in valid_day_values]
+                    if len(selected_days) == 0:
+                        selected_days = default_history_days(days)
                     stack_choices, prompt_by_stack = seed_stack_choices(
                         search, favorite_only, review_status, tag, selected_days, checkpoints, loras,
                         show_preview_images=show_preview_images,
@@ -3124,6 +3328,7 @@ with shared.gradio_root:
                                              show_preview_images=False, thumbnail_visibility='Visible',
                                              evt: gr.SelectData = None):
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
+                    days = effective_history_days(days)
                     try:
                         index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
                         clicked_index = int(index)
@@ -3306,13 +3511,14 @@ with shared.gradio_root:
                     return f"{'Favorited' if next_favorite else 'Unfavorited'} history image #{image_id}."
 
                 def hide_history_thumbnail(image_id, search, favorite_only, review_status, tag, checkpoints, loras,
+                                           selected_days_state,
                                            show_preview_images=False, group_by_seed=False,
                                            thumbnail_visibility='Visible'):
                     image_id = parse_history_id(image_id)
                     if image_id is None:
                         return refresh_history(
                             search, favorite_only, review_status, tag, checkpoints, loras,
-                            show_preview_images, group_by_seed, thumbnail_visibility
+                            show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
                         )
                     summary = modules.history_db.get_image_summary(image_id)
                     next_hidden = not bool(summary.get('thumbnail_hidden')) if len(summary) > 0 else True
@@ -3325,7 +3531,7 @@ with shared.gradio_root:
                     )
                     outputs = refresh_history(
                         search, favorite_only, review_status, tag, checkpoints, loras,
-                        show_preview_images, group_by_seed, thumbnail_visibility
+                        show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
                     )
                     outputs = list(outputs)
                     outputs[-1] = status_prefix + str(outputs[-1] or '')
@@ -3437,7 +3643,7 @@ with shared.gradio_root:
                 history_filter_inputs = [
                     history_search, history_filter_favorites, history_filter_status, history_filter_tag,
                     history_filter_checkpoints, history_filter_loras, history_show_preview_images,
-                    history_stack_by_seed, history_thumbnail_visibility
+                    history_stack_by_seed, history_thumbnail_visibility, history_selected_days
                 ]
                 history_refresh_outputs = [
                     history_batch_selection, history_day_selection, history_filter_checkpoints,
@@ -3585,6 +3791,7 @@ with shared.gradio_root:
                     inputs=[history_hide_thumbnail_image_id, history_search,
                             history_filter_favorites, history_filter_status, history_filter_tag,
                             history_filter_checkpoints, history_filter_loras,
+                            history_selected_days,
                             history_show_preview_images, history_stack_by_seed,
                             history_thumbnail_visibility],
                     outputs=history_refresh_outputs,
@@ -3608,7 +3815,7 @@ with shared.gradio_root:
                                                          outputs=[history_batch_selection, history_status],
                                                          queue=False, show_progress=False)
                 history_load_full_button.click(load_full_history_config,
-                                               inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                               inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
                                                outputs=history_load_outputs,
                                                queue=False, show_progress=False) \
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
@@ -3616,11 +3823,11 @@ with shared.gradio_root:
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 history_replace_prompt_button.click(replace_prompt_from_history,
-                                                    inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                                    inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
                                                     outputs=history_load_outputs,
                                                     queue=False, show_progress=False)
                 history_append_prompt_button.click(append_prompt_from_history,
-                                                   inputs=[history_image_selection, prompt, state_is_generating, inpaint_mode],
+                                                   inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
                                                    outputs=history_load_outputs,
                                                    queue=False, show_progress=False)
 
@@ -3638,8 +3845,15 @@ with shared.gradio_root:
                                                  outputs=load_prompt_config_outputs,
                                                  queue=False, show_progress=False)
 
-                gallery.select(select_generation_image, outputs=[state_selected_generation_index, selected_image_status],
+                gallery.select(select_generation_image, inputs=state_session_gallery,
+                               outputs=[state_selected_generation_index, selected_image_status],
                                queue=False, show_progress=False)
+                show_selected_generation_detail_button.click(select_generation_image_by_index,
+                                                             inputs=[selected_generation_detail_index,
+                                                                     state_session_gallery],
+                                                             outputs=[state_selected_generation_index,
+                                                                      selected_image_status],
+                                                             queue=False, show_progress=False)
                 apply_selected_image_config_button.click(apply_selected_generation_config,
                                                          inputs=[selected_generation_apply_index, state_session_gallery,
                                                                  state_is_generating, inpaint_mode],

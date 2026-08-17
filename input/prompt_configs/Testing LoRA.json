@@ -1,5 +1,5 @@
 {
-  "prompt": "girl_named_qq, (10 years old:1.2), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks\n\nnatural skin texture, detailed eyes, detailed lips, realistic, 8k\n\nGirl wearing a tight skirt with white pantyhose and pink and white air force one Nike sneakers, standing outside, city street, standing in front of a brick wall, graffiti, from below",
+  "prompt": "girl_named_qq, (10 years old:1.2), young East Asian girl, black hair, dark brown eyes, round face, fair skin, soft cheeks\n\nnatural skin texture, detailed eyes, detailed lips, realistic, 8k",
   "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
   "styles": "['Fooocus V2', 'Fooocus Negative']",
   "wildprompts": "[]",
@@ -28,8 +28,9 @@
   "person_likeness_face_weight": 0,
   "person_likeness_face_start": 0.55,
   "person_likeness_paths": "[]",
-  "saved_at": "2026-08-14 10:25:34",
+  "saved_at": "2026-08-15 14:40:40",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)",
-  "seed": "7789717485974139655"
+  "lora_combined_1": "True : XL\\Sliders\\StS_age_slider_v1_initial_release.safetensors : -1",
+  "lora_combined_2": "True : XL\\Sliders\\EnvyZoomSliderXL01.safetensors : 1"
 }

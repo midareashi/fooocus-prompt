@@ -14,6 +14,7 @@ from PIL import Image
 
 DB_FILENAME = 'history.sqlite3'
 SUPPORTED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp'}
+INTERNAL_OUTPUT_FOLDERS = {'history_stacks'}
 _lock = threading.Lock()
 _initialized = False
 
@@ -986,12 +987,17 @@ def reconcile_outputs_folder(output_folder=None):
     skipped = 0
     failed = 0
 
-    for root, _, filenames in os.walk(output_folder):
+    for root, dirnames, filenames in os.walk(output_folder):
+        dirnames[:] = [dirname for dirname in dirnames if dirname not in INTERNAL_OUTPUT_FOLDERS]
         for filename in filenames:
             if os.path.splitext(filename)[1].lower() not in SUPPORTED_IMAGE_EXTENSIONS:
                 skipped += 1
                 continue
-            disk_paths.add(os.path.abspath(os.path.join(root, filename)))
+            path = os.path.abspath(os.path.join(root, filename))
+            if _is_internal_output_path(path, output_folder):
+                skipped += 1
+                continue
+            disk_paths.add(path)
 
     with _connect() as conn:
         rows = conn.execute('SELECT id, path, config_json FROM images').fetchall()
@@ -1003,7 +1009,10 @@ def reconcile_outputs_folder(output_folder=None):
         for row in rows
         if is_inside_output_folder(row['path'])
     }
-    missing_paths = sorted([path for path in existing_paths if not os.path.exists(path)])
+    missing_paths = sorted([
+        path for path in existing_paths
+        if not os.path.exists(path) or _is_internal_output_path(path, output_folder)
+    ])
     new_paths = sorted([path for path in disk_paths if path not in existing_paths])
     unchanged = len(disk_paths) - len(new_paths)
     log_config_cache = {}
@@ -1239,6 +1248,8 @@ def list_output_days():
     days = []
     seen = set()
     for row in rows:
+        if _is_internal_output_path(row['path'], output_folder):
+            continue
         day = _output_day_from_path(row['path'], output_folder)
         if day == '' or day in seen:
             continue
@@ -1261,6 +1272,8 @@ def list_output_day_counts():
         ).fetchall()
     counts = {}
     for row in rows:
+        if _is_internal_output_path(row['path'], output_folder):
+            continue
         day = _output_day_from_path(row['path'], output_folder)
         if day == '':
             continue
@@ -1285,6 +1298,16 @@ def _output_day_from_path(path, output_folder):
     if first_part == '' or first_part == os.curdir or first_part == os.pardir:
         first_part = os.path.basename(os.path.dirname(path))
     return first_part
+
+
+def _is_internal_output_path(path, output_folder=None):
+    output_folder = os.path.abspath(output_folder or modules.config.path_outputs)
+    try:
+        relative = os.path.relpath(os.path.abspath(path), output_folder)
+    except Exception:
+        return False
+    first_part = relative.split(os.sep, 1)[0]
+    return first_part in INTERNAL_OUTPUT_FOLDERS
 
 
 def list_filter_values():
@@ -1351,6 +1374,11 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
     if batch_id is not None:
         where_clauses.append('images.batch_id = ?')
         params.append(int(batch_id))
+    output_folder = os.path.abspath(modules.config.path_outputs)
+    for internal_folder in INTERNAL_OUTPUT_FOLDERS:
+        internal_path = os.path.abspath(os.path.join(output_folder, internal_folder))
+        where_clauses.append('NOT (images.path = ? OR images.path LIKE ?)')
+        params += [internal_path, internal_path + os.sep + '%']
     if search:
         where_clauses.append('images.prompt LIKE ?')
         like = f'%{search}%'
@@ -1373,13 +1401,14 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
         )
         params.append(f'%{tag}%')
     if len(days) > 0:
-        output_folder = os.path.abspath(modules.config.path_outputs)
         day_clauses = []
-        for day in days:
-            day_path = os.path.abspath(os.path.join(output_folder, day))
-            day_clauses.append('images.path = ? OR images.path LIKE ?')
-            params += [day_path, day_path + os.sep + '%']
-        where_clauses.append('(' + ' OR '.join(day_clauses) + ')')
+        if '__all__' not in days:
+            for day in days:
+                day_path = os.path.abspath(os.path.join(output_folder, day))
+                day_clauses.append('images.path = ? OR images.path LIKE ?')
+                params += [day_path, day_path + os.sep + '%']
+            if len(day_clauses) > 0:
+                where_clauses.append('(' + ' OR '.join(day_clauses) + ')')
     if len(checkpoints) > 0:
         where_clauses.append('images.checkpoint IN (' + ', '.join(['?'] * len(checkpoints)) + ')')
         params += checkpoints
@@ -1602,6 +1631,28 @@ def get_image_summary(image_id):
         mark_image_file_exists(item['id'], exists)
         item['file_exists'] = 1 if exists else 0
     return item
+
+
+def get_image_loras(image_id):
+    init_db()
+    try:
+        image_id = int(image_id)
+    except Exception:
+        return []
+    with _connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT name, weight, role, position
+            FROM image_loras
+            WHERE image_id = ?
+            ORDER BY
+                CASE role WHEN 'active' THEN 0 WHEN 'testing' THEN 1 ELSE 2 END,
+                position,
+                name
+            """,
+            (image_id,)
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def list_batch_comparison_rows(batch_id):

@@ -190,8 +190,18 @@ function getGenerationFavoriteIndexInput() {
     );
 }
 
+function getGenerationDetailIndexInput() {
+    return gradioApp().querySelector(
+        '#selected_generation_detail_index textarea, #selected_generation_detail_index input, textarea#selected_generation_detail_index, input#selected_generation_detail_index'
+    );
+}
+
 function getGenerationFavoriteButton() {
     return gradioButton('#favorite_selected_generation_button');
+}
+
+function getGenerationDetailButton() {
+    return gradioButton('#show_selected_generation_detail_button');
 }
 
 function getQuickPreviewGenerationIndicesInput() {
@@ -236,6 +246,10 @@ function setGenerationQualityIndex(index) {
 
 function setGenerationFavoriteIndex(index) {
     return setGenerationActionIndex(getGenerationFavoriteIndexInput(), index);
+}
+
+function setGenerationDetailIndex(index) {
+    return setGenerationActionIndex(getGenerationDetailIndexInput(), index);
 }
 
 function getQueueRemoveIdInput() {
@@ -287,8 +301,9 @@ function installGenerationHistoryApplyButtons() {
     const deleteButton = gradioButton('#delete_selected_image_button');
     const qualityButton = gradioButton('#regenerate_selected_quality_button');
     const favoriteButton = getGenerationFavoriteButton();
+    const detailButton = getGenerationDetailButton();
     const previewIndicesInput = getQuickPreviewGenerationIndicesInput();
-    if (!gallery || !applyButton || !removeButton || !deleteButton || !qualityButton || !favoriteButton) return;
+    if (!gallery || !applyButton || !removeButton || !deleteButton || !qualityButton || !favoriteButton || !detailButton) return;
 
     let previewIndices = [];
     try {
@@ -300,6 +315,18 @@ function installGenerationHistoryApplyButtons() {
 
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
     items.forEach(function(item, index) {
+        item.dataset.generationHistoryIndex = String(index);
+        if (item.dataset.generationDetailsBound !== 'true') {
+            item.addEventListener('click', function(event) {
+                if (event.target.closest('.generation-history-action')) return;
+                const detailIndex = item.dataset.generationHistoryIndex;
+                if (setGenerationDetailIndex(detailIndex)) {
+                    detailButton.click();
+                }
+            });
+            item.dataset.generationDetailsBound = 'true';
+        }
+
         const isTinyThumbnail = item.getBoundingClientRect().width < 80;
         item.classList.toggle('generation-config-apply-hidden', isTinyThumbnail);
         if (isTinyThumbnail) {
@@ -419,6 +446,22 @@ function getHistoryHideThumbnailButton() {
     return gradioButton('#history_hide_thumbnail_button');
 }
 
+function getHistoryConfigActionIdInput() {
+    return gradioApp().querySelector('#history_config_action_image_id textarea, #history_config_action_image_id input');
+}
+
+function getHistoryLoadFullButton() {
+    return gradioButton('#history_load_full_button');
+}
+
+function getHistoryReplacePromptButton() {
+    return gradioButton('#history_replace_prompt_button');
+}
+
+function getHistoryAppendPromptButton() {
+    return gradioButton('#history_append_prompt_button');
+}
+
 function setHistorySelectionMode(event) {
     const input = getHistorySelectionModeInput();
     let mode = 'single';
@@ -521,20 +564,20 @@ function ensureHistoryFavoriteButton(item, imageId) {
     };
 }
 
-function ensureHistoryHideThumbnailButton(item, imageId) {
+function ensureHistoryHideThumbnailButton(item, imageId, className = 'history-hide-thumbnail') {
     if (imageId === null) {
-        item.querySelector('.history-hide-thumbnail')?.remove();
+        item.querySelector(`.${className}`)?.remove();
         return;
     }
-    let button = item.querySelector('.history-hide-thumbnail');
+    let button = item.querySelector(`.${className}`);
     if (!button) {
         button = document.createElement('button');
         button.type = 'button';
-        button.className = 'history-hide-thumbnail';
+        button.className = className;
         button.textContent = '\u{1F441}';
         item.appendChild(button);
     }
-    const title = historyItemIsHidden(item) ? 'Show in thumbnails' : 'Hide from thumbnails';
+    const title = historyItemIsHidden(item) ? 'Show in gallery' : 'Hide from gallery';
     setAttributeIfChanged(button, 'aria-label', title);
     setAttributeIfChanged(button, 'title', title);
     button.onclick = function(event) {
@@ -542,6 +585,12 @@ function ensureHistoryHideThumbnailButton(item, imageId) {
         event.stopPropagation();
         triggerHistoryImageAction(getHistoryHideThumbnailIdInput(), getHistoryHideThumbnailButton(), imageId);
     };
+}
+
+function triggerHistoryConfigAction(imageId, buttonGetter) {
+    const input = getHistoryConfigActionIdInput();
+    const button = buttonGetter();
+    return triggerHistoryImageAction(input, button, imageId);
 }
 
 function installHistoryThumbnailSelection() {
@@ -592,6 +641,63 @@ function ensureHistorySelectedActionButton(item, className, label, title, imageI
     };
 }
 
+function closeHistorySelectedMenus(root) {
+    const scope = root || gradioApp();
+    scope.querySelectorAll('.history-selected-menu-open').forEach(function(item) {
+        item.classList.remove('history-selected-menu-open');
+    });
+}
+
+function ensureHistorySelectedConfigMenu(item, imageId) {
+    let button = item.querySelector('.history-selected-kebab');
+    if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'history-selected-action history-selected-kebab';
+        button.textContent = '\u22EE';
+        item.appendChild(button);
+    }
+    setAttributeIfChanged(button, 'aria-label', 'Image config actions');
+    setAttributeIfChanged(button, 'title', 'Image config actions');
+
+    let menu = item.querySelector('.history-selected-config-menu');
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.className = 'history-selected-config-menu';
+        item.appendChild(menu);
+    }
+
+    const actions = [
+        ['Load Full Config', getHistoryLoadFullButton],
+        ['Replace Prompt', getHistoryReplacePromptButton],
+        ['Append Prompt', getHistoryAppendPromptButton]
+    ];
+    actions.forEach(function(action) {
+        let menuButton = menu.querySelector(`button[data-history-config-action="${action[0]}"]`);
+        if (!menuButton) {
+            menuButton = document.createElement('button');
+            menuButton.type = 'button';
+            menuButton.dataset.historyConfigAction = action[0];
+            menuButton.textContent = action[0];
+            menu.appendChild(menuButton);
+        }
+        menuButton.onclick = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            item.classList.remove('history-selected-menu-open');
+            triggerHistoryConfigAction(imageId, action[1]);
+        };
+    });
+
+    button.onclick = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const wasOpen = item.classList.contains('history-selected-menu-open');
+        closeHistorySelectedMenus();
+        item.classList.toggle('history-selected-menu-open', !wasOpen);
+    };
+}
+
 function installHistorySelectedRemoveButtons() {
     const gallery = gradioApp().querySelector('#history_selected_gallery');
     if (!gallery) return;
@@ -599,13 +705,22 @@ function installHistorySelectedRemoveButtons() {
     items.forEach(function(item) {
         item.classList.add('history-selected-image-item');
         const imageId = getHistoryImageIdFromThumb(item);
+        ensureHistorySelectedConfigMenu(item, imageId);
         ensureHistoryFavoriteButton(item, imageId);
-        ensureHistorySelectedActionButton(item, 'history-selected-apply', 'Apply Config', 'Apply image config', imageId,
-            getHistoryApplySelectedIdInput, getHistoryApplySelectedButton);
-        ensureHistorySelectedActionButton(item, 'history-selected-remove', 'Remove', 'Remove from selected images', imageId,
+        ensureHistorySelectedActionButton(item, 'history-selected-remove', '\u2212', 'Remove from selected images', imageId,
             getHistoryRemoveSelectedIdInput, getHistoryRemoveSelectedButton);
-        ensureHistorySelectedActionButton(item, 'history-selected-delete', 'Delete', 'Delete image file and history record', imageId,
+        ensureHistorySelectedActionButton(item, 'history-selected-delete', '\u{1F5D1}', 'Delete image file and history record', imageId,
             getHistoryDeleteSelectedIdInput, getHistoryDeleteSelectedButton);
+        ensureHistoryHideThumbnailButton(item, imageId, 'history-selected-hide');
+    });
+}
+
+function installHistorySelectedMenuDismissal() {
+    if (window.fooocusHistorySelectedMenuDismissalInstalled) return;
+    window.fooocusHistorySelectedMenuDismissalInstalled = true;
+    document.addEventListener('click', function(event) {
+        if (event.target.closest?.('#history_selected_gallery .history-selected-image-item')) return;
+        closeHistorySelectedMenus();
     });
 }
 
@@ -718,6 +833,7 @@ function runUiInstallers() {
     installGenerationHistoryApplyButtons();
     installHistoryThumbnailSelection();
     installHistorySelectedRemoveButtons();
+    installHistorySelectedMenuDismissal();
     installHistoryDaySelectionMode();
     installQueueButtons();
 }
