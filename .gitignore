@@ -53,3 +53,5 @@ user_path_config-deprecated.txt
 /auth.json
 .DS_Store
 models/loras/.tmp*
+outputs-bk
+sorted_wildprompt.json

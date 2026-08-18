@@ -1,6 +1,6 @@
 {
     "path_checkpoints": [
-        "D:\\Models\\Checkpoints\\XL\\Photo"
+        "D:\\Models\\Checkpoints\\XL"
     ],
     "default_model": "cyberrealisticXL_v100.safetensors",
     "default_refiner": "None",

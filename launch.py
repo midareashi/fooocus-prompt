@@ -1,6 +1,52 @@
 import os
+import builtins
 import ssl
 import sys
+
+LAUNCH_DEBUG = os.environ.get('FOOOCUS_LAUNCH_DEBUG', '').strip().lower() in ['1', 'true', 'yes', 'on']
+_launch_print = builtins.print
+
+
+def _should_suppress_print(message: str) -> bool:
+    if LAUNCH_DEBUG:
+        return False
+
+    noisy_prefixes = (
+        '[Queue] ',
+        '[Parameters] ',
+        '[Prompt Expansion] ',
+        '[Wildprompts] ',
+        '[Person Likeness] ',
+        '[Vary] ',
+        '[Upscale] ',
+        '[Inpaint] ',
+        '[Enhance] ',
+        '[Cache] ',
+        '[Fooocus Model Management] ',
+        '[Sampler] ',
+        '[Wildcards] ',
+        '[Arrays] ',
+        '[History] ',
+        '[System ARGV] '
+    )
+
+    if not message:
+        return False
+
+    return message.startswith(noisy_prefixes) or message.startswith('Refiner disabled because base model and refiner are same.')
+
+
+def print(*args, **kwargs):  # type: ignore[override]
+    if not args:
+        return _launch_print()
+
+    first = args[0]
+    if isinstance(first, str) and _should_suppress_print(first):
+        return None
+    return _launch_print(*args, **kwargs)
+
+
+builtins.print = print
 
 print('[System ARGV] ' + str(sys.argv))
 
