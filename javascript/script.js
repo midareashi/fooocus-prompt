@@ -390,6 +390,18 @@ function getHistorySelectionModeInput() {
     return gradioApp().querySelector('#history_selection_mode textarea, #history_selection_mode input');
 }
 
+function isHistoryDebugEnabled() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('history_debug') === '1') {
+            return true;
+        }
+        return window.localStorage?.getItem('fooocus_history_debug') === '1';
+    } catch {
+        return false;
+    }
+}
+
 function getHistoryDaySelectionModeInput() {
     return gradioApp().querySelector('#history_day_selection_mode textarea, #history_day_selection_mode input');
 }
@@ -619,6 +631,11 @@ function installHistoryThumbnailSelection() {
             item.dataset.historySelectionInstalled = 'true';
             item.addEventListener('pointerdown', function(event) {
                 setHistorySelectionMode(event);
+                if (isHistoryDebugEnabled()) {
+                    const debugImageRef = getHistorySelectionRefFromThumb(item);
+                    console.debug('[HistoryDebug] pointerdown',
+                        { hasShift: event.shiftKey, hasCtrl: event.ctrlKey || event.metaKey, ref: debugImageRef });
+                }
             }, true);
             item.addEventListener('click', function(event) {
                 if (event.target.closest('.history-favorite-toggle, .history-hide-thumbnail')) return;
@@ -632,8 +649,21 @@ function installHistoryThumbnailSelection() {
                 }
                 const rawSelectionRef = getHistorySelectionRefFromThumb(item);
                 const imageRef = `index:${currentIndex}` + (rawSelectionRef ? `|${rawSelectionRef}` : '');
+                if (isHistoryDebugEnabled()) {
+                    console.debug('[HistoryDebug] click payload', {
+                        currentIndex,
+                        rawSelectionRef,
+                        imageRef,
+                        target: event.target && event.target.className,
+                        shift: event.shiftKey,
+                        ctrl: event.ctrlKey || event.metaKey
+                    });
+                }
                 if (!input || !button) return;
                 if (setHiddenActionValue(input, imageRef)) {
+                    if (isHistoryDebugEnabled()) {
+                        console.debug('[HistoryDebug] triggering history select button', imageRef);
+                    }
                     button.click();
                 }
             }, true);

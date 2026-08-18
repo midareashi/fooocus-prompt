@@ -37,6 +37,26 @@ from modules.util import is_json
 
 people_dir = os.path.abspath(os.path.join('input', 'people'))
 legacy_people_dir = os.path.abspath('input')
+history_debug_enabled = bool(
+    getattr(args_manager.args, 'history_debug', False)
+    or str(os.getenv('FOOOCUS_HISTORY_DEBUG') or '').strip().lower() in ['1', 'true', 'yes', 'on']
+)
+print(
+    '[HistoryDebug] status=',
+    'enabled' if history_debug_enabled else 'disabled',
+    'source=',
+    'arg' if getattr(args_manager.args, 'history_debug', False) else (
+        'env' if str(os.getenv('FOOOCUS_HISTORY_DEBUG') or '').strip().lower() in ['1', 'true', 'yes', 'on'] else 'off'
+    ),
+    'tip=use --history-debug or FOOOCUS_HISTORY_DEBUG=1',
+    flush=True
+)
+
+
+def history_debug(*parts):
+    if not history_debug_enabled:
+        return
+    print('[HistoryDebug]', *parts, flush=True)
 
 
 def sanitize_person_name(name):
@@ -2831,9 +2851,9 @@ with shared.gradio_root:
                     if text.startswith('stack:'):
                         text = text[len('stack:'):]
                     text = re.sub(r'^#', '', text)
-                    match = re.match(r'(\\d+)', text.strip())
+                    match = re.match(r'(\d+)', text.strip())
                     if match is None:
-                        match = re.search(r'\\b(\\d+)\\b', text)
+                        match = re.search(r'\b(\d+)\b', text)
                     if match is None:
                         return None
                     try:
@@ -3135,11 +3155,24 @@ with shared.gradio_root:
                     return gallery_items, visible_refs, shared_stack_count
 
                 def selected_history_gallery_items(image_ids):
+                    image_ids = parse_history_id_list(image_ids)
+                    history_debug('selected_history_gallery_items', 'count=', len(image_ids), 'ids=', image_ids)
                     gallery_items = []
-                    for image_id in parse_history_id_list(image_ids):
+                    for image_id in image_ids:
                         summary = modules.history_db.get_image_summary(image_id)
-                        if len(summary) == 0 or not summary.get('file_exists') or not os.path.exists(summary['path']):
+                        if len(summary) == 0:
+                            history_debug('selected_history_gallery_items skip', 'id=', image_id, 'reason=missing_summary')
                             continue
+                        image_path = summary.get('path')
+                        if not isinstance(image_path, str) or image_path == '':
+                            history_debug('selected_history_gallery_items skip', 'id=', image_id, 'reason=missing_path')
+                            continue
+                        if not os.path.exists(image_path):
+                            history_debug('selected_history_gallery_items skip', 'id=', image_id, 'reason=path_missing', 'path=', image_path)
+                            continue
+                        if not bool(summary.get('file_exists')):
+                            history_debug('selected_history_gallery_items', 'id=', image_id, 'file_exists_flag=', summary.get('file_exists'),
+                                          'path=', image_path)
                         seed = summary.get('seed')
                         seed_text = f"seed {seed}" if seed is not None else 'seed ?'
                         hidden_text = 'hidden | ' if summary.get('thumbnail_hidden') else ''
@@ -3213,16 +3246,43 @@ with shared.gradio_root:
                         comparison_rows = modules.history_db.list_batch_comparison_rows(batch_id)
                     gallery_items = format_history_gallery_items(rows)
                     visible_image_ids = []
+                    reason_counts = {'missing_id': 0, 'missing_path': 0, 'missing_on_disk': 0, 'not_marked_exists': 0}
                     for row in rows:
                         parsed_id = parse_history_id(row.get('id'))
                         if parsed_id is None:
+                            reason_counts['missing_id'] += 1
+                            continue
+                        image_path = row.get('path', '')
+                        if not image_path:
+                            reason_counts['missing_path'] += 1
+                            continue
+                        if not bool(row.get('file_exists')):
+                            reason_counts['not_marked_exists'] += 1
                             continue
                         if row.get('file_exists') and os.path.exists(row.get('path', '')):
                             visible_image_ids.append(parsed_id)
+                            continue
+                        reason_counts['missing_on_disk'] += 1
+                    if len(visible_image_ids) == 0 and len(rows) > 0:
+                        visible_image_ids = [parse_history_id(row.get('id')) for row in rows if parse_history_id(row.get('id')) is not None]
+                        history_debug(
+                            'history_image_view fallback_visible_ids',
+                            'rows=', len(rows),
+                            'reason_counts=', reason_counts,
+                            'visible=', len(visible_image_ids)
+                        )
+                    elif len(visible_image_ids) > 0 and len(rows) > 0:
+                        history_debug('history_image_view visible_ids', 'rows=', len(rows), 'reason_counts=', reason_counts)
                     image_choices = [format_history_image(row) for row in rows]
-                    value = image_choices[0] if len(image_choices) > 0 else None
-                    image_id = parse_history_id(value)
+                    image_id = visible_image_ids[0] if len(visible_image_ids) > 0 else None
+                    value = None
+                    if image_id is not None:
+                        image_summary = modules.history_db.get_image_summary(image_id)
+                        if len(image_summary) > 0:
+                            value = format_history_image(image_summary)
                     selected_image_ids = [image_id] if image_id is not None else []
+                    history_debug('history_image_view', 'selection=', selection, 'rows=', len(rows), 'visible=', len(visible_image_ids),
+                                 'preselect=', image_id)
                     curation = modules.history_db.get_image_curation(image_id) if image_id is not None else {}
                     missing_count = len([row for row in rows if not row.get('file_exists')])
                     scope = 'all output images' if is_all_images else 'batch images'
@@ -3243,6 +3303,7 @@ with shared.gradio_root:
                 def history_seed_group_view(seed_stack_selection, seed_stack_prompt, search, favorite_only,
                                             review_status, tag, days, checkpoints, loras, show_preview_images=False,
                                             thumbnail_visibility='visible'):
+                    history_debug('history_seed_group_view', 'selection=', seed_stack_selection, 'prompt=', seed_stack_prompt, 'days=', days)
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = effective_history_days(days)
                     stack_id = parse_history_id(seed_stack_selection)
@@ -3273,6 +3334,12 @@ with shared.gradio_root:
                             continue
                         if row.get('file_exists') and os.path.exists(row['path']):
                             selected_image_ids.append(parsed_id)
+                    if len(selected_image_ids) == 0 and len(rows) > 0:
+                        selected_image_ids = [
+                            parse_history_id(row.get('id'))
+                            for row in rows
+                            if parse_history_id(row.get('id')) is not None
+                        ]
                     image_choices = [format_history_image(row) for row in rows]
                     value = image_choices[0] if len(image_choices) > 0 else None
                     image_id = parse_history_id(value)
@@ -3290,6 +3357,7 @@ with shared.gradio_root:
                 def history_seed_stack_gallery_view(search, favorite_only, review_status, tag, days, checkpoints, loras,
                                                     show_preview_images=False, thumbnail_visibility='visible',
                                                     status_prefix=''):
+                    history_debug('history_seed_stack_gallery_view', 'preview=', show_preview_images, 'grouping=', 'on')
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = effective_history_days(days)
                     stacks = modules.history_db.list_seed_stacks(
@@ -3347,6 +3415,12 @@ with shared.gradio_root:
                                 if row.get('file_exists') and os.path.exists(row.get('path', '')):
                                     selected_image_ids.append(parsed_id)
                             image_choices = [format_history_image(row) for row in selected_rows]
+                            if len(selected_image_ids) == 0 and len(selected_rows) > 0:
+                                selected_image_ids = [
+                                    parse_history_id(row.get('id'))
+                                    for row in selected_rows
+                                    if parse_history_id(row.get('id')) is not None
+                                ]
                     elif first_ref is not None:
                         image_id = parse_history_id(first_ref)
                         summary = modules.history_db.get_image_summary(image_id) if image_id is not None else {}
@@ -3441,6 +3515,8 @@ with shared.gradio_root:
                 def refresh_history(search, favorite_only, review_status, tag, checkpoints, loras,
                                     show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible',
                                     selected_days_state=None):
+                    history_debug('refresh_history', 'group_by_seed=', group_by_seed, 'preview=', show_preview_images,
+                                 'visibility=', thumbnail_visibility, 'review=', review_status)
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = modules.history_db.list_output_days()
                     filter_values = modules.history_db.list_filter_values()
@@ -3489,6 +3565,8 @@ with shared.gradio_root:
                 def requery_history_outputs(search, favorite_only, review_status, tag, checkpoints, loras,
                                             show_preview_images=False, group_by_seed=False, thumbnail_visibility='Visible',
                                             selected_days_state=None):
+                    history_debug('requery_history_outputs', 'group_by_seed=', group_by_seed, 'preview=', show_preview_images,
+                                 'visibility=', thumbnail_visibility, 'review=', review_status)
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     result = modules.history_db.reconcile_outputs_folder()
                     days = modules.history_db.list_output_days()
@@ -3585,6 +3663,7 @@ with shared.gradio_root:
                         f'Loaded curation for history batch #{batch_id}.'
 
                 def load_history_image_curation(selection):
+                    history_debug('load_history_image_curation', 'selection=', selection)
                     image_id = parse_history_id(selection)
                     if image_id is None:
                         return False, 0, '', '', '', '', 'Select a history image.'
@@ -3673,6 +3752,13 @@ with shared.gradio_root:
                     else:
                         selected = [image_id]
                     selected = selected[-4:]
+                    history_debug(
+                        'select_history_thumbnail',
+                        'mode=', selection_mode,
+                        'image_ref=', image_ref,
+                        'before=', parse_history_id_list(selected_image_ids),
+                        'after=', selected
+                    )
 
                     summary = modules.history_db.get_image_summary(image_id)
                     curation = modules.history_db.get_image_curation(image_id)
@@ -3726,6 +3812,15 @@ with shared.gradio_root:
                         except Exception:
                             return False
 
+                    history_debug(
+                        'select_history_thumbnail_by_ref',
+                        'incoming=', image_ref,
+                        'raw=', raw_image_ref,
+                        'selected=', selected_image_ids,
+                        'visible=', len(visible_image_ids or []),
+                        'mode=', selection_mode
+                    )
+
                     clicked_index = None
                     if image_ref.lower().startswith('index:'):
                         try:
@@ -3757,7 +3852,10 @@ with shared.gradio_root:
                                     clicked_index = index
                                     break
                     if clicked_index is None:
+                        history_debug('select_history_thumbnail_by_ref', 'failed_resolve=', image_ref, raw_image_ref,
+                                     'visible=', visible_image_ids)
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Selected thumbnail is no longer visible.'
+                    history_debug('select_history_thumbnail_by_ref', 'resolved_index=', clicked_index, 'ref=', raw_image_ref)
 
                     class ThumbnailSelectEvent:
                         def __init__(self, index):
@@ -3804,6 +3902,10 @@ with shared.gradio_root:
                         format_history_image_details(selected[0] if len(selected) > 0 else None), status
 
                 def delete_history_selected_image(selected_image_ids, visible_image_ids, delete_image_id):
+                    history_debug('delete_history_selected_image',
+                                 'delete=', delete_image_id,
+                                 'selected=', selected_image_ids,
+                                 'visible=', visible_image_ids)
                     delete_image_id = parse_history_id(delete_image_id)
                     if delete_image_id is None:
                         return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), 'Select an image to delete.'
@@ -3824,6 +3926,7 @@ with shared.gradio_root:
                         gr.update(choices=choices, value=next_choice), format_history_image_details(next_choice), status
 
                 def toggle_history_image_favorite(image_id):
+                    history_debug('toggle_history_image_favorite', 'image=', image_id)
                     image_id = parse_history_id(image_id)
                     if image_id is None:
                         return 'Select an image to favorite.'

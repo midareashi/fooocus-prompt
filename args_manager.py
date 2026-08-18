@@ -31,6 +31,9 @@ args_parser.parser.add_argument("--disable-preset-download", action='store_true'
 args_parser.parser.add_argument("--disable-enhance-output-sorting", action='store_true',
                                 help="Disables enhance output sorting for final image gallery.")
 
+args_parser.parser.add_argument("--history-debug", action='store_true',
+                                help="Enable verbose History tab selection debug logging in CLI output.")
+
 args_parser.parser.add_argument("--enable-auto-describe-image", action='store_true',
                                 help="Enables automatic description of uov and enhance image when prompt is empty", default=False)
 
