@@ -3108,11 +3108,14 @@ with shared.gradio_root:
                             thumbnail_path = history_stack_thumbnail_path(group_rows)
                             if thumbnail_path is None:
                                 continue
-                            stack_id = min(
-                                int(parsed_id)
+                            grouped_row_ids = [
+                                parsed_id
                                 for parsed_id in (parse_history_id(group_row.get('id')) for group_row in group_rows)
                                 if parsed_id is not None
-                            )
+                            ]
+                            if len(grouped_row_ids) == 0:
+                                continue
+                            stack_id = min(grouped_row_ids)
                             label = f"stack:{stack_id} | seed {seed} | {len(group_rows)} images"
                             gallery_items.append((thumbnail_path, label))
                             visible_refs.append(f"stack:{stack_id}")
@@ -3622,9 +3625,12 @@ with shared.gradio_root:
                             thumbnail_visibility=thumbnail_visibility
                         )
                         selected = [
-                            parse_history_id(row.get('id'))
-                            for row in rows
-                            if row.get('file_exists') and os.path.exists(row.get('path', ''))
+                            parsed_id
+                            for parsed_id in (
+                                parse_history_id(row.get('id')) for row in rows
+                                if row.get('file_exists') and os.path.exists(row.get('path', ''))
+                            )
+                            if parsed_id is not None
                         ]
                         image_choices = [format_history_image(row) for row in rows]
                         value = image_choices[0] if len(image_choices) > 0 else None
