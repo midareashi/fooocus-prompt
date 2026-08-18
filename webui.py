@@ -706,7 +706,19 @@ def poll_generate_queue(task, is_generating, session_history):
                 gr.update(value=make_queue_panel_html()), \
                 gr.update(value=get_quick_preview_indices()), \
                 True
-        return gr.update(), gr.update(), gr.update(), gr.update(), session_history, \
+        running_task_id = getattr(active_task, 'queue_id', 0)
+        status_html = modules.html.make_progress_html(
+            1,
+            f'Generation running (task {running_task_id})...'
+            if running_task_id
+            else 'Generation running...'
+        )
+        latest_image = get_latest_display_image(session_history)
+        return status_html, \
+            gr.update(visible=True, value=latest_image) if latest_image is not None else gr.update(), \
+            gr.update(), \
+            gr.update(visible=True, value=session_history), \
+            session_history, \
             gr.update(visible=True, interactive=True), \
             gr.update(visible=False, interactive=False), \
             gr.update(visible=False, interactive=False), \
@@ -2813,10 +2825,34 @@ with shared.gradio_root:
                     lora_note_buttons + lora_note_add_buttons + lora_note_editor_cols + [history_status]
 
                 def parse_history_id(selection):
+                    text = str(selection or '').strip()
+                    if text == '':
+                        return None
+                    if text.startswith('stack:'):
+                        text = text[len('stack:'):]
+                    text = re.sub(r'^#', '', text)
+                    match = re.match(r'(\\d+)', text.strip())
+                    if match is None:
+                        match = re.search(r'\\b(\\d+)\\b', text)
+                    if match is None:
+                        return None
                     try:
-                        return int(str(selection or '').split('|', 1)[0].strip())
+                        return int(match.group(1))
                     except Exception:
                         return None
+
+                def parse_history_id_list(values):
+                    if isinstance(values, str):
+                        try:
+                            values = json.loads(values)
+                        except Exception:
+                            values = [values]
+                    ids = []
+                    for value in values or []:
+                        parsed = parse_history_id(value)
+                        if parsed is not None:
+                            ids.append(parsed)
+                    return ids
 
                 def format_history_image_details(image_id):
                     image_id = parse_history_id(image_id)
@@ -3072,7 +3108,11 @@ with shared.gradio_root:
                             thumbnail_path = history_stack_thumbnail_path(group_rows)
                             if thumbnail_path is None:
                                 continue
-                            stack_id = min(int(group_row.get('id')) for group_row in group_rows)
+                            stack_id = min(
+                                int(parsed_id)
+                                for parsed_id in (parse_history_id(group_row.get('id')) for group_row in group_rows)
+                                if parsed_id is not None
+                            )
                             label = f"stack:{stack_id} | seed {seed} | {len(group_rows)} images"
                             gallery_items.append((thumbnail_path, label))
                             visible_refs.append(f"stack:{stack_id}")
@@ -3093,7 +3133,7 @@ with shared.gradio_root:
 
                 def selected_history_gallery_items(image_ids):
                     gallery_items = []
-                    for image_id in image_ids or []:
+                    for image_id in parse_history_id_list(image_ids):
                         summary = modules.history_db.get_image_summary(image_id)
                         if len(summary) == 0 or not summary.get('file_exists') or not os.path.exists(summary['path']):
                             continue
@@ -3107,7 +3147,7 @@ with shared.gradio_root:
 
                 def visible_history_gallery_items(image_ids):
                     rows = []
-                    for image_id in image_ids or []:
+                    for image_id in parse_history_id_list(image_ids):
                         summary = modules.history_db.get_image_summary(image_id)
                         if len(summary) > 0:
                             rows.append(summary)
@@ -3115,7 +3155,7 @@ with shared.gradio_root:
 
                 def history_image_choices_from_ids(image_ids):
                     choices = []
-                    for image_id in image_ids or []:
+                    for image_id in parse_history_id_list(image_ids):
                         summary = modules.history_db.get_image_summary(image_id)
                         if len(summary) > 0:
                             choices.append(format_history_image(summary))
@@ -3123,7 +3163,7 @@ with shared.gradio_root:
 
                 def history_selected_ids_json(image_ids):
                     try:
-                        return json.dumps([int(image_id) for image_id in (image_ids or [])])
+                        return json.dumps(parse_history_id_list(image_ids))
                     except Exception:
                         return '[]'
 
@@ -3169,7 +3209,13 @@ with shared.gradio_root:
                         )
                         comparison_rows = modules.history_db.list_batch_comparison_rows(batch_id)
                     gallery_items = format_history_gallery_items(rows)
-                    visible_image_ids = [row['id'] for row in rows if row.get('file_exists') and os.path.exists(row['path'])]
+                    visible_image_ids = []
+                    for row in rows:
+                        parsed_id = parse_history_id(row.get('id'))
+                        if parsed_id is None:
+                            continue
+                        if row.get('file_exists') and os.path.exists(row.get('path', '')):
+                            visible_image_ids.append(parsed_id)
                     image_choices = [format_history_image(row) for row in rows]
                     value = image_choices[0] if len(image_choices) > 0 else None
                     image_id = parse_history_id(value)
@@ -3197,6 +3243,12 @@ with shared.gradio_root:
                     thumbnail_visibility = normalize_thumbnail_visibility(thumbnail_visibility)
                     days = effective_history_days(days)
                     stack_id = parse_history_id(seed_stack_selection)
+                    if stack_id is None:
+                        return [], history_selected_ids_json([]), \
+                            gr.update(value=selected_history_gallery_items([])), \
+                            gr.update(choices=[], value=None), \
+                            False, 0, '', '', '', \
+                            format_history_image_details(None), 'Select a seed group.'
                     seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
                     rows = modules.history_db.list_seed_stack_images(
                         seed,
@@ -3211,7 +3263,13 @@ with shared.gradio_root:
                         show_preview_images=show_preview_images,
                         thumbnail_visibility=thumbnail_visibility
                     )
-                    selected_image_ids = [row['id'] for row in rows if row.get('file_exists') and os.path.exists(row['path'])]
+                    selected_image_ids = []
+                    for row in rows:
+                        parsed_id = parse_history_id(row.get('id'))
+                        if parsed_id is None:
+                            continue
+                        if row.get('file_exists') and os.path.exists(row['path']):
+                            selected_image_ids.append(parsed_id)
                     image_choices = [format_history_image(row) for row in rows]
                     value = image_choices[0] if len(image_choices) > 0 else None
                     image_id = parse_history_id(value)
@@ -3261,29 +3319,38 @@ with shared.gradio_root:
                     first_ref = visible_refs[0] if len(visible_refs) > 0 else None
                     if isinstance(first_ref, str) and first_ref.startswith('stack:'):
                         stack_id = parse_history_id(first_ref.replace('stack:', '', 1))
-                        seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
-                        selected_rows = modules.history_db.list_seed_stack_images(
-                            seed,
-                            prompt,
-                            search=search,
-                            favorite_only=favorite_only,
-                            review_status=review_status,
-                            tag=tag,
-                            days=days,
-                            checkpoints=checkpoints,
-                            loras=loras,
-                            show_preview_images=show_preview_images,
-                            thumbnail_visibility=thumbnail_visibility
-                        )
-                        selected_image_ids = [
-                            row['id'] for row in selected_rows
-                            if row.get('file_exists') and os.path.exists(row.get('path', ''))
-                        ]
-                        image_choices = [format_history_image(row) for row in selected_rows]
+                        if stack_id is None:
+                            first_ref = None
+                        else:
+                            seed, prompt = modules.history_db.get_seed_stack_key(stack_id)
+                            selected_rows = modules.history_db.list_seed_stack_images(
+                                seed,
+                                prompt,
+                                search=search,
+                                favorite_only=favorite_only,
+                                review_status=review_status,
+                                tag=tag,
+                                days=days,
+                                checkpoints=checkpoints,
+                                loras=loras,
+                                show_preview_images=show_preview_images,
+                                thumbnail_visibility=thumbnail_visibility
+                            )
+                            selected_image_ids = []
+                            for row in selected_rows:
+                                parsed_id = parse_history_id(row.get('id'))
+                                if parsed_id is None:
+                                    continue
+                                if row.get('file_exists') and os.path.exists(row.get('path', '')):
+                                    selected_image_ids.append(parsed_id)
+                            image_choices = [format_history_image(row) for row in selected_rows]
                     elif first_ref is not None:
-                        summary = modules.history_db.get_image_summary(first_ref)
+                        image_id = parse_history_id(first_ref)
+                        summary = modules.history_db.get_image_summary(image_id) if image_id is not None else {}
                         if len(summary) > 0:
-                            selected_image_ids = [summary['id']]
+                            parsed_id = parse_history_id(summary.get('id'))
+                            if parsed_id is not None:
+                                selected_image_ids = [parsed_id]
                             image_choices = [format_history_image(summary)]
 
                     if len(image_choices) > 0:
@@ -3555,7 +3622,8 @@ with shared.gradio_root:
                             thumbnail_visibility=thumbnail_visibility
                         )
                         selected = [
-                            row['id'] for row in rows
+                            parse_history_id(row.get('id'))
+                            for row in rows
                             if row.get('file_exists') and os.path.exists(row.get('path', ''))
                         ]
                         image_choices = [format_history_image(row) for row in rows]
@@ -3570,12 +3638,11 @@ with shared.gradio_root:
                             format_history_image_details(image_id), \
                             f'Loaded {len(selected)} image(s) from seed stack #{stack_id}.'
 
-                    try:
-                        image_id = int(image_ref)
-                    except Exception:
+                    image_id = parse_history_id(image_ref)
+                    if image_id is None:
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Select a thumbnail.'
 
-                    selected = [int(x) for x in (selected_image_ids or []) if x is not None]
+                    selected = parse_history_id_list(selected_image_ids)
                     selection_mode = str(selection_mode or 'single').strip().casefold()
                     if selection_mode == 'ctrl':
                         if image_id in selected:
@@ -3585,10 +3652,9 @@ with shared.gradio_root:
                     elif selection_mode == 'shift' and len(selected) > 0:
                         visible = []
                         for visible_ref in visible_image_ids or []:
-                            try:
-                                visible.append(int(visible_ref))
-                            except Exception:
-                                pass
+                            parsed_visible = parse_history_id(visible_ref)
+                            if parsed_visible is not None:
+                                visible.append(parsed_visible)
                         anchor = selected[-1]
                         try:
                             anchor_index = visible.index(anchor)
@@ -3632,7 +3698,7 @@ with shared.gradio_root:
                             clicked_index = index
                             break
                         try:
-                            if int(visible_ref) == int(image_ref):
+                            if parse_history_id(visible_ref) == parse_history_id(image_ref):
                                 clicked_index = index
                                 break
                         except Exception:
@@ -3675,11 +3741,8 @@ with shared.gradio_root:
                         f'Selected history image #{image_id} from comparison.'
 
                 def remove_history_selected_image(selected_image_ids, remove_image_id):
-                    try:
-                        remove_image_id = int(str(remove_image_id or '').strip())
-                    except Exception:
-                        remove_image_id = None
-                    selected = [int(x) for x in (selected_image_ids or []) if x is not None]
+                    remove_image_id = parse_history_id(remove_image_id)
+                    selected = parse_history_id_list(selected_image_ids)
                     if remove_image_id is not None:
                         selected = [image_id for image_id in selected if image_id != remove_image_id]
                     status = f'Selected {len(selected)}/4 image(s).'
@@ -3688,15 +3751,18 @@ with shared.gradio_root:
                         format_history_image_details(selected[0] if len(selected) > 0 else None), status
 
                 def delete_history_selected_image(selected_image_ids, visible_image_ids, delete_image_id):
-                    try:
-                        delete_image_id = int(str(delete_image_id or '').strip())
-                    except Exception:
-                        delete_image_id = None
+                    delete_image_id = parse_history_id(delete_image_id)
                     if delete_image_id is None:
                         return gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), gr.update(), 'Select an image to delete.'
                     deleted, path = modules.history_db.delete_image(delete_image_id, delete_file=True)
-                    selected = [int(x) for x in (selected_image_ids or []) if x is not None and int(x) != delete_image_id]
-                    visible = [int(x) for x in (visible_image_ids or []) if x is not None and int(x) != delete_image_id]
+                    selected = [
+                        image_id for image_id in parse_history_id_list(selected_image_ids)
+                        if image_id != delete_image_id
+                    ]
+                    visible = [
+                        image_id for image_id in parse_history_id_list(visible_image_ids)
+                        if image_id != delete_image_id
+                    ]
                     choices = history_image_choices_from_ids(visible)
                     next_choice = choices[0] if len(choices) > 0 else None
                     status = f"Deleted {os.path.basename(path)}." if deleted and path else 'Could not delete selected image.'
