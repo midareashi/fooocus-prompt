@@ -3699,16 +3699,24 @@ with shared.gradio_root:
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Select a thumbnail.'
 
                     clicked_index = None
-                    for index, visible_ref in enumerate(visible_image_ids or []):
-                        if str(visible_ref) == image_ref:
-                            clicked_index = index
-                            break
+                    if image_ref.lower().startswith('index:'):
                         try:
-                            if parse_history_id(visible_ref) == parse_history_id(image_ref):
+                            requested_index = int(image_ref[len('index:'):])
+                        except Exception:
+                            requested_index = None
+                        if requested_index is not None and 0 <= requested_index < len(visible_image_ids or []):
+                            clicked_index = requested_index
+                    else:
+                        for index, visible_ref in enumerate(visible_image_ids or []):
+                            if str(visible_ref) == image_ref:
                                 clicked_index = index
                                 break
-                        except Exception:
-                            pass
+                            try:
+                                if parse_history_id(visible_ref) == parse_history_id(image_ref):
+                                    clicked_index = index
+                                    break
+                            except Exception:
+                                pass
                     if clicked_index is None:
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Selected thumbnail is no longer visible.'
 

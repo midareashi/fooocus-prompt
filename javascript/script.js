@@ -614,7 +614,7 @@ function installHistoryThumbnailSelection() {
     if (!gallery) return;
     const selectedIds = getHistorySelectedIds();
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
-    items.forEach(function(item) {
+    items.forEach(function(item, index) {
         if (item.dataset.historySelectionInstalled !== 'true') {
             item.dataset.historySelectionInstalled = 'true';
             item.addEventListener('pointerdown', function(event) {
@@ -625,8 +625,8 @@ function installHistoryThumbnailSelection() {
                 setHistorySelectionMode(event);
                 const input = getHistorySelectThumbnailIdInput();
                 const button = getHistorySelectThumbnailButton();
-                const imageRef = getHistorySelectionRefFromThumb(item);
-                if (!input || !button || imageRef === '') return;
+                const imageRef = getHistorySelectionRefFromThumb(item) || `index:${index}`;
+                if (!input || !button) return;
                 if (setHiddenActionValue(input, imageRef)) {
                     button.click();
                 }
