@@ -495,9 +495,11 @@ def monitor_generate_queue(should_monitor, session_history):
             return image_item
         return None
 
-    def append_task_results_to_session_history(task):
+    def append_task_results_to_session_history(task, image_items=None):
+        if image_items is None:
+            image_items = getattr(task, 'results', []) or []
         changed = False
-        for image_item in list(getattr(task, 'results', []) or []):
+        for image_item in list(image_items):
             if isinstance(image_item, str):
                 if not os.path.exists(image_item):
                     continue
@@ -661,9 +663,11 @@ def poll_generate_queue(task, is_generating, session_history):
             return image_item
         return None
 
-    def append_task_results_to_session_history(task):
+    def append_task_results_to_session_history(task, image_items=None):
+        if image_items is None:
+            image_items = getattr(task, 'results', []) or []
         changed = False
-        for image_item in list(getattr(task, 'results', []) or []):
+        for image_item in list(image_items):
             if isinstance(image_item, str):
                 if not os.path.exists(image_item):
                     continue
@@ -713,6 +717,23 @@ def poll_generate_queue(task, is_generating, session_history):
         pending_count = worker.get_pending_task_count()
         active_running = active_task is not None and not getattr(active_task, 'completed', False)
         if not active_running and pending_count == 0:
+            if task is not None and getattr(task, 'completed', False):
+                final_product = list(getattr(task, 'results', []) or [])
+                if not args_manager.args.disable_enhance_output_sorting:
+                    final_product = sort_enhance_images(final_product, task)
+                append_task_results_to_session_history(task, final_product)
+                latest_image = get_latest_display_image(final_product)
+                return gr.update(visible=False), \
+                    gr.update(visible=True, value=latest_image) if latest_image is not None else gr.update(visible=True), \
+                    gr.update(), \
+                    gr.update(visible=True, value=session_history) if final_product else gr.update(visible=True), \
+                    session_history, \
+                    gr.update(visible=True, interactive=True), \
+                    gr.update(visible=False, interactive=False), \
+                    gr.update(visible=False, interactive=False), \
+                    gr.update(value=make_queue_panel_html()), \
+                    gr.update(value=get_quick_preview_indices()), \
+                    False
             worker.end_queue_monitor()
             return idle_updates()
         if not active_running and pending_count > 0:
@@ -766,16 +787,18 @@ def poll_generate_queue(task, is_generating, session_history):
         if flag == 'finish' and not args_manager.args.disable_enhance_output_sorting:
             product = sort_enhance_images(product, task)
 
-        for image_item in product:
-            if isinstance(image_item, str):
-                if not os.path.exists(image_item):
-                    continue
-                if image_item not in session_history:
-                    session_history.append(image_item)
-            else:
-                session_history.append(image_item)
+        if flag == 'results':
+            image_items = product
+        elif flag == 'finish':
+            image_items = list(product)
+            if not image_items:
+                image_items = list(getattr(task, 'results', []) or [])
+                if not args_manager.args.disable_enhance_output_sorting:
+                    image_items = sort_enhance_images(image_items, task)
 
-        latest_image = get_latest_display_image(product)
+        append_task_results_to_session_history(task, image_items)
+
+        latest_image = get_latest_display_image(image_items)
         active_task = worker.get_current_task()
         active_running = active_task is not None and not getattr(active_task, 'completed', False)
         has_more_work = active_running or worker.get_pending_task_count() > 0
@@ -3674,6 +3697,35 @@ with shared.gradio_root:
                         curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
                         format_history_image_details(image_id), f'Loaded curation for history image #{image_id}.'
 
+                def select_history_selected_gallery_image(selected_image_ids, evt: gr.SelectData):
+                    if evt is None or not hasattr(evt, 'index') or evt.index is None:
+                        return gr.update(), False, 0, '', '', '', '', 'Select a large history image.'
+                    try:
+                        index = evt.index[0] if isinstance(evt.index, (list, tuple)) else evt.index
+                        index = int(index)
+                    except Exception:
+                        return gr.update(), False, 0, '', '', '', '', 'Select a large history image.'
+
+                    image_ids = parse_history_id_list(selected_image_ids)
+                    if index < 0 or index >= len(image_ids):
+                        return gr.update(), False, 0, '', '', '', '', 'Selected large history image was not found.'
+
+                    image_id = image_ids[index]
+                    summary = modules.history_db.get_image_summary(image_id)
+                    if len(summary) == 0:
+                        return gr.update(), False, 0, '', '', '', format_history_image_details(None), \
+                            f'Selected large history image #{image_id} was not found.'
+
+                    selection_value = format_history_image(summary)
+                    curation = modules.history_db.get_image_curation(image_id)
+                    if len(curation) == 0:
+                        return selection_value, False, 0, '', '', '', format_history_image_details(image_id), \
+                            'History image was not found.'
+
+                    return selection_value, bool(curation.get('favorite', False)), int(curation.get('rating', 0) or 0), \
+                        curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
+                        format_history_image_details(image_id), f'Selected history image #{image_id} from large preview.'
+
                 def select_history_thumbnail(visible_image_ids, selected_image_ids, selection_mode, search,
                                              favorite_only, review_status, tag, days, checkpoints, loras,
                                              show_preview_images=False, thumbnail_visibility='Visible',
@@ -4181,6 +4233,12 @@ with shared.gradio_root:
                                                outputs=[history_favorite, history_rating, history_review_status,
                                                         history_tags, history_note, history_image_details,
                                                         history_status],
+                                               queue=False, show_progress=False)
+                history_selected_gallery.select(select_history_selected_gallery_image,
+                                               inputs=history_selected_image_ids,
+                                               outputs=[history_image_selection, history_favorite,
+                                                        history_rating, history_review_status, history_tags,
+                                                        history_note, history_image_details, history_status],
                                                queue=False, show_progress=False)
                 history_select_thumbnail_button.click(select_history_thumbnail_by_ref,
                                                       inputs=[history_select_thumbnail_image_id,
