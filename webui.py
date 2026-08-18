@@ -3698,6 +3698,36 @@ with shared.gradio_root:
                     if image_ref == '':
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Select a thumbnail.'
 
+                    raw_image_ref = image_ref
+                    if '|' in image_ref:
+                        parts = image_ref.split('|', 1)
+                        image_ref = parts[0].strip()
+                        raw_image_ref = parts[1].strip()
+
+                    if isinstance(visible_image_ids, str):
+                        try:
+                            visible_image_ids = json.loads(visible_image_ids)
+                        except Exception:
+                            visible_image_ids = [v for v in (visible_image_ids.split(',') if isinstance(visible_image_ids, str) else []) if v.strip() != '']
+
+                    def matches_visible_ref(visible_ref, target_ref):
+                        if visible_ref is None or target_ref is None:
+                            return False
+                        visible_ref = str(visible_ref).strip()
+                        target_ref = str(target_ref).strip()
+                        if visible_ref == target_ref:
+                            return True
+
+                        visible_is_stack = visible_ref.lower().startswith('stack:')
+                        target_is_stack = target_ref.lower().startswith('stack:')
+                        if visible_is_stack != target_is_stack:
+                            return False
+
+                        try:
+                            return parse_history_id(visible_ref) == parse_history_id(target_ref)
+                        except Exception:
+                            return False
+
                     clicked_index = None
                     if image_ref.lower().startswith('index:'):
                         try:
@@ -3706,6 +3736,10 @@ with shared.gradio_root:
                             requested_index = None
                         if requested_index is not None and 0 <= requested_index < len(visible_image_ids or []):
                             clicked_index = requested_index
+                            if raw_image_ref:
+                                current_ref = (visible_image_ids or [])[clicked_index]
+                                if not matches_visible_ref(current_ref, raw_image_ref):
+                                    clicked_index = None
                     else:
                         for index, visible_ref in enumerate(visible_image_ids or []):
                             if str(visible_ref) == image_ref:
@@ -3717,6 +3751,13 @@ with shared.gradio_root:
                                     break
                             except Exception:
                                 pass
+                    if clicked_index is None:
+                        # Fallback to direct reference match (for cases where index changed while gallery was rerendered).
+                        if raw_image_ref:
+                            for index, visible_ref in enumerate(visible_image_ids or []):
+                                if matches_visible_ref(visible_ref, raw_image_ref):
+                                    clicked_index = index
+                                    break
                     if clicked_index is None:
                         return [], '[]', gr.update(value=[]), gr.update(), False, 0, '', '', '', '', 'Selected thumbnail is no longer visible.'
 

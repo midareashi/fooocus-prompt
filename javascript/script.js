@@ -625,7 +625,13 @@ function installHistoryThumbnailSelection() {
                 setHistorySelectionMode(event);
                 const input = getHistorySelectThumbnailIdInput();
                 const button = getHistorySelectThumbnailButton();
-                const imageRef = getHistorySelectionRefFromThumb(item) || `index:${index}`;
+                const currentItems = Array.from(gallery.querySelectorAll('.thumbnail-item'));
+                const currentIndex = currentItems.indexOf(item);
+                if (currentIndex < 0) {
+                    return;
+                }
+                const rawSelectionRef = getHistorySelectionRefFromThumb(item);
+                const imageRef = `index:${currentIndex}` + (rawSelectionRef ? `|${rawSelectionRef}` : '');
                 if (!input || !button) return;
                 if (setHiddenActionValue(input, imageRef)) {
                     button.click();
