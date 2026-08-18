@@ -707,7 +707,7 @@ default_save_metadata_to_images = get_config_item_or_set_default(
 )
 save_history_log_html = get_config_item_or_set_default(
     key='save_history_log_html',
-    default_value=True,
+    default_value=False,
     validator=lambda x: isinstance(x, bool),
     expected_type=bool
 )
