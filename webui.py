@@ -3670,8 +3670,6 @@ with shared.gradio_root:
                             selected = visible[start:end + 1]
                         except Exception:
                             selected = [image_id]
-                    elif image_id in selected and len(selected) == 1:
-                        selected = [x for x in selected if x != image_id]
                     else:
                         selected = [image_id]
                     selected = selected[-4:]
