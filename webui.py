@@ -998,6 +998,7 @@ with shared.gradio_root:
                     with gr.Column(elem_id='history_thumbnail_view_controls'):
                         history_stack_by_seed = gr.Checkbox(label='Stack Matching Seeds', value=False,
                                                             elem_id='history_stack_by_seed')
+                        history_filter_favorites = gr.Checkbox(label='Favorites Only', value=False)
                         history_thumbnail_visibility = gr.Radio(label='Thumbnail View',
                                                                 choices=['Visible', 'All', 'Hidden'],
                                                                 value='Visible',
@@ -1029,8 +1030,6 @@ with shared.gradio_root:
                                                              multiselect=True)
                     history_filter_loras = gr.Dropdown(label='LoRAs', choices=[], value=[],
                                                        multiselect=True)
-                with gr.Row():
-                    history_filter_favorites = gr.Checkbox(label='Favorites Only', value=False)
                 history_seed_stack_selection = gr.Dropdown(label='Seed Group', choices=[], value=None,
                                                            visible=False)
                 history_seed_stack_prompt = gr.Textbox(value='', visible=False)
