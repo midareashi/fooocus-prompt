@@ -18,6 +18,7 @@ class AsyncTask:
         from PIL import Image
         import numpy as np
         import json
+        import os
         import args_manager
 
         self.args = args.copy()
@@ -115,10 +116,28 @@ class AsyncTask:
         self.person_likeness_strength = args.pop()
         self.person_likeness_face_weight = args.pop()
         self.person_likeness_face_start = args.pop()
+        self.person_likeness_name = None
         self.person_likeness_images = []
         self.person_likeness_prepared_images = None
         self.person_likeness_cache_key = None
         person_likeness_files = flatten_uploaded_files(args.pop())
+        for person_file in person_likeness_files:
+            person_image_path = get_uploaded_file_path(person_file)
+            if not isinstance(person_image_path, str):
+                continue
+            person_dir = os.path.dirname(os.path.abspath(person_image_path))
+            person_metadata_path = os.path.join(person_dir, 'person.json')
+            if not os.path.exists(person_metadata_path):
+                continue
+            try:
+                with open(person_metadata_path, 'r', encoding='utf-8') as metadata_file:
+                    person_metadata = json.load(metadata_file)
+                person_name = str(person_metadata.get('name', '') or '').strip()
+                if person_name:
+                    self.person_likeness_name = person_name
+                    break
+            except Exception:
+                continue
         for person_file in person_likeness_files:
             person_image = load_uploaded_image(person_file)
             if person_image is not None:
@@ -719,6 +738,8 @@ def worker():
 
             if is_person_likeness_active(async_task):
                 d.append(('Person Likeness', 'person_likeness_enabled', async_task.person_likeness_enabled))
+                if async_task.person_likeness_name:
+                    d.append(('Person Likeness Name', 'person_likeness_name', async_task.person_likeness_name))
                 d.append(('Person Likeness Subject', 'person_likeness_class', async_task.person_likeness_class))
                 d.append(('Person Likeness Identity Strength', 'person_likeness_strength',
                           async_task.person_likeness_strength))
