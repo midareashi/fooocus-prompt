@@ -564,6 +564,49 @@ function triggerHistoryImageAction(input, button, imageId) {
     return true;
 }
 
+function ensureHistoryThumbnailBulkButton(container, className, label, title, actionButton) {
+    let button = container.querySelector(`.${className}`);
+    if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = `history-thumbnail-bulk-action ${className}`;
+        button.textContent = label;
+        container.appendChild(button);
+    }
+    setAttributeIfChanged(button, 'aria-label', title);
+    setAttributeIfChanged(button, 'title', title);
+    button.onclick = function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        actionButton?.click();
+    };
+}
+
+function installHistoryThumbnailBulkActions() {
+    const gallery = gradioApp().querySelector('#history_thumbnail_gallery');
+    const deleteButton = gradioButton('#history_bulk_delete_button');
+    const favoriteButton = gradioButton('#history_bulk_favorite_button');
+    const hideButton = gradioButton('#history_bulk_hide_button');
+    if (!gallery || !deleteButton || !favoriteButton || !hideButton) return;
+
+    const thumbnails = gallery.querySelector('.thumbnails');
+    const actionHost = thumbnails?.parentElement || gallery;
+    let actions = gallery.querySelector('.history-thumbnail-bulk-actions');
+    if (!actions) {
+        actions = document.createElement('div');
+        actions.className = 'history-thumbnail-bulk-actions';
+        actionHost.insertBefore(actions, thumbnails || null);
+    } else if (actions.parentElement !== actionHost || actions.nextElementSibling !== thumbnails) {
+        actionHost.insertBefore(actions, thumbnails || null);
+    }
+    ensureHistoryThumbnailBulkButton(actions, 'history-thumbnail-bulk-delete', '\u{1F5D1}',
+        'Delete selected thumbnails and files', deleteButton);
+    ensureHistoryThumbnailBulkButton(actions, 'history-thumbnail-bulk-favorite', '\u2605',
+        'Favorite selected thumbnails', favoriteButton);
+    ensureHistoryThumbnailBulkButton(actions, 'history-thumbnail-bulk-hide', '\u{1F441}',
+        'Hide selected thumbnails', hideButton);
+}
+
 function ensureHistoryFavoriteButton(item, imageId) {
     if (imageId === null) {
         item.querySelector('.history-favorite-toggle')?.remove();
@@ -760,11 +803,13 @@ function installHistorySelectedRemoveButtons() {
         const imageId = getHistoryImageIdFromThumb(item);
         ensureHistorySelectedConfigMenu(item, imageId);
         ensureHistoryFavoriteButton(item, imageId);
+        ensureHistorySelectedActionButton(item, 'history-selected-delete', '\u{1F5D1}', 'Delete image and file', imageId,
+            getHistoryDeleteSelectedIdInput, getHistoryDeleteSelectedButton);
         ensureHistorySelectedActionButton(item, 'history-selected-remove', '\u2212', 'Remove from selected images', imageId,
             getHistoryRemoveSelectedIdInput, getHistoryRemoveSelectedButton);
-        ensureHistorySelectedActionButton(item, 'history-selected-delete', '\u{1F5D1}', 'Delete image file and history record', imageId,
-            getHistoryDeleteSelectedIdInput, getHistoryDeleteSelectedButton);
-        if (historyItemIsPreview(item)) {
+        const isPreview = historyItemIsPreview(item);
+        item.classList.toggle('history-selected-has-quality', isPreview);
+        if (isPreview) {
             ensureHistorySelectedActionButton(item, 'history-selected-quality', 'Quality 60', 'Generate this preview at Quality, 60 steps', imageId,
                 getHistoryQualitySelectedIdInput, getHistoryQualitySelectedButton);
         } else {

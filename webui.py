@@ -991,11 +991,22 @@ with shared.gradio_root:
                                                      visible=False)
             with gr.Row():
                 with gr.Column(scale=1, min_width=220):
+                    with gr.Row(elem_id='history_thumbnail_bulk_actions'):
+                        history_bulk_delete_button = gr.Button(value='🗑', elem_id='history_bulk_delete_button',
+                                                                elem_classes='history-thumbnail-bulk-action')
+                        history_bulk_favorite_button = gr.Button(value='★', elem_id='history_bulk_favorite_button',
+                                                                  elem_classes='history-thumbnail-bulk-action')
+                        history_bulk_hide_button = gr.Button(value='◉', elem_id='history_bulk_hide_button',
+                                                              elem_classes='history-thumbnail-bulk-action')
                     history_gallery = gr.Gallery(label='Thumbnails', show_label=True, object_fit='cover',
                                                  columns=1, height=820, preview=False, allow_preview=False,
                                                  elem_id='history_thumbnail_gallery',
                                                  elem_classes=['image_gallery'])
                     with gr.Column(elem_id='history_thumbnail_view_controls'):
+                        history_thumbnail_layout = gr.Radio(label='Thumbnail Layout',
+                                                            choices=['Large (1 column)', 'Small (2 columns)'],
+                                                            value='Large (1 column)',
+                                                            elem_id='history_thumbnail_layout')
                         history_stack_by_seed = gr.Checkbox(label='Stack Matching Seeds', value=False,
                                                             elem_id='history_stack_by_seed')
                         history_filter_favorites = gr.Checkbox(label='Favorites Only', value=False)
@@ -1009,7 +1020,7 @@ with shared.gradio_root:
                                                                elem_id='history_preview_visibility')
                 with gr.Column(scale=4):
                     history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
-                                                          object_fit='contain', columns=2, rows=2,
+                                                          object_fit='contain', columns=2, rows=4,
                                                           height=820, preview=False, allow_preview=False,
                                                           elem_id='history_selected_gallery',
                                                           elem_classes=['image_gallery'])
@@ -1065,65 +1076,69 @@ with shared.gradio_root:
             inpaint_engine_state = gr.State('empty')
             with gr.Row(elem_id='generation_main_row'):
                 with gr.Column(scale=2):
-                    with gr.Row(elem_id='generation_image_panel'):
-                        with gr.Column(scale=1, elem_id='current_generation_panel'):
-                            progress_window = grh.Image(label='Current Image', show_label=True, visible=True, height=640,
-                                                        elem_classes=['main_view'])
-                            progress_gallery = gr.Gallery(label='Finished Images', show_label=True, object_fit='contain',
-                                                          height=640, visible=False, elem_classes=['main_view', 'image_gallery'])
-                        with gr.Column(scale=1, elem_id='generation_history_panel'):
-                            selected_generation_apply_index = gr.Textbox(value='',
-                                                                          elem_id='selected_generation_apply_index',
-                                                                          elem_classes='generation_apply_hidden_control')
-                            apply_selected_image_config_button = gr.Button(value='Apply Selected Image Config',
-                                                                           elem_id='apply_selected_image_config_button',
-                                                                           elem_classes='generation_apply_hidden_control')
-                            selected_generation_remove_index = gr.Textbox(value='',
-                                                                           elem_id='selected_generation_remove_index',
-                                                                           elem_classes='generation_apply_hidden_control')
-                            remove_selected_image_button = gr.Button(value='Remove Selected Image',
-                                                                     elem_id='remove_selected_image_button',
-                                                                     elem_classes='generation_apply_hidden_control')
-                            selected_generation_delete_index = gr.Textbox(value='',
-                                                                           elem_id='selected_generation_delete_index',
-                                                                           elem_classes='generation_apply_hidden_control')
-                            delete_selected_image_button = gr.Button(value='Delete Selected Image',
-                                                                     elem_id='delete_selected_image_button',
-                                                                     elem_classes='generation_apply_hidden_control')
-                            selected_generation_quality_index = gr.Textbox(value='',
-                                                                            elem_id='selected_generation_quality_index',
-                                                                            elem_classes='generation_apply_hidden_control')
-                            regenerate_selected_quality_button = gr.Button(value='Regenerate Selected Preview at Quality',
-                                                                           elem_id='regenerate_selected_quality_button',
-                                                                           elem_classes='generation_apply_hidden_control')
-                            selected_generation_favorite_index = gr.Textbox(value='',
-                                                                            elem_id='selected_generation_favorite_index',
-                                                                            elem_classes='generation_apply_hidden_control')
-                            favorite_selected_generation_button = gr.Button(value='Favorite Selected Image',
-                                                                            elem_id='favorite_selected_generation_button',
-                                                                            elem_classes='generation_apply_hidden_control')
-                            selected_generation_detail_index = gr.Textbox(value='',
-                                                                          elem_id='selected_generation_detail_index',
-                                                                          elem_classes='generation_apply_hidden_control')
-                            show_selected_generation_detail_button = gr.Button(value='Show Selected Image Details',
-                                                                               elem_id='show_selected_generation_detail_button',
+                    with gr.Accordion(label='Generation Preview & Session History', open=True,
+                                      elem_id='generation_preview_history'):
+                        with gr.Row(elem_id='generation_image_panel'):
+                            with gr.Column(scale=1, elem_id='current_generation_panel'):
+                                progress_window = grh.Image(label='Current Image', show_label=True, visible=True, height=640,
+                                                            elem_classes=['main_view'])
+                                progress_gallery = gr.Gallery(label='Finished Images', show_label=True, object_fit='contain',
+                                                              height=640, visible=False, elem_classes=['main_view', 'image_gallery'])
+                            with gr.Column(scale=1, elem_id='generation_history_panel'):
+                                selected_generation_apply_index = gr.Textbox(value='',
+                                                                              elem_id='selected_generation_apply_index',
+                                                                              elem_classes='generation_apply_hidden_control')
+                                apply_selected_image_config_button = gr.Button(value='Apply Selected Image Config',
+                                                                               elem_id='apply_selected_image_config_button',
                                                                                elem_classes='generation_apply_hidden_control')
-                            quick_preview_generation_indices = gr.Textbox(value='[]',
-                                                                          elem_id='quick_preview_generation_indices',
-                                                                          elem_classes='generation_apply_hidden_control')
-                            selected_queue_remove_id = gr.Textbox(value='',
-                                                                  elem_id='selected_queue_remove_id',
-                                                                  elem_classes='generation_apply_hidden_control')
-                            remove_queued_task_button = gr.Button(value='Remove Queued Item',
-                                                                  elem_id='remove_queued_task_button',
-                                                                  elem_classes='generation_apply_hidden_control')
-                            stop_queue_button = gr.Button(value='Stop Queue',
-                                                          elem_id='stop_queue_button',
-                                                          elem_classes='generation_apply_hidden_control')
-                            gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
-                                                 elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
-                                                 elem_id='final_gallery')
-                            selected_image_status = gr.HTML(elem_id='selected_generation_details', visible=False)
+                                selected_generation_remove_index = gr.Textbox(value='',
+                                                                               elem_id='selected_generation_remove_index',
+                                                                               elem_classes='generation_apply_hidden_control')
+                                remove_selected_image_button = gr.Button(value='Remove Selected Image',
+                                                                         elem_id='remove_selected_image_button',
+                                                                         elem_classes='generation_apply_hidden_control')
+                                selected_generation_delete_index = gr.Textbox(value='',
+                                                                               elem_id='selected_generation_delete_index',
+                                                                               elem_classes='generation_apply_hidden_control')
+                                delete_selected_image_button = gr.Button(value='Delete Selected Image',
+                                                                         elem_id='delete_selected_image_button',
+                                                                         elem_classes='generation_apply_hidden_control')
+                                selected_generation_quality_index = gr.Textbox(value='',
+                                                                                elem_id='selected_generation_quality_index',
+                                                                                elem_classes='generation_apply_hidden_control')
+                                regenerate_selected_quality_button = gr.Button(value='Regenerate Selected Preview at Quality',
+                                                                               elem_id='regenerate_selected_quality_button',
+                                                                               elem_classes='generation_apply_hidden_control')
+                                selected_generation_favorite_index = gr.Textbox(value='',
+                                                                                elem_id='selected_generation_favorite_index',
+                                                                                elem_classes='generation_apply_hidden_control')
+                                favorite_selected_generation_button = gr.Button(value='Favorite Selected Image',
+                                                                                elem_id='favorite_selected_generation_button',
+                                                                                elem_classes='generation_apply_hidden_control')
+                                selected_generation_detail_index = gr.Textbox(value='',
+                                                                              elem_id='selected_generation_detail_index',
+                                                                              elem_classes='generation_apply_hidden_control')
+                                show_selected_generation_detail_button = gr.Button(value='Show Selected Image Details',
+                                                                                   elem_id='show_selected_generation_detail_button',
+                                                                                   elem_classes='generation_apply_hidden_control')
+                                quick_preview_generation_indices = gr.Textbox(value='[]',
+                                                                              elem_id='quick_preview_generation_indices',
+                                                                              elem_classes='generation_apply_hidden_control')
+                                selected_queue_remove_id = gr.Textbox(value='',
+                                                                      elem_id='selected_queue_remove_id',
+                                                                      elem_classes='generation_apply_hidden_control')
+                                remove_queued_task_button = gr.Button(value='Remove Queued Item',
+                                                                      elem_id='remove_queued_task_button',
+                                                                      elem_classes='generation_apply_hidden_control')
+                                stop_queue_button = gr.Button(value='Stop Queue',
+                                                              elem_id='stop_queue_button',
+                                                              elem_classes='generation_apply_hidden_control')
+                                gallery = gr.Gallery(label='Session History', show_label=True, object_fit='contain', visible=True, height=640,
+                                                     elem_classes=['resizable_area', 'main_view', 'final_gallery', 'image_gallery'],
+                                                     elem_id='final_gallery')
+                                clear_session_history_button = gr.Button(value='Clear Session History', variant='secondary',
+                                                                         elem_id='clear_session_history_button')
+                                selected_image_status = gr.HTML(elem_id='selected_generation_details', visible=False)
                     progress_html = gr.HTML(value=modules.html.make_progress_html(32, 'Progress 32%'), visible=False,
                                             elem_id='progress-bar', elem_classes='progress-bar')
                     queue_status_html = gr.HTML(value=make_queue_panel_html(), elem_id='queue_status_panel')
@@ -2822,6 +2837,10 @@ with shared.gradio_root:
                         gr.update(value=json.dumps(preview_indices)), \
                         ''
 
+                def clear_session_history():
+                    return gr.update(value=[]), [], gr.update(value=None), \
+                        gr.update(value='[]'), 'Session history cleared. Generated image files were kept.'
+
                 def delete_generation_from_history(selected_index, session_history):
                     session_history = list(session_history or [])
                     image_path = get_selected_generation_image_path(selected_index, session_history)
@@ -3802,7 +3821,6 @@ with shared.gradio_root:
                             selected = [image_id]
                     else:
                         selected = [image_id]
-                    selected = selected[-4:]
                     history_debug(
                         'select_history_thumbnail',
                         'mode=', selection_mode,
@@ -3818,7 +3836,7 @@ with shared.gradio_root:
                             gr.update(value=selected_history_gallery_items(selected)), gr.update(), \
                             False, 0, '', '', '', '', 'History image was not found.'
 
-                    status = f'Selected {len(selected)}/4 image(s). Use Ctrl-click to add/remove one or Shift-click to select a range.'
+                    status = f'Selected {len(selected)} image(s). Use Ctrl-click to add/remove one or Shift-click to select a range.'
                     return selected, history_selected_ids_json(selected), \
                         gr.update(value=selected_history_gallery_items(selected)), \
                         gr.update(value=format_history_image(summary)), \
@@ -3947,7 +3965,7 @@ with shared.gradio_root:
                     selected = parse_history_id_list(selected_image_ids)
                     if remove_image_id is not None:
                         selected = [image_id for image_id in selected if image_id != remove_image_id]
-                    status = f'Selected {len(selected)}/4 image(s).'
+                    status = f'Selected {len(selected)} image(s).'
                     return selected, history_selected_ids_json(selected), \
                         gr.update(value=selected_history_gallery_items(selected)), \
                         format_history_image_details(selected[0] if len(selected) > 0 else None), status
@@ -4021,6 +4039,90 @@ with shared.gradio_root:
                     outputs = list(outputs)
                     outputs[-1] = status_prefix + str(outputs[-1] or '')
                     return tuple(outputs)
+
+                def refresh_history_after_bulk_action(status_prefix, search, favorite_only, review_status, tag,
+                                                      checkpoints, loras, show_preview_images=False,
+                                                      group_by_seed=False, thumbnail_visibility='Visible',
+                                                      selected_days_state=None):
+                    outputs = list(refresh_history(
+                        search, favorite_only, review_status, tag, checkpoints, loras,
+                        show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
+                    ))
+                    outputs[-1] = status_prefix + str(outputs[-1] or '')
+                    return tuple(outputs)
+
+                def bulk_delete_history_images(selected_image_ids, search, favorite_only, review_status, tag,
+                                               checkpoints, loras, show_preview_images=False,
+                                               group_by_seed=False, thumbnail_visibility='Visible',
+                                               selected_days_state=None):
+                    image_ids = parse_history_id_list(selected_image_ids)
+                    deleted_count = 0
+                    failed_count = 0
+                    for image_id in image_ids:
+                        deleted, _ = modules.history_db.delete_image(image_id, delete_file=True)
+                        if deleted:
+                            deleted_count += 1
+                        else:
+                            failed_count += 1
+                    if len(image_ids) == 0:
+                        status = 'Select one or more thumbnails to delete. '
+                    else:
+                        status = f'Deleted {deleted_count} selected thumbnail image file(s) and history record(s). '
+                        if failed_count > 0:
+                            status += f'Could not delete {failed_count} image(s). '
+                    return refresh_history_after_bulk_action(
+                        status, search, favorite_only, review_status, tag, checkpoints, loras,
+                        show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
+                    )
+
+                def bulk_favorite_history_images(selected_image_ids, search, favorite_only, review_status, tag,
+                                                 checkpoints, loras, show_preview_images=False,
+                                                 group_by_seed=False, thumbnail_visibility='Visible',
+                                                 selected_days_state=None):
+                    image_ids = parse_history_id_list(selected_image_ids)
+                    favorite_count = 0
+                    failed_count = 0
+                    for image_id in image_ids:
+                        curation = modules.history_db.get_image_curation(image_id)
+                        if len(curation) == 0 or not modules.history_db.update_image_curation(
+                                image_id, True, curation.get('rating', 0), curation.get('review_status', ''),
+                                curation.get('tags', ''), curation.get('note', '')):
+                            failed_count += 1
+                            continue
+                        favorite_count += 1
+                    if len(image_ids) == 0:
+                        status = 'Select one or more thumbnails to favorite. '
+                    else:
+                        status = f'Favorited {favorite_count} selected image(s). '
+                        if failed_count > 0:
+                            status += f'Could not favorite {failed_count} image(s). '
+                    return refresh_history_after_bulk_action(
+                        status, search, favorite_only, review_status, tag, checkpoints, loras,
+                        show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
+                    )
+
+                def bulk_hide_history_thumbnails(selected_image_ids, search, favorite_only, review_status, tag,
+                                                 checkpoints, loras, show_preview_images=False,
+                                                 group_by_seed=False, thumbnail_visibility='Visible',
+                                                 selected_days_state=None):
+                    image_ids = parse_history_id_list(selected_image_ids)
+                    hidden_count = 0
+                    failed_count = 0
+                    for image_id in image_ids:
+                        if modules.history_db.set_image_thumbnail_hidden(image_id, True):
+                            hidden_count += 1
+                        else:
+                            failed_count += 1
+                    if len(image_ids) == 0:
+                        status = 'Select one or more thumbnails to hide. '
+                    else:
+                        status = f'Hidden {hidden_count} selected image(s) from the thumbnail view. '
+                        if failed_count > 0:
+                            status += f'Could not hide {failed_count} image(s). '
+                    return refresh_history_after_bulk_action(
+                        status, search, favorite_only, review_status, tag, checkpoints, loras,
+                        show_preview_images, group_by_seed, thumbnail_visibility, selected_days_state
+                    )
 
                 def load_history_image_config_by_id(image_id, current_prompt, is_generating, inpaint_mode):
                     image_id = parse_history_id(image_id)
@@ -4163,6 +4265,13 @@ with shared.gradio_root:
                 history_requery_button.click(requery_history_outputs, inputs=history_filter_inputs,
                                              outputs=history_refresh_outputs,
                                              queue=False, show_progress=True)
+                history_thumbnail_layout.change(
+                    lambda layout: gr.Gallery.update(columns=2 if layout == 'Small (2 columns)' else 1),
+                    inputs=history_thumbnail_layout,
+                    outputs=history_gallery,
+                    queue=False,
+                    show_progress=False
+                )
                 history_batch_selection.change(load_history_batch,
                                                inputs=[history_batch_selection, history_search,
                                                        history_filter_favorites, history_filter_status,
@@ -4263,6 +4372,18 @@ with shared.gradio_root:
                                                          history_tags, history_note, history_image_details,
                                                          history_status],
                                                 queue=False, show_progress=False)
+                history_bulk_delete_button.click(bulk_delete_history_images,
+                                                 inputs=[history_selected_image_ids] + history_filter_inputs,
+                                                 outputs=history_refresh_outputs,
+                                                 queue=False, show_progress=False)
+                history_bulk_favorite_button.click(bulk_favorite_history_images,
+                                                   inputs=[history_selected_image_ids] + history_filter_inputs,
+                                                   outputs=history_refresh_outputs,
+                                                   queue=False, show_progress=False)
+                history_bulk_hide_button.click(bulk_hide_history_thumbnails,
+                                               inputs=[history_selected_image_ids] + history_filter_inputs,
+                                               outputs=history_refresh_outputs,
+                                               queue=False, show_progress=False)
                 history_remove_selected_image_button.click(remove_history_selected_image,
                                                            inputs=[history_selected_image_ids,
                                                                    history_remove_selected_image_id],
@@ -4384,6 +4505,10 @@ with shared.gradio_root:
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
+                clear_session_history_button.click(clear_session_history,
+                                                   outputs=[gallery, state_session_gallery, state_selected_generation_index,
+                                                            quick_preview_generation_indices, selected_image_status],
+                                                   queue=False, show_progress=False)
                 remove_selected_image_button.click(remove_generation_from_history,
                                                    inputs=[selected_generation_remove_index, state_session_gallery],
                                                    outputs=[gallery, state_session_gallery, state_selected_generation_index,

@@ -426,6 +426,7 @@ div:has(> #positive_prompt) {
 }
 
 #history_stack_by_seed label,
+#history_thumbnail_layout label,
 #history_thumbnail_visibility label,
 #history_preview_visibility label {
     min-height: 30px !important;
@@ -435,6 +436,7 @@ div:has(> #positive_prompt) {
 }
 
 #history_thumbnail_visibility .wrap,
+#history_thumbnail_layout .wrap,
 #history_preview_visibility .wrap {
     gap: 4px !important;
 }
@@ -455,6 +457,49 @@ div:has(> #positive_prompt) {
 
 #history_selected_gallery .history-selected-image-item {
     position: relative;
+}
+
+#history_thumbnail_bulk_actions {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 38px;
+    box-sizing: border-box;
+    padding: 4px 0;
+    gap: 6px;
+}
+
+#history_thumbnail_bulk_actions .history-thumbnail-bulk-action,
+#history_thumbnail_bulk_actions .history-thumbnail-bulk-action button {
+    flex: 0 0 30px;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 999px;
+    background: rgba(12, 18, 28, 0.86);
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 15px;
+    line-height: 24px;
+    cursor: pointer;
+}
+
+#history_thumbnail_bulk_actions .history-thumbnail-bulk-action:hover,
+#history_thumbnail_bulk_actions .history-thumbnail-bulk-action:hover button {
+    background: rgba(44, 102, 199, 0.95);
+}
+
+#history_thumbnail_bulk_actions #history_bulk_delete_button:hover,
+#history_thumbnail_bulk_actions #history_bulk_delete_button:hover button {
+    background: rgba(178, 42, 52, 0.96);
+}
+
+#history_thumbnail_bulk_actions #history_bulk_favorite_button:hover,
+#history_thumbnail_bulk_actions #history_bulk_favorite_button:hover button {
+    border-color: rgba(250, 204, 21, 0.95);
+    background: rgba(113, 63, 18, 0.92);
+    color: #facc15;
 }
 
 #history_selected_gallery .history-selected-action {
@@ -507,7 +552,7 @@ div:has(> #positive_prompt) {
 
 #history_selected_gallery .history-selected-hide {
     position: absolute;
-    top: 198px;
+    top: 160px;
     right: 8px;
     z-index: 5;
     width: 32px;
@@ -522,6 +567,10 @@ div:has(> #positive_prompt) {
     font-size: 15px;
     line-height: 28px;
     cursor: pointer;
+}
+
+#history_selected_gallery .history-selected-has-quality .history-selected-hide {
+    top: 198px;
 }
 
 #history_selected_gallery .history-selected-config-menu {

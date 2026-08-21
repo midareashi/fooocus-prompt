@@ -1,11 +1,11 @@
 {
-  "prompt": "girl_named_jocelyn, East Asian woman, 30 years old, realistic photo, black hair, dark brown eyes",
+  "prompt": "girl_named_jocelyn, East Asian woman, 30 years old, realistic photo, black hair, dark brown eyes, Chinese girl, medium shot, round face, clear skin",
   "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
   "styles": "['Fooocus V2', 'Fooocus Negative']",
   "wildprompts": "[]",
   "wildprompt_generate_all": false,
   "wildprompt_line_selections": "{}",
-  "performance": "Quality",
+  "performance": "Speed",
   "steps": -1,
   "overwrite_switch": -1,
   "guidance_scale": 3,
@@ -28,7 +28,7 @@
   "person_likeness_face_weight": 0,
   "person_likeness_face_start": 0.55,
   "person_likeness_paths": "[]",
-  "saved_at": "2026-08-20 09:50:40",
+  "saved_at": "2026-08-21 08:47:15",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)"
 }

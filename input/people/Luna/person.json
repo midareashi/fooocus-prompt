@@ -1,0 +1,12 @@
+{
+  "name": "Luna",
+  "enabled": true,
+  "subject": "woman",
+  "identity_strength": 1.0,
+  "face_weight": 0.9,
+  "face_weight_start": 0.55,
+  "image_count": 1,
+  "image_files": [
+    "20260821_104658_01.png"
+  ]
+}
