@@ -459,6 +459,12 @@ div:has(> #positive_prompt) {
     position: relative;
 }
 
+/* Gradio defaults this fixed-height gallery to overflow-y: scroll, which
+   leaves a scrollbar visible even when the selected images fit. */
+#history_selected_gallery .grid-wrap {
+    overflow-y: auto;
+}
+
 #history_thumbnail_bulk_actions {
     display: flex;
     justify-content: flex-end;
