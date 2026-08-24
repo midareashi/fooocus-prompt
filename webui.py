@@ -2952,6 +2952,29 @@ with shared.gradio_root:
                     ]
                     if stringify_generation_detail(refiner).strip() not in ['', 'None']:
                         rows.append(generation_detail_row('Refiner', refiner, full=True))
+
+                    person_likeness_name = selected_generation_config_value(
+                        config_data, summary, 'person_likeness_name'
+                    )
+                    person_likeness_sliders = [
+                        ('Identity Strength', 'person_likeness_strength'),
+                        ('Face Weight', 'person_likeness_face_weight'),
+                        ('Face Weight Start At', 'person_likeness_face_start'),
+                    ]
+                    has_person_likeness_details = any(
+                        not is_empty_generation_detail_value(
+                            selected_generation_config_value(config_data, summary, key)
+                        )
+                        for _, key in person_likeness_sliders
+                    )
+                    if has_person_likeness_details:
+                        if not is_empty_generation_detail_value(person_likeness_name):
+                            rows.append(generation_detail_row('Person Likeness Name', person_likeness_name, full=True))
+                        rows.extend([
+                            generation_detail_row(label, selected_generation_config_value(config_data, summary, key))
+                            for label, key in person_likeness_sliders
+                        ])
+
                     rows.extend([
                         (
                             '<div class="generation-detail-row generation-detail-row-full generation-detail-row-multiline">'
