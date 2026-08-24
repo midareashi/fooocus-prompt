@@ -1020,7 +1020,7 @@ with shared.gradio_root:
                                                                elem_id='history_preview_visibility')
                 with gr.Column(scale=4):
                     history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
-                                                          object_fit='contain', columns=2, rows=4,
+                                                          object_fit='contain', columns=2,
                                                           height=820, preview=False, allow_preview=False,
                                                           elem_id='history_selected_gallery',
                                                           elem_classes=['image_gallery'])
@@ -2039,6 +2039,7 @@ with shared.gradio_root:
         
                         with gr.Row():
                             refresh_files = gr.Button(label='Refresh', value='\U0001f504 Refresh All Files', variant='secondary', elem_classes='refresh_button')
+                            clear_all_loras = gr.Button(label='Clear All LoRAs', value='Clear All LoRAs', variant='secondary')
                     with gr.Tab(label='Advanced'):
                         reset_button = gr.Button(label="Reconnect", value="Reconnect", variant='secondary',
                                                  elem_id='reset_button', visible=False)
@@ -2239,12 +2240,26 @@ with shared.gradio_root:
                                 results += [gr.update(interactive=True),
                                             gr.update(choices=['None'] + modules.config.lora_filenames), gr.update()]
                             return results
+
+                        def clear_all_loras_clicked():
+                            lora_updates = []
+                            for _ in range(modules.config.default_max_lora_number):
+                                lora_updates += [gr.update(), gr.update(value='None'), gr.update(value=1.0)]
+                            return lora_updates + \
+                                [gr.update(value='') for _ in lora_prompt_ctrls] + \
+                                [gr.update(visible=False) for _ in lora_note_buttons] + \
+                                [gr.update(visible=False) for _ in lora_note_add_buttons] + \
+                                [gr.update(visible=False) for _ in lora_note_editor_cols]
         
                         refresh_files_output = [base_model, multi_checkpoint_models, refiner_model, vae_name, testing_loras]
                         if not args_manager.args.disable_preset_selection:
                             refresh_files_output += [preset_selection]
                         refresh_files.click(refresh_files_clicked, [], refresh_files_output + lora_ctrls,
                                             queue=False, show_progress=False)
+                        clear_all_loras.click(clear_all_loras_clicked, [],
+                                              lora_ctrls + lora_prompt_ctrls + lora_note_buttons +
+                                              lora_note_add_buttons + lora_note_editor_cols,
+                                              queue=False, show_progress=False)
 
                 state_is_generating = gr.State(False)
                 state_queue_monitor = gr.State(False)
