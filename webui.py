@@ -426,6 +426,15 @@ def get_generation_tracking_task(task):
     return task
 
 
+def get_active_generation_task(fallback_task=None):
+    active_task = worker.get_current_task()
+    if active_task is not None and not getattr(active_task, 'completed', False):
+        return active_task
+    if fallback_task is not None and not getattr(fallback_task, 'completed', False):
+        return fallback_task
+    return None
+
+
 def enqueue_generate_task(*args):
     task = get_task(*args)
     should_monitor = False
@@ -1148,21 +1157,21 @@ with shared.gradio_root:
 
                     def stop_clicked(currentTask):
                         import ldm_patched.modules.model_management as model_management
-                        target_task = currentTask if currentTask.processing else worker.get_current_task()
+                        target_task = get_active_generation_task(currentTask)
                         if target_task is None:
-                            target_task = currentTask
+                            return currentTask, gr.update(value=make_queue_panel_html())
                         target_task.last_stop = 'stop'
-                        if (target_task.processing):
+                        if target_task.processing:
                             model_management.interrupt_current_processing()
                         return target_task, gr.update(value=make_queue_panel_html())
 
                     def skip_clicked(currentTask):
                         import ldm_patched.modules.model_management as model_management
-                        target_task = currentTask if currentTask.processing else worker.get_current_task()
+                        target_task = get_active_generation_task(currentTask)
                         if target_task is None:
-                            target_task = currentTask
+                            return currentTask
                         target_task.last_stop = 'skip'
-                        if (target_task.processing):
+                        if target_task.processing:
                             model_management.interrupt_current_processing()
                         return target_task
 

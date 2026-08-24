@@ -2103,6 +2103,7 @@ def worker():
             finally:
                 if pid in modules.patch.patch_settings:
                     del modules.patch.patch_settings[pid]
+                task.processing = False
                 current_task = None
     pass
 
