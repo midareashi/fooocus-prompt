@@ -75,7 +75,13 @@ class AsyncTask:
         self.wildprompt_selections = args.pop()
         if not isinstance(self.wildprompt_selections, list):
             self.wildprompt_selections = []
-        self.wildprompt_generate_all = args.pop()
+        from modules.sdxl_styles import normalize_wildprompt_generate_all_files
+        raw_wildprompt_generate_all = args.pop()
+        self.wildprompt_generate_all_files = normalize_wildprompt_generate_all_files(
+            self.wildprompt_selections,
+            raw_wildprompt_generate_all,
+        )
+        self.wildprompt_generate_all = len(self.wildprompt_generate_all_files) > 0
         try:
             self.wildprompt_line_selections = json.loads(args.pop())
         except Exception:
@@ -404,11 +410,20 @@ def get_task_summary(task):
         total_images *= testing_lora_count
 
     wildprompt_selections = getattr(task, 'wildprompt_selections', []) or []
-    if getattr(task, 'wildprompt_generate_all', False) and len(wildprompt_selections) > 0:
+    generate_all_files = getattr(task, 'wildprompt_generate_all_files', None)
+    if generate_all_files is None:
+        from modules.sdxl_styles import normalize_wildprompt_generate_all_files
+        generate_all_files = normalize_wildprompt_generate_all_files(
+            wildprompt_selections,
+            getattr(task, 'wildprompt_generate_all', False),
+        )
+    generate_all_files = generate_all_files or []
+    if len(generate_all_files) > 0 and len(wildprompt_selections) > 0:
         try:
-            from modules.sdxl_styles import get_all_wildprompts
-            total_images *= max(1, len(get_all_wildprompts(
+            from modules.sdxl_styles import get_wildprompt_fixed_combinations
+            total_images *= max(1, len(get_wildprompt_fixed_combinations(
                 wildprompt_selections,
+                generate_all_files,
                 getattr(task, 'wildprompt_line_selections', {})
             )))
         except Exception:
@@ -546,7 +561,8 @@ def worker():
 
     from extras.censor import default_censor
     from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
-                                     random_style_name, apply_wildprompts, get_all_wildprompts)
+                                     random_style_name, apply_wildprompts,
+                                     get_wildprompt_fixed_combinations)
     from modules.private_logger import log, write_training_caption
     from extras.expansion import safe_str
     from modules.util import (remove_empty_str, HWC3, resize_image, get_image_shape_ceil, set_image_shape_ceil,
@@ -699,6 +715,8 @@ def worker():
                  str(task['styles'] if not use_expansion else [fooocus_expansion] + task['styles'])),
                  ('Wildprompts', 'wildprompts', str(task['wildprompts'])),
                  ('Generate All Wildprompts', 'wildprompt_generate_all', async_task.wildprompt_generate_all),
+                 ('Generate All Wildprompt Files', 'wildprompt_generate_all_files',
+                  str(async_task.wildprompt_generate_all_files)),
                  ('Wildprompt Line Selections', 'wildprompt_line_selections',
                   json.dumps(async_task.wildprompt_line_selections, ensure_ascii=False)),
                  ('Quick Preview', 'quick_preview', async_task.quick_preview),
@@ -1164,14 +1182,19 @@ def worker():
         tasks = []
         raw_wildprompt_selections = copy.deepcopy(async_task.wildprompt_selections)
         use_wildprompt = len(async_task.wildprompt_selections) > 0
-        all_wildprompts = []
-        if async_task.wildprompt_generate_all and len(async_task.wildprompt_selections) > 0:
-            all_wildprompts = get_all_wildprompts(async_task.wildprompt_selections,
-                                                  async_task.wildprompt_line_selections)
-            selection_names = ', '.join(async_task.wildprompt_selections)
-            print(f'[Wildprompts] Generate All expanded [{selection_names}] to {len(all_wildprompts)} combination(s).')
+        wildprompt_combinations = []
+        if len(async_task.wildprompt_generate_all_files) > 0 and len(async_task.wildprompt_selections) > 0:
+            wildprompt_combinations = get_wildprompt_fixed_combinations(
+                async_task.wildprompt_selections,
+                async_task.wildprompt_generate_all_files,
+                async_task.wildprompt_line_selections,
+            )
+            selection_names = ', '.join(async_task.wildprompt_generate_all_files)
+            print(f'[Wildprompts] Generate All expanded [{selection_names}] to '
+                  f'{len(wildprompt_combinations)} combination(s); other selected files remain random.')
 
-        total_prompts = len(all_wildprompts) * image_number if len(all_wildprompts) > 0 else image_number
+        total_prompts = len(wildprompt_combinations) * image_number \
+            if len(wildprompt_combinations) > 0 else image_number
         for i in range(total_prompts):
             if disable_seed_increment:
                 task_seed = async_task.seed % (constants.MAX_SEED + 1)
@@ -1180,11 +1203,14 @@ def worker():
 
             task_rng = random.Random(task_seed)  # may bind to inpaint noise in the future
             wildprompt_index = i // image_number
-            if len(all_wildprompts) > 0:
-                wildprompt_prompt = all_wildprompts[wildprompt_index]
-            else:
-                wildprompt_prompt = apply_wildprompts(async_task.wildprompt_selections, task_rng,
-                                                      async_task.wildprompt_line_selections) if use_wildprompt else ''
+            fixed_wildprompt_lines = wildprompt_combinations[wildprompt_index] \
+                if len(wildprompt_combinations) > 0 else None
+            wildprompt_prompt = apply_wildprompts(
+                async_task.wildprompt_selections,
+                task_rng,
+                async_task.wildprompt_line_selections,
+                fixed_wildprompt_lines,
+            ) if use_wildprompt else ''
             wildprompt_prompt = apply_wildcards(wildprompt_prompt, task_rng, wildprompt_index,
                                                 async_task.read_wildcards_in_order)
 

@@ -31,8 +31,8 @@ def load_parameter_button_click(raw_metadata: dict | str, is_generating: bool, i
     get_str('prompt', 'Prompt', loaded_parameter_dict, results)
     get_str('negative_prompt', 'Negative Prompt', loaded_parameter_dict, results)
     get_list('styles', 'Styles', loaded_parameter_dict, results)
-    get_list('wildprompts', 'Wildprompts', loaded_parameter_dict, results)
-    get_bool('wildprompt_generate_all', 'Generate All Wildprompts', loaded_parameter_dict, results)
+    wildprompts = get_list('wildprompts', 'Wildprompts', loaded_parameter_dict, results)
+    get_wildprompt_generate_all_files(loaded_parameter_dict, results, wildprompts)
     get_str('wildprompt_line_selections', 'Wildprompt Line Selections', loaded_parameter_dict, results, default='{}')
     performance = get_str('performance', 'Performance', loaded_parameter_dict, results)
     get_steps('steps', 'Steps', loaded_parameter_dict, results)
@@ -92,8 +92,25 @@ def get_list(key: str, fallback: str | None, source_dict: dict, results: list, d
         h = eval(h)
         assert isinstance(h, list)
         results.append(h)
+        return h
     except:
         results.append(gr.update())
+        return None
+
+
+def get_wildprompt_generate_all_files(source_dict: dict, results: list, wildprompts=None):
+    selected_files = wildprompts if isinstance(wildprompts, list) else []
+    raw_value = source_dict.get('wildprompt_generate_all_files')
+    if raw_value is None:
+        raw_value = source_dict.get(
+            'wildprompt_generate_all',
+            source_dict.get('Generate All Wildprompts', False),
+        )
+    generate_all_files = modules.sdxl_styles.normalize_wildprompt_generate_all_files(
+        selected_files,
+        raw_value,
+    )
+    results.append(gr.update(choices=selected_files, value=generate_all_files))
 
 
 def get_bool(key: str, fallback: str | None, source_dict: dict, results: list, default=None):

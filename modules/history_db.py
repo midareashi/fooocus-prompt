@@ -190,6 +190,7 @@ def task_to_config(task):
         'styles': str(getattr(task, 'style_selections', []) or []),
         'wildprompts': str(getattr(task, 'wildprompt_selections', []) or []),
         'wildprompt_generate_all': bool(getattr(task, 'wildprompt_generate_all', False)),
+        'wildprompt_generate_all_files': str(getattr(task, 'wildprompt_generate_all_files', []) or []),
         'wildprompt_line_selections': _json_dumps(getattr(task, 'wildprompt_line_selections', {}) or {}),
         'performance': getattr(getattr(task, 'performance_selection', None), 'value', ''),
         'steps': int(getattr(task, 'overwrite_step', 0) or 0),

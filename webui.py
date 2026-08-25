@@ -19,6 +19,7 @@ import modules.flags as flags
 import modules.gradio_hijack as grh
 import modules.style_sorter as style_sorter
 import modules.wildprompt_sorter as wildprompt_sorter
+import modules.sdxl_styles
 import modules.meta_parser
 import modules.prompt_config
 import modules.lora_notes
@@ -313,12 +314,17 @@ def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_se
     else:
         resolution = None
 
+    generate_all_files = modules.sdxl_styles.normalize_wildprompt_generate_all_files(
+        wildprompt_selections,
+        wildprompt_generate_all,
+    )
     config_data = {
         'prompt': prompt,
         'negative_prompt': negative_prompt,
         'styles': str(style_selections or []),
         'wildprompts': str(wildprompt_selections or []),
-        'wildprompt_generate_all': bool(wildprompt_generate_all),
+        'wildprompt_generate_all': len(generate_all_files) > 0,
+        'wildprompt_generate_all_files': str(generate_all_files),
         'wildprompt_line_selections': wildprompt_line_selections if isinstance(wildprompt_line_selections, str) else '{}',
         'performance': performance_selection,
         'steps': int(overwrite_step),
@@ -1236,14 +1242,6 @@ with shared.gradio_root:
                             )
                         )
 
-                        wildprompt_generate_all = gr.Checkbox(
-                            label='Generate every combination',
-                            value=False,
-                            container=False,
-                            elem_classes='min_check',
-                            info='Off: randomly choose one row from each selected file. On: generate the Cartesian product across all selected files and rows.',
-                            interactive=True
-                        )
                         wildprompt_folder_chips = gr.CheckboxGroup(
                             label='Folders (clear to show all)',
                             choices=wildprompt_sorter.get_wildprompt_folder_names(),
@@ -1268,6 +1266,13 @@ with shared.gradio_root:
                                                                  value=copy.deepcopy(modules.config.default_wildprompts),
                                                                  label='Selected Wildprompts',
                                                                  elem_classes=['wildprompt_selections'])
+                        wildprompt_generate_all = gr.CheckboxGroup(
+                            label='Generate all rows for',
+                            choices=copy.deepcopy(modules.config.default_wildprompts),
+                            value=[],
+                            info='Checked files use every selected row. Other applied files choose a random row for each combination.',
+                            elem_classes=['wildprompt-generate-all-files']
+                        )
                         gradio_receiver_wildprompt_selections = gr.Textbox(
                             elem_id='gradio_receiver_wildprompt_selections',
                             visible=False
@@ -1279,7 +1284,7 @@ with shared.gradio_root:
                         )
                         wildprompt_combination_summary = gr.HTML(
                             value=wildprompt_sorter.build_wildprompt_combination_summary(
-                                modules.config.default_wildprompts, False, '{}',
+                                modules.config.default_wildprompts, [], '{}',
                                 wildprompt_sorter.build_generation_factors(modules.config.default_image_number)
                             ),
                             elem_id='wildprompt_combination_summary'
@@ -1391,6 +1396,12 @@ with shared.gradio_root:
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
                         wildprompt_selections.change(
+                            wildprompt_sorter.sync_wildprompt_generate_all_files,
+                            inputs=[wildprompt_selections, wildprompt_generate_all],
+                            outputs=wildprompt_generate_all,
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             wildprompt_sorter.update_wildprompt_line_sections,
                             inputs=[wildprompt_selections, wildprompt_line_selection_json],
                             outputs=wildprompt_line_section_outputs,
@@ -1443,6 +1454,12 @@ with shared.gradio_root:
                             queue=False,
                             show_progress=False
                         ).then(
+                            wildprompt_sorter.sync_wildprompt_generate_all_files,
+                            inputs=[wildprompt_selections],
+                            outputs=wildprompt_generate_all,
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             wildprompt_sorter.update_wildprompt_line_sections,
                             inputs=[wildprompt_selections, wildprompt_line_selection_json],
                             outputs=wildprompt_line_section_outputs,
@@ -1487,6 +1504,12 @@ with shared.gradio_root:
                             wildprompt_sorter.refresh_wildprompt_chip_browser,
                             inputs=[wildprompt_selections, wildprompt_folder_chips, wildprompt_search_bar],
                             outputs=[wildprompt_folder_chips, wildprompt_selections],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.sync_wildprompt_generate_all_files,
+                            inputs=[wildprompt_selections, wildprompt_generate_all],
+                            outputs=wildprompt_generate_all,
                             queue=False,
                             show_progress=False
                         ).then(
@@ -2831,6 +2854,7 @@ with shared.gradio_root:
                     config_data['image_number'] = 1
                     config_data['wildprompts'] = '[]'
                     config_data['wildprompt_generate_all'] = False
+                    config_data['wildprompt_generate_all_files'] = '[]'
                     config_data['wildprompt_line_selections'] = '{}'
                     return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
 
@@ -2889,7 +2913,16 @@ with shared.gradio_root:
                         args[5] = parse_literal(config_data.get('styles'), list, args[5])
                     if 'wildprompts' in config_data:
                         args[6] = parse_literal(config_data.get('wildprompts'), list, args[6])
-                    set_if_present(7, 'wildprompt_generate_all', bool)
+                    if 'wildprompt_generate_all_files' in config_data:
+                        args[7] = modules.sdxl_styles.normalize_wildprompt_generate_all_files(
+                            args[6],
+                            config_data.get('wildprompt_generate_all_files'),
+                        )
+                    elif 'wildprompt_generate_all' in config_data:
+                        args[7] = modules.sdxl_styles.normalize_wildprompt_generate_all_files(
+                            args[6],
+                            cast_bool_config(config_data.get('wildprompt_generate_all')),
+                        )
                     set_if_present(8, 'wildprompt_line_selections', str)
                     args[9] = flags.Performance.QUALITY.value
                     args[11] = 1
@@ -3015,6 +3048,7 @@ with shared.gradio_root:
                     config_data['image_number'] = 1
                     config_data['wildprompts'] = '[]'
                     config_data['wildprompt_generate_all'] = False
+                    config_data['wildprompt_generate_all_files'] = '[]'
                     config_data['wildprompt_line_selections'] = '{}'
                     image_path = summary.get('path') or ''
                     return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'

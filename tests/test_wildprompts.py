@@ -81,6 +81,40 @@ class TestWildprompts(unittest.TestCase):
             result,
         )
 
+    def test_generate_all_can_expand_only_one_selected_file(self):
+        combinations = sdxl_styles.get_wildprompt_fixed_combinations(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            ['Poses/Poses'],
+        )
+
+        self.assertEqual(
+            [
+                {'Poses/Poses': 'looking back'},
+                {'Poses/Poses': 'seated'},
+            ],
+            combinations,
+        )
+        prompts = [
+            sdxl_styles.apply_wildprompts(
+                ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+                Random(index),
+                fixed_lines=fixed_lines,
+            )
+            for index, fixed_lines in enumerate(combinations)
+        ]
+        self.assertTrue(prompts[0].endswith('looking back'))
+        self.assertTrue(prompts[1].endswith('seated'))
+        self.assertEqual(3, len(prompts[0].split(', ')))
+
+    def test_legacy_generate_all_true_expands_every_selected_file(self):
+        self.assertEqual(
+            ['Clothes/Dress', 'Locations/Places'],
+            sdxl_styles.normalize_wildprompt_generate_all_files(
+                ['Clothes/Dress', 'Locations/Places'],
+                True,
+            ),
+        )
+
     def test_empty_row_selection_skips_that_ingredient(self):
         result = sdxl_styles.get_all_wildprompts(
             ['Clothes/Dress', 'Locations/Places'],
@@ -147,6 +181,27 @@ class TestWildprompts(unittest.TestCase):
 
         self.assertIn('8 combination(s)', summary)
         self.assertIn('2 &times; 2 &times; 2', summary)
+
+    def test_combination_summary_only_multiplies_files_marked_generate_all(self):
+        summary = wildprompt_sorter.build_wildprompt_combination_summary(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            ['Poses/Poses'],
+            '{}',
+            wildprompt_sorter.build_generation_factors(image_number=4),
+        )
+
+        self.assertIn('8 total images', summary)
+        self.assertIn('2 combination(s) &times; 4 Image Number', summary)
+        self.assertIn('other 2 file(s)', summary)
+
+    def test_generate_all_choices_only_include_applied_prompts(self):
+        update = wildprompt_sorter.sync_wildprompt_generate_all_files(
+            ['Clothes/Dress', 'Poses/Poses'],
+            ['Locations/Places', 'Poses/Poses'],
+        )
+
+        self.assertEqual(['Clothes/Dress', 'Poses/Poses'], update['choices'])
+        self.assertEqual(['Poses/Poses'], update['value'])
 
     def test_total_summary_multiplies_prompt_rows_by_image_number(self):
         self._write('Scenes/Three Prompts', ['one', 'two', 'three'])

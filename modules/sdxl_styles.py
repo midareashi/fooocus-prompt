@@ -3,6 +3,7 @@ import re
 import json
 import math
 import itertools
+import ast
 
 from modules.extra_utils import get_files_from_folder
 from random import Random
@@ -98,9 +99,36 @@ def load_wildprompt_lines(wildprompt_selection):
         return []
 
 
-def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None):
+def normalize_wildprompt_generate_all_files(wildprompt_selections, generate_all_files=None):
+    wildprompt_selections = wildprompt_selections if isinstance(wildprompt_selections, list) else []
+    parsed = generate_all_files
+
+    if isinstance(parsed, str):
+        value = parsed.strip()
+        if value.casefold() in ['true', '1', 'yes', 'on']:
+            parsed = wildprompt_selections
+        elif value.casefold() in ['', 'false', '0', 'no', 'off']:
+            parsed = []
+        else:
+            try:
+                parsed = json.loads(value)
+            except Exception:
+                try:
+                    parsed = ast.literal_eval(value)
+                except Exception:
+                    parsed = []
+    elif isinstance(parsed, bool):
+        parsed = wildprompt_selections if parsed else []
+
+    parsed = parsed if isinstance(parsed, (list, tuple, set)) else []
+    requested = {name for name in parsed if isinstance(name, str)}
+    return [name for name in wildprompt_selections if name in requested]
+
+
+def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None, fixed_lines=None):
     prompts = []
     wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
+    fixed_lines = fixed_lines if isinstance(fixed_lines, dict) else {}
 
     for wildprompt_selection in wildprompt_selections:
         try:
@@ -110,11 +138,40 @@ def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=Non
             wildprompt_lines = selected_lines if isinstance(selected_lines, list) else _load_wildprompt_lines(wildprompt_selection)
             wildprompt_lines = [x for x in wildprompt_lines if isinstance(x, str) and x.strip() != '']
             assert len(wildprompt_lines) > 0
-            prompts.append(rng.choice(wildprompt_lines))
+            fixed_line = fixed_lines.get(wildprompt_selection)
+            prompts.append(fixed_line if fixed_line in wildprompt_lines else rng.choice(wildprompt_lines))
         except Exception:
             print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
 
     return ', '.join(prompts)
+
+
+def get_wildprompt_fixed_combinations(wildprompt_selections, generate_all_files,
+                                      wildprompt_line_selections=None):
+    wildprompt_selections = wildprompt_selections if isinstance(wildprompt_selections, list) else []
+    generate_all_files = normalize_wildprompt_generate_all_files(wildprompt_selections, generate_all_files)
+    wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
+    names = []
+    prompt_groups = []
+
+    for wildprompt_selection in generate_all_files:
+        try:
+            selected_lines = wildprompt_line_selections.get(wildprompt_selection, None)
+            if isinstance(selected_lines, list) and len(selected_lines) == 0:
+                continue
+            lines = selected_lines if isinstance(selected_lines, list) else \
+                _load_wildprompt_lines(wildprompt_selection)
+            lines = [x.strip() for x in lines if isinstance(x, str) and x.strip() != '']
+            if len(lines) > 0:
+                names.append(wildprompt_selection)
+                prompt_groups.append(lines)
+        except Exception:
+            print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
+
+    if len(prompt_groups) == 0:
+        return []
+
+    return [dict(zip(names, parts)) for parts in itertools.product(*prompt_groups)]
 
 
 def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None, use_line_selections=True):
