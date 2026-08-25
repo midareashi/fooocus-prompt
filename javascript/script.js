@@ -947,6 +947,20 @@ function scheduleUiInstallers() {
     uiInstallerTimeout = setTimeout(runUiInstallers, 100);
 }
 
+function putImageGenerationTabFirst() {
+    const tabNav = gradioApp().querySelector('#generation_mode_tabs > .tab-nav');
+    if (!tabNav) return;
+
+    const imageGenerationTab = Array.from(tabNav.querySelectorAll('button'))
+        .find((button) => button.textContent.trim() === 'Image Generation');
+
+    if (imageGenerationTab && tabNav.firstElementChild !== imageGenerationTab) {
+        tabNav.prepend(imageGenerationTab);
+    }
+}
+
+onUiLoaded(putImageGenerationTabFirst);
+
 document.addEventListener("DOMContentLoaded", function() {
     var mutationObserver = new MutationObserver(function(m) {
         if (!executedOnLoaded && gradioApp().querySelector('#generate_button')) {

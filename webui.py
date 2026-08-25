@@ -1430,9 +1430,9 @@ with shared.gradio_root:
                                 container=False
                             )
                             person_likeness_strength = gr.Slider(
-                                label='Identity Strength',
+                                label='Likeness Strength',
                                 minimum=0.0,
-                                maximum=modules.config.default_person_likeness_strength_max,
+                                maximum=1.0,
                                 step=0.001,
                                 value=1.0
                             )
@@ -1441,14 +1441,16 @@ with shared.gradio_root:
                                 minimum=0.0,
                                 maximum=modules.config.default_person_likeness_face_weight_max,
                                 step=0.001,
-                                value=modules.config.default_person_likeness_face_weight
+                                value=modules.config.default_person_likeness_face_weight,
+                                visible=False
                             )
                             person_likeness_face_start = gr.Slider(
                                 label='Face Weight Start At',
                                 minimum=0.0,
                                 maximum=1.0,
                                 step=0.001,
-                                value=modules.config.default_person_likeness_face_start
+                                value=modules.config.default_person_likeness_face_start,
+                                visible=False
                             )
                         with gr.Row():
                             person_likeness_preset = gr.Dropdown(

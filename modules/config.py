@@ -424,7 +424,7 @@ default_enhance_checkbox = get_config_item_or_set_default(
 )
 default_advanced_checkbox = get_config_item_or_set_default(
     key='default_advanced_checkbox',
-    default_value=False,
+    default_value=True,
     validator=lambda x: isinstance(x, bool),
     expected_type=bool
 )
@@ -527,8 +527,8 @@ default_person_likeness_image_count = get_config_item_or_set_default(
 )
 default_person_likeness_strength_max = get_config_item_or_set_default(
     key='default_person_likeness_strength_max',
-    default_value=1.5,
-    validator=lambda x: isinstance(x, float) and 0.1 <= x <= 2.0,
+    default_value=1.0,
+    validator=lambda x: isinstance(x, float) and 0.1 <= x <= 1.0,
     expected_type=float
 )
 default_person_likeness_face_weight = get_config_item_or_set_default(
