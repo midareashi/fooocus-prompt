@@ -130,6 +130,27 @@ def clamp_float(value, default, minimum, maximum):
     return max(minimum, min(maximum, value))
 
 
+PERSON_LIKENESS_PRESETS = {
+    'Baseline': (1.00, 1.00, 0.30),
+    'ID+': (1.15, 1.00, 0.25),
+    'Face+': (1.00, 1.15, 0.25),
+    'Early Lock': (1.05, 1.05, 0.15),
+    'Strong Match': (1.20, 1.15, 0.15),
+    'Aggressive Match': (1.30, 1.25, 0.10),
+    'Flexible': (0.90, 0.90, 0.35),
+    'Dataset Candidate': (1.15, 1.10, 0.20),
+}
+
+
+def apply_person_likeness_preset(name):
+    return PERSON_LIKENESS_PRESETS.get(name, PERSON_LIKENESS_PRESETS['Baseline'])
+
+
+def clear_person_likeness_settings():
+    strength, face_weight, face_start = apply_person_likeness_preset('Baseline')
+    return True, 'person', strength, face_weight, face_start, 'Baseline', 'Person likeness settings reset to Baseline.'
+
+
 def list_saved_people():
     saved_people = set()
     for base_dir in [people_dir, legacy_people_dir]:
@@ -1429,6 +1450,16 @@ with shared.gradio_root:
                                 step=0.001,
                                 value=modules.config.default_person_likeness_face_start
                             )
+                        with gr.Row():
+                            person_likeness_preset = gr.Dropdown(
+                                label='Preset',
+                                choices=list(PERSON_LIKENESS_PRESETS.keys()),
+                                value=None
+                            )
+                            clear_person_likeness_button = gr.Button(
+                                value='Clear Settings',
+                                variant='secondary'
+                            )
                         person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
                                                  person_likeness_strength,
                                                  person_likeness_face_weight,
@@ -1456,6 +1487,23 @@ with shared.gradio_root:
                             preview_person_likeness_paths,
                             inputs=person_likeness_paths,
                             outputs=person_likeness_gallery,
+                            queue=False,
+                            show_progress=False
+                        )
+                        person_likeness_preset.change(
+                            apply_person_likeness_preset,
+                            inputs=person_likeness_preset,
+                            outputs=[person_likeness_strength, person_likeness_face_weight,
+                                     person_likeness_face_start],
+                            queue=False,
+                            show_progress=False
+                        )
+                        clear_person_likeness_button.click(
+                            clear_person_likeness_settings,
+                            outputs=[person_likeness_enabled, person_likeness_class,
+                                     person_likeness_strength, person_likeness_face_weight,
+                                     person_likeness_face_start, person_likeness_preset,
+                                     saved_person_status],
                             queue=False,
                             show_progress=False
                         )

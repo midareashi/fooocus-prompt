@@ -527,7 +527,7 @@ default_person_likeness_image_count = get_config_item_or_set_default(
 )
 default_person_likeness_strength_max = get_config_item_or_set_default(
     key='default_person_likeness_strength_max',
-    default_value=1.0,
+    default_value=1.5,
     validator=lambda x: isinstance(x, float) and 0.1 <= x <= 2.0,
     expected_type=float
 )
@@ -539,7 +539,7 @@ default_person_likeness_face_weight = get_config_item_or_set_default(
 )
 default_person_likeness_face_weight_max = get_config_item_or_set_default(
     key='default_person_likeness_face_weight_max',
-    default_value=0.9,
+    default_value=1.5,
     validator=lambda x: isinstance(x, float) and 0.0 <= x <= 1.5,
     expected_type=float
 )
