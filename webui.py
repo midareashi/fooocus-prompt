@@ -2703,6 +2703,44 @@ with shared.gradio_root:
                         escaped = escaped.replace('\n', '<br>')
                     return escaped
 
+                def parse_resolved_wildprompts(value):
+                    if isinstance(value, str):
+                        try:
+                            value = json.loads(value)
+                        except Exception:
+                            try:
+                                value = ast.literal_eval(value)
+                            except Exception:
+                                value = []
+                    if not isinstance(value, list):
+                        return []
+                    resolved = []
+                    for item in value:
+                        if not isinstance(item, dict):
+                            continue
+                        name = str(item.get('name', '') or '').strip()
+                        prompt_value = str(item.get('prompt', '') or '').strip()
+                        if name == '' and prompt_value == '':
+                            continue
+                        resolved.append({'name': name, 'prompt': prompt_value})
+                    return resolved
+
+                def resolved_wildprompt_detail_rows(config_data, summary=None):
+                    value = selected_generation_config_value(
+                        config_data,
+                        summary or {},
+                        'resolved_wildprompts',
+                    )
+                    rows = []
+                    for item in parse_resolved_wildprompts(value):
+                        rows.append(generation_detail_row(
+                            f"Wildprompt · {item['name'] or 'Unknown'}",
+                            item['prompt'],
+                            multiline=True,
+                            full=True,
+                        ))
+                    return rows
+
                 def parse_generation_lora_value(value):
                     if not isinstance(value, str):
                         return None
@@ -2792,8 +2830,9 @@ with shared.gradio_root:
 
                     rows = [
                         generation_detail_row('Prompt', prompt_text, multiline=True, full=True),
-                        generation_detail_row('Checkpoint', checkpoint, full=True),
                     ]
+                    rows.extend(resolved_wildprompt_detail_rows(config_data, summary))
+                    rows.append(generation_detail_row('Checkpoint', checkpoint, full=True))
                     if stringify_generation_detail(refiner).strip() not in ['', 'None']:
                         rows.append(generation_detail_row('Refiner', refiner, full=True))
                     rows.extend([
@@ -3190,8 +3229,9 @@ with shared.gradio_root:
 
                     rows = [
                         generation_detail_row('Prompt', prompt_text, multiline=True, full=True),
-                        generation_detail_row('Checkpoint', checkpoint, full=True),
                     ]
+                    rows.extend(resolved_wildprompt_detail_rows(config_data, summary))
+                    rows.append(generation_detail_row('Checkpoint', checkpoint, full=True))
                     if stringify_generation_detail(refiner).strip() not in ['', 'None']:
                         rows.append(generation_detail_row('Refiner', refiner, full=True))
 

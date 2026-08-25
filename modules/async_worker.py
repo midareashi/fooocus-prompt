@@ -561,7 +561,7 @@ def worker():
 
     from extras.censor import default_censor
     from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
-                                     random_style_name, apply_wildprompts,
+                                     random_style_name, resolve_wildprompts,
                                      get_wildprompt_fixed_combinations)
     from modules.private_logger import log, write_training_caption
     from extras.expansion import safe_str
@@ -714,6 +714,7 @@ def worker():
                  ('Styles', 'styles',
                  str(task['styles'] if not use_expansion else [fooocus_expansion] + task['styles'])),
                  ('Wildprompts', 'wildprompts', str(task['wildprompts'])),
+                 ('Resolved Wildprompts', 'resolved_wildprompts', task.get('resolved_wildprompts', [])),
                  ('Generate All Wildprompts', 'wildprompt_generate_all', async_task.wildprompt_generate_all),
                  ('Generate All Wildprompt Files', 'wildprompt_generate_all_files',
                   str(async_task.wildprompt_generate_all_files)),
@@ -1205,14 +1206,20 @@ def worker():
             wildprompt_index = i // image_number
             fixed_wildprompt_lines = wildprompt_combinations[wildprompt_index] \
                 if len(wildprompt_combinations) > 0 else None
-            wildprompt_prompt = apply_wildprompts(
+            resolved_wildprompts = resolve_wildprompts(
                 async_task.wildprompt_selections,
                 task_rng,
                 async_task.wildprompt_line_selections,
                 fixed_wildprompt_lines,
-            ) if use_wildprompt else ''
-            wildprompt_prompt = apply_wildcards(wildprompt_prompt, task_rng, wildprompt_index,
-                                                async_task.read_wildcards_in_order)
+            ) if use_wildprompt else []
+            for resolved_wildprompt in resolved_wildprompts:
+                resolved_wildprompt['prompt'] = apply_wildcards(
+                    resolved_wildprompt['prompt'],
+                    task_rng,
+                    wildprompt_index,
+                    async_task.read_wildcards_in_order,
+                )
+            wildprompt_prompt = ', '.join(item['prompt'] for item in resolved_wildprompts)
 
             task_prompt = apply_wildcards(prompt, task_rng, i, async_task.read_wildcards_in_order)
             task_prompt = apply_arrays(task_prompt, i)
@@ -1269,7 +1276,8 @@ def worker():
                 log_positive_prompt='\n'.join([task_prompt] + task_extra_positive_prompts),
                 log_negative_prompt='\n'.join([task_negative_prompt] + task_extra_negative_prompts),
                 styles=task_styles,
-                wildprompts=raw_wildprompt_selections
+                wildprompts=raw_wildprompt_selections,
+                resolved_wildprompts=resolved_wildprompts,
             ))
         if use_expansion:
             if advance_progress:

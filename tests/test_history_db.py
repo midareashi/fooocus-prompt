@@ -553,6 +553,10 @@ class TestHistoryDb(unittest.TestCase):
                 ('Sampler', 'sampler', 'dpmpp_2m_sde_gpu'),
                 ('Scheduler', 'scheduler', 'karras'),
                 ('Steps', 'steps', 30),
+                ('Resolved Wildprompts', 'resolved_wildprompts', [
+                    {'name': 'Clothes/Lingerie', 'prompt': 'wearing a detailed lingerie set'},
+                    {'name': 'Locations/Indoor', 'prompt': 'inside a detailed hotel suite'},
+                ]),
             ],
             loras=[('portrait_lora.safetensors', 0.75)],
             width=8,
@@ -575,6 +579,13 @@ class TestHistoryDb(unittest.TestCase):
         self.assertEqual('record prompt', config['prompt'])
         self.assertEqual('record negative', config['negative_prompt'])
         self.assertEqual(30, config['steps'])
+        self.assertEqual(
+            [
+                {'name': 'Clothes/Lingerie', 'prompt': 'wearing a detailed lingerie set'},
+                {'name': 'Locations/Indoor', 'prompt': 'inside a detailed hotel suite'},
+            ],
+            config['resolved_wildprompts'],
+        )
         self.assertEqual('checkpoint_a.safetensors', summary['checkpoint'])
         self.assertEqual(123, summary['seed'])
         self.assertEqual(8, image_row['width'])

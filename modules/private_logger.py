@@ -213,6 +213,17 @@ def log(img, metadata, metadata_parser: MetadataParser | None = None, output_for
     for label, key, value in metadata:
         if key == 'wildprompt_line_selections':
             continue
+        if key == 'resolved_wildprompts' and isinstance(value, list):
+            for resolved in value:
+                if not isinstance(resolved, dict):
+                    continue
+                resolved_name = html.escape(str(resolved.get('name', '') or ''))
+                resolved_prompt = html.escape(str(resolved.get('prompt', '') or '')).replace('\n', ' </br> ')
+                item += (
+                    f"<tr><td class='label'>Wildprompt: {resolved_name}</td>"
+                    f"<td class='value'>{resolved_prompt}</td></tr>\n"
+                )
+            continue
         value_txt = str(value).replace('\n', ' </br> ')
         item += f"<tr><td class='label'>{label}</td><td class='value'>{value_txt}</td></tr>\n"
 

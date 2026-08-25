@@ -125,8 +125,8 @@ def normalize_wildprompt_generate_all_files(wildprompt_selections, generate_all_
     return [name for name in wildprompt_selections if name in requested]
 
 
-def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None, fixed_lines=None):
-    prompts = []
+def resolve_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None, fixed_lines=None):
+    resolved = []
     wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
     fixed_lines = fixed_lines if isinstance(fixed_lines, dict) else {}
 
@@ -139,11 +139,24 @@ def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=Non
             wildprompt_lines = [x for x in wildprompt_lines if isinstance(x, str) and x.strip() != '']
             assert len(wildprompt_lines) > 0
             fixed_line = fixed_lines.get(wildprompt_selection)
-            prompts.append(fixed_line if fixed_line in wildprompt_lines else rng.choice(wildprompt_lines))
+            resolved.append({
+                'name': wildprompt_selection,
+                'prompt': fixed_line if fixed_line in wildprompt_lines else rng.choice(wildprompt_lines),
+            })
         except Exception:
             print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
 
-    return ', '.join(prompts)
+    return resolved
+
+
+def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=None, fixed_lines=None):
+    resolved = resolve_wildprompts(
+        wildprompt_selections,
+        rng,
+        wildprompt_line_selections,
+        fixed_lines,
+    )
+    return ', '.join(item['prompt'] for item in resolved)
 
 
 def get_wildprompt_fixed_combinations(wildprompt_selections, generate_all_files,

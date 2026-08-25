@@ -54,6 +54,24 @@ class TestWildprompts(unittest.TestCase):
         self.assertIn(parts[1], ['garden', 'rooftop'])
         self.assertIn(parts[2], ['looking back', 'seated'])
 
+    def test_resolved_wildprompts_keep_each_file_name_and_chosen_row(self):
+        result = sdxl_styles.resolve_wildprompts(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            Random(7),
+        )
+
+        self.assertEqual(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            [item['name'] for item in result],
+        )
+        self.assertEqual(
+            sdxl_styles.apply_wildprompts(
+                ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+                Random(7),
+            ),
+            ', '.join(item['prompt'] for item in result),
+        )
+
     def test_generate_all_builds_cartesian_product_in_selection_order(self):
         result = sdxl_styles.get_all_wildprompts(
             ['Clothes/Dress', 'Locations/Places', 'Poses/Poses']
