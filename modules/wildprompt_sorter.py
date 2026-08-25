@@ -69,6 +69,41 @@ def get_wildprompt_categories():
     return [all_categories_label] + categories
 
 
+def get_wildprompt_folder_names():
+    return get_wildprompt_categories()[1:]
+
+
+def filter_wildprompts_by_folders(selected, folders=None, query=''):
+    selected = [name for name in _as_list(selected) if name in all_wildprompts]
+    valid_folders = set(get_wildprompt_folder_names())
+    folders = [name for name in _as_list(folders) if name in valid_folders]
+    query = query.strip().casefold() if isinstance(query, str) else ''
+    unselected = [name for name in all_wildprompts if name not in selected]
+    if len(folders) > 0:
+        unselected = [name for name in unselected if get_wildprompt_category(name) in folders]
+    if query != '':
+        unselected = [name for name in unselected if query in localization_key(name).casefold()]
+    return gr.update(choices=selected + unselected, value=selected)
+
+
+def refresh_wildprompt_chip_browser(selected, folders=None, query=''):
+    try_load_sorted_wildprompts()
+    folder_names = get_wildprompt_folder_names()
+    folders = [name for name in _as_list(folders) if name in folder_names]
+    return (
+        gr.update(choices=folder_names, value=folders),
+        filter_wildprompts_by_folders(selected, folders, query),
+    )
+
+
+def reset_wildprompt_browser():
+    return (
+        gr.update(choices=get_wildprompt_folder_names(), value=[]),
+        '',
+        gr.update(choices=copy.deepcopy(all_wildprompts), value=[]),
+    )
+
+
 def filter_wildprompts(selected, category=all_categories_label, query=''):
     selected = [x for x in _as_list(selected) if x in all_wildprompts]
     category = category if category in get_wildprompt_categories() else all_categories_label
@@ -208,7 +243,7 @@ def build_wildprompt_combination_summary(selected_files, generate_all=False, cur
 
     if total_images >= 100:
         total_class = 'wildprompt-total-danger'
-        warning = '<div class="wildprompt-total-warning">Large queue — review these multipliers before Generate.</div>'
+        warning = '<div class="wildprompt-total-warning">Large queue - review these multipliers before Generate.</div>'
     elif total_images >= 25:
         total_class = 'wildprompt-total-warning-level'
         warning = '<div class="wildprompt-total-caution">This will create a sizable queue.</div>'

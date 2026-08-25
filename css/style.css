@@ -1085,6 +1085,30 @@ div:has(> #positive_prompt) {
   padding-right: 2px;
 }
 
+.wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] {
+  gap: 6px;
+}
+
+.wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 999px;
+  background: var(--background-fill-secondary);
+}
+
+.wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label.selected {
+  border-color: var(--checkbox-border-color-selected);
+  background: var(--checkbox-label-background-fill-selected);
+  color: var(--checkbox-label-text-color-selected);
+}
+
+.wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label input {
+  display: none;
+}
+
 .wildprompt_selections_tab .wildprompt_line_selections .wrap[data-testid="checkbox-group"] {
   overflow: auto;
   max-height: 260px;

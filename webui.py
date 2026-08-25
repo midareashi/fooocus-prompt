@@ -1244,17 +1244,24 @@ with shared.gradio_root:
                             info='Off: randomly choose one row from each selected file. On: generate the Cartesian product across all selected files and rows.',
                             interactive=True
                         )
+                        wildprompt_folder_chips = gr.CheckboxGroup(
+                            label='Folders (clear to show all)',
+                            choices=wildprompt_sorter.get_wildprompt_folder_names(),
+                            value=[],
+                            elem_classes=['wildprompt-folder-chips']
+                        )
                         with gr.Row():
-                            wildprompt_category = gr.Dropdown(
-                                label='Folder',
-                                choices=wildprompt_sorter.get_wildprompt_categories(),
-                                value=wildprompt_sorter.all_categories_label,
-                                interactive=True
-                            )
                             wildprompt_search_bar = gr.Textbox(
                                 label='Search',
                                 placeholder='Find a wildprompt ...',
-                                value=''
+                                value='',
+                                scale=4
+                            )
+                            wildprompt_reset = gr.Button(
+                                value='Reset',
+                                variant='secondary',
+                                scale=1,
+                                min_width=100
                             )
                         wildprompt_selections = gr.CheckboxGroup(show_label=False, container=False,
                                                                  choices=copy.deepcopy(wildprompt_sorter.all_wildprompts),
@@ -1356,24 +1363,31 @@ with shared.gradio_root:
                             )
 
                         shared.gradio_root.load(
-                            lambda: gr.update(choices=copy.deepcopy(wildprompt_sorter.all_wildprompts)),
-                            outputs=wildprompt_selections
+                            wildprompt_sorter.refresh_wildprompt_chip_browser,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips, wildprompt_search_bar],
+                            outputs=[wildprompt_folder_chips, wildprompt_selections],
+                            queue=False,
+                            show_progress=False
                         )
 
-                        wildprompt_search_bar.change(wildprompt_sorter.filter_wildprompts,
-                                                     inputs=[wildprompt_selections, wildprompt_category,
-                                                             wildprompt_search_bar],
-                                                     outputs=wildprompt_selections,
-                                                     queue=False,
-                                                     show_progress=False).then(
+                        wildprompt_search_bar.change(
+                            wildprompt_sorter.filter_wildprompts_by_folders,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips,
+                                    wildprompt_search_bar],
+                            outputs=wildprompt_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
-                        wildprompt_category.change(wildprompt_sorter.filter_wildprompts,
-                                                   inputs=[wildprompt_selections, wildprompt_category,
-                                                           wildprompt_search_bar],
-                                                   outputs=wildprompt_selections,
-                                                   queue=False,
-                                                   show_progress=False).then(
+                        wildprompt_folder_chips.change(
+                            wildprompt_sorter.filter_wildprompts_by_folders,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips,
+                                    wildprompt_search_bar],
+                            outputs=wildprompt_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
                         wildprompt_selections.change(
@@ -1422,36 +1436,57 @@ with shared.gradio_root:
                             show_progress=False
                         )
 
-                        gradio_receiver_wildprompt_selections.input(wildprompt_sorter.sort_wildprompts,
-                                                                    inputs=wildprompt_selections,
-                                                                    outputs=wildprompt_selections,
-                                                                    queue=False,
-                                                                    show_progress=False).then(
+                        wildprompt_reset.click(
+                            wildprompt_sorter.reset_wildprompt_browser,
+                            outputs=[wildprompt_folder_chips, wildprompt_search_bar,
+                                     wildprompt_selections],
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             wildprompt_sorter.update_wildprompt_line_sections,
                             inputs=[wildprompt_selections, wildprompt_line_selection_json],
                             outputs=wildprompt_line_section_outputs,
                             queue=False,
-                            show_progress=False).then(
+                            show_progress=False
+                        ).then(
                             wildprompt_sorter.encode_wildprompt_line_selections,
                             inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
                             outputs=wildprompt_line_selection_json,
                             queue=False,
-                            show_progress=False).then(
+                            show_progress=False
+                        ).then(
                             wildprompt_sorter.build_wildprompt_combination_summary,
                             inputs=[wildprompt_selections, wildprompt_generate_all,
                                     wildprompt_line_selection_json, wildprompt_generation_factors],
                             outputs=wildprompt_combination_summary,
                             queue=False,
-                            show_progress=False).then(
+                            show_progress=False
+                        ).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        gradio_receiver_wildprompt_selections.input(
+                            wildprompt_sorter.sort_wildprompts,
+                            inputs=wildprompt_selections,
+                            outputs=wildprompt_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.filter_wildprompts_by_folders,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips,
+                                    wildprompt_search_bar],
+                            outputs=wildprompt_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
                         wildprompt_refresh = gr.Button(label='Refresh', value='Refresh All Wildprompts',
                                                        variant='secondary', elem_classes='refresh_button')
 
                         wildprompt_refresh.click(
-                            wildprompt_sorter.refresh_wildprompt_browser,
-                            inputs=[wildprompt_selections, wildprompt_category, wildprompt_search_bar],
-                            outputs=[wildprompt_category, wildprompt_selections],
+                            wildprompt_sorter.refresh_wildprompt_chip_browser,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips, wildprompt_search_bar],
+                            outputs=[wildprompt_folder_chips, wildprompt_selections],
                             queue=False,
                             show_progress=False
                         ).then(

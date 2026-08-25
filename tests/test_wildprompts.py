@@ -93,6 +93,51 @@ class TestWildprompts(unittest.TestCase):
         with self.assertRaises(ValueError):
             sdxl_styles._wildprompt_path('../outside')
 
+    def test_folder_chips_use_top_level_folder_names(self):
+        self.assertEqual(
+            ['Clothes', 'Locations', 'Poses', 'Uncategorized'],
+            wildprompt_sorter.get_wildprompt_folder_names(),
+        )
+
+    def test_no_folder_chips_shows_every_wildprompt(self):
+        update = wildprompt_sorter.filter_wildprompts_by_folders([], [], '')
+
+        self.assertEqual(
+            wildprompt_sorter.all_wildprompts,
+            update['choices'],
+        )
+
+    def test_folder_chips_filter_the_single_list_and_keep_selections_visible(self):
+        update = wildprompt_sorter.filter_wildprompts_by_folders(
+            ['Clothes/Dress'],
+            ['Locations', 'Poses'],
+            '',
+        )
+
+        self.assertEqual(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            update['choices'],
+        )
+        self.assertEqual(['Clothes/Dress'], update['value'])
+
+    def test_folder_chips_and_search_filter_together(self):
+        update = wildprompt_sorter.filter_wildprompts_by_folders(
+            [],
+            ['Locations', 'Poses'],
+            'places',
+        )
+
+        self.assertEqual(['Locations/Places'], update['choices'])
+
+    def test_reset_clears_folder_chips_search_and_selected_prompts(self):
+        chips, search, prompts = wildprompt_sorter.reset_wildprompt_browser()
+
+        self.assertEqual([], chips['value'])
+        self.assertEqual(wildprompt_sorter.get_wildprompt_folder_names(), chips['choices'])
+        self.assertEqual('', search)
+        self.assertEqual([], prompts['value'])
+        self.assertEqual(wildprompt_sorter.all_wildprompts, prompts['choices'])
+
     def test_combination_summary_shows_cartesian_count(self):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
