@@ -1115,6 +1115,37 @@ div:has(> #positive_prompt) {
   line-height: 1.45;
 }
 
+#wildprompt_combination_summary .wildprompt-total {
+  display: block;
+  font-size: 1.35em;
+  line-height: 1.2;
+}
+
+#wildprompt_combination_summary .wildprompt-total-formula {
+  margin: 3px 0 5px;
+  font-weight: 600;
+}
+
+#wildprompt_combination_summary .wildprompt-total-warning-level {
+  color: #f59e0b;
+}
+
+#wildprompt_combination_summary .wildprompt-total-caution {
+  color: #f59e0b;
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+#wildprompt_combination_summary .wildprompt-total-danger,
+#wildprompt_combination_summary .wildprompt-total-warning {
+  color: #ef4444;
+}
+
+#wildprompt_combination_summary .wildprompt-total-warning {
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
 #wildprompt_combination_summary span {
   opacity: 0.72;
   font-size: 0.9em;

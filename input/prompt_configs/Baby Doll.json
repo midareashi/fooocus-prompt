@@ -1,7 +1,7 @@
 {
-  "prompt": "1girl, white stockings, sheer babydoll lingerie, wearing sheer white lace stockings, white lace thong,",
+  "prompt": "1girl, white stockings, sheer babydoll lingerie, wearing sheer white lace stockings, white lace thong",
   "negative_prompt": "unrealistic, saturated, high contrast, big nose, painting, drawing, sketch, cartoon, anime, manga, render, CG, 3d, watermark, signature, label",
-  "styles": "['Fooocus V2', 'Fooocus Photograph', 'Fooocus Negative']",
+  "styles": "['Fooocus V2', 'Fooocus Negative']",
   "wildprompts": "[]",
   "wildprompt_generate_all": false,
   "wildprompt_line_selections": "{}",
@@ -22,7 +22,13 @@
   "vae": "Default (model)",
   "inpaint_engine_version": "v2.6",
   "inpaint_method": "Inpaint or Outpaint (default)",
-  "saved_at": "2026-08-12 10:41:34",
+  "person_likeness_enabled": true,
+  "person_likeness_class": "person",
+  "person_likeness_strength": 1,
+  "person_likeness_face_weight": 0,
+  "person_likeness_face_start": 0.55,
+  "person_likeness_paths": "[]",
+  "saved_at": "2026-08-25 15:30:01",
   "version": "Fooocus v2.5.5",
   "resolution": "(896, 1152)"
 }
