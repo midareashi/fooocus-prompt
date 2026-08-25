@@ -1,4 +1,5 @@
 import copy
+import html
 import json
 
 import gradio as gr
@@ -9,6 +10,8 @@ import modules.sdxl_styles as sdxl_styles
 all_wildprompts = []
 sort_file = 'sorted_wildprompt.json'
 max_wildprompt_detail_sections = 24
+all_categories_label = 'All folders'
+uncategorized_label = 'Uncategorized'
 
 
 def _as_list(value):
@@ -56,14 +59,39 @@ def localization_key(x):
     return x + localization.current_translation.get(x, '')
 
 
-def search_wildprompts(selected, query):
+def get_wildprompt_category(wildprompt_name):
+    name = str(wildprompt_name or '').replace('\\', '/')
+    return name.split('/', 1)[0] if '/' in name else uncategorized_label
+
+
+def get_wildprompt_categories():
+    categories = sorted({get_wildprompt_category(name) for name in all_wildprompts}, key=str.casefold)
+    return [all_categories_label] + categories
+
+
+def filter_wildprompts(selected, category=all_categories_label, query=''):
     selected = [x for x in _as_list(selected) if x in all_wildprompts]
+    category = category if category in get_wildprompt_categories() else all_categories_label
     query = query if isinstance(query, str) else ''
     unselected = [y for y in all_wildprompts if y not in selected]
-    matched = [y for y in unselected if query.lower() in localization_key(y).lower()] if len(query.replace(' ', '')) > 0 else []
-    unmatched = [y for y in unselected if y not in matched]
-    sorted_wildprompts = matched + selected + unmatched
-    return gr.update(choices=sorted_wildprompts)
+    if category != all_categories_label:
+        unselected = [name for name in unselected if get_wildprompt_category(name) == category]
+    if len(query.replace(' ', '')) > 0:
+        unselected = [name for name in unselected if query.casefold() in localization_key(name).casefold()]
+    return gr.update(choices=selected + unselected, value=selected)
+
+
+def search_wildprompts(selected, query):
+    return filter_wildprompts(selected, all_categories_label, query)
+
+
+def refresh_wildprompt_browser(selected, category, query):
+    selected = [x for x in _as_list(selected)]
+    try_load_sorted_wildprompts()
+    categories = get_wildprompt_categories()
+    category = category if category in categories else all_categories_label
+    browser_update = filter_wildprompts(selected, category, query)
+    return gr.update(choices=categories, value=category), browser_update
 
 
 def get_wildprompt_lines(wildprompt_name):
@@ -118,3 +146,46 @@ def select_all_wildprompt_lines(wildprompt_name):
 
 def select_no_wildprompt_lines():
     return gr.update(value=[])
+
+
+def build_wildprompt_combination_summary(selected_files, generate_all=False, current_json=''):
+    selected_files = [name for name in _as_list(selected_files) if name in all_wildprompts]
+    if len(selected_files) == 0:
+        return '<div class="wildprompt-combination-summary">Select files from one or more folders to build a prompt.</div>'
+
+    try:
+        current = json.loads(current_json) if isinstance(current_json, str) and current_json != '' else {}
+    except Exception:
+        current = {}
+    current = current if isinstance(current, dict) else {}
+
+    groups = []
+    for name in selected_files:
+        all_lines = get_wildprompt_lines(name)
+        selected_lines = current.get(name, all_lines)
+        selected_lines = [line for line in _as_list(selected_lines) if line in all_lines]
+        if len(selected_lines) > 0:
+            groups.append((name, len(selected_lines)))
+
+    if len(groups) == 0:
+        return '<div class="wildprompt-combination-summary">No prompt rows are selected.</div>'
+
+    escaped_names = ', '.join(html.escape(name) for name, _ in groups)
+    if not bool(generate_all):
+        return (
+            '<div class="wildprompt-combination-summary"><strong>Random mix</strong> &middot; '
+            f'one selected row from each of {len(groups)} file(s) per image.<br>'
+            f'<span>{escaped_names}</span></div>'
+        )
+
+    combination_count = 1
+    for _, line_count in groups:
+        combination_count *= line_count
+    factors = ' &times; '.join(str(line_count) for _, line_count in groups)
+    color = '#f59e0b' if combination_count > 100 else 'var(--body-text-color)'
+    return (
+        f'<div class="wildprompt-combination-summary"><strong style="color:{color}">'
+        f'{combination_count:,} combination(s)</strong> &middot; {factors}. '
+        'Image Number repeats every combination.<br>'
+        f'<span>{escaped_names}</span></div>'
+    )

@@ -1232,17 +1232,25 @@ with shared.gradio_root:
                         wildprompt_sorter.try_load_sorted_wildprompts()
 
                         wildprompt_generate_all = gr.Checkbox(
-                            label='Generate All Wildprompts',
+                            label='Generate every combination',
                             value=False,
                             container=False,
                             elem_classes='min_check',
-                            info='When selected, creates an image for each prompt in the selected file. Increase Image Number to generate each prompt multiple times. Only works if one wildprompt is selected.',
+                            info='Off: randomly choose one row from each selected file. On: generate the Cartesian product across all selected files and rows.',
                             interactive=True
                         )
-                        wildprompt_search_bar = gr.Textbox(show_label=False, container=False,
-                                                           placeholder='Type here to search wildprompts ...',
-                                                           value='',
-                                                           label='Search Wildprompts')
+                        with gr.Row():
+                            wildprompt_category = gr.Dropdown(
+                                label='Folder',
+                                choices=wildprompt_sorter.get_wildprompt_categories(),
+                                value=wildprompt_sorter.all_categories_label,
+                                interactive=True
+                            )
+                            wildprompt_search_bar = gr.Textbox(
+                                label='Search',
+                                placeholder='Find a wildprompt ...',
+                                value=''
+                            )
                         wildprompt_selections = gr.CheckboxGroup(show_label=False, container=False,
                                                                  choices=copy.deepcopy(wildprompt_sorter.all_wildprompts),
                                                                  value=copy.deepcopy(modules.config.default_wildprompts),
@@ -1256,6 +1264,12 @@ with shared.gradio_root:
                             value='{}',
                             elem_id='wildprompt_line_selection_json',
                             visible=False
+                        )
+                        wildprompt_combination_summary = gr.HTML(
+                            value=wildprompt_sorter.build_wildprompt_combination_summary(
+                                modules.config.default_wildprompts, False, '{}'
+                            ),
+                            elem_id='wildprompt_combination_summary'
                         )
                         wildprompt_line_section_ctrls = []
                         wildprompt_line_name_ctrls = []
@@ -1307,6 +1321,13 @@ with shared.gradio_root:
                                 outputs=wildprompt_line_selection_json,
                                 queue=False,
                                 show_progress=False
+                            ).then(
+                                wildprompt_sorter.build_wildprompt_combination_summary,
+                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                        wildprompt_line_selection_json],
+                                outputs=wildprompt_combination_summary,
+                                queue=False,
+                                show_progress=False
                             )
                             wildprompt_line_none.click(
                                 wildprompt_sorter.select_no_wildprompt_lines,
@@ -1319,6 +1340,13 @@ with shared.gradio_root:
                                 outputs=wildprompt_line_selection_json,
                                 queue=False,
                                 show_progress=False
+                            ).then(
+                                wildprompt_sorter.build_wildprompt_combination_summary,
+                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                        wildprompt_line_selection_json],
+                                outputs=wildprompt_combination_summary,
+                                queue=False,
+                                show_progress=False
                             )
 
                         shared.gradio_root.load(
@@ -1326,11 +1354,20 @@ with shared.gradio_root:
                             outputs=wildprompt_selections
                         )
 
-                        wildprompt_search_bar.change(wildprompt_sorter.search_wildprompts,
-                                                     inputs=[wildprompt_selections, wildprompt_search_bar],
+                        wildprompt_search_bar.change(wildprompt_sorter.filter_wildprompts,
+                                                     inputs=[wildprompt_selections, wildprompt_category,
+                                                             wildprompt_search_bar],
                                                      outputs=wildprompt_selections,
                                                      queue=False,
                                                      show_progress=False).then(
+                            lambda: None, _js='()=>{refresh_wildprompt_localization();}')
+
+                        wildprompt_category.change(wildprompt_sorter.filter_wildprompts,
+                                                   inputs=[wildprompt_selections, wildprompt_category,
+                                                           wildprompt_search_bar],
+                                                   outputs=wildprompt_selections,
+                                                   queue=False,
+                                                   show_progress=False).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
                         wildprompt_selections.change(
@@ -1345,6 +1382,13 @@ with shared.gradio_root:
                             outputs=wildprompt_line_selection_json,
                             queue=False,
                             show_progress=False
+                        ).then(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                                    wildprompt_line_selection_json],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False
                         )
 
                         for wildprompt_line_selection in wildprompt_line_selection_ctrls:
@@ -1354,7 +1398,23 @@ with shared.gradio_root:
                                 outputs=wildprompt_line_selection_json,
                                 queue=False,
                                 show_progress=False
+                            ).then(
+                                wildprompt_sorter.build_wildprompt_combination_summary,
+                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                        wildprompt_line_selection_json],
+                                outputs=wildprompt_combination_summary,
+                                queue=False,
+                                show_progress=False
                             )
+
+                        wildprompt_generate_all.change(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                                    wildprompt_line_selection_json],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False
+                        )
 
                         gradio_receiver_wildprompt_selections.input(wildprompt_sorter.sort_wildprompts,
                                                                     inputs=wildprompt_selections,
@@ -1371,16 +1431,31 @@ with shared.gradio_root:
                             outputs=wildprompt_line_selection_json,
                             queue=False,
                             show_progress=False).then(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                                    wildprompt_line_selection_json],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
                         wildprompt_refresh = gr.Button(label='Refresh', value='Refresh All Wildprompts',
                                                        variant='secondary', elem_classes='refresh_button')
 
-                        def handle_wildprompt_refresh_click():
-                            return gr.update(choices=wildprompt_sorter.try_load_sorted_wildprompts())
-
-                        wildprompt_refresh.click(handle_wildprompt_refresh_click, [], wildprompt_selections,
-                                                 queue=False, show_progress=False)
+                        wildprompt_refresh.click(
+                            wildprompt_sorter.refresh_wildprompt_browser,
+                            inputs=[wildprompt_selections, wildprompt_category, wildprompt_search_bar],
+                            outputs=[wildprompt_category, wildprompt_selections],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                                    wildprompt_line_selection_json],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False
+                        )
 
                     with gr.Accordion(label='Person Likeness', open=False):
                         person_likeness_ctrls = []
@@ -1430,9 +1505,9 @@ with shared.gradio_root:
                                 container=False
                             )
                             person_likeness_strength = gr.Slider(
-                                label='Likeness Strength',
+                                label='Identity Strength',
                                 minimum=0.0,
-                                maximum=1.0,
+                                maximum=modules.config.default_person_likeness_strength_max,
                                 step=0.001,
                                 value=1.0
                             )
@@ -1441,16 +1516,14 @@ with shared.gradio_root:
                                 minimum=0.0,
                                 maximum=modules.config.default_person_likeness_face_weight_max,
                                 step=0.001,
-                                value=modules.config.default_person_likeness_face_weight,
-                                visible=False
+                                value=modules.config.default_person_likeness_face_weight
                             )
                             person_likeness_face_start = gr.Slider(
                                 label='Face Weight Start At',
                                 minimum=0.0,
                                 maximum=1.0,
                                 step=0.001,
-                                value=modules.config.default_person_likeness_face_start,
-                                visible=False
+                                value=modules.config.default_person_likeness_face_start
                             )
                         with gr.Row():
                             person_likeness_preset = gr.Dropdown(

@@ -2,6 +2,7 @@ import os
 import re
 import json
 import math
+import itertools
 
 from modules.extra_utils import get_files_from_folder
 from random import Random
@@ -56,7 +57,8 @@ legal_style_names = [fooocus_expansion, random_style_name] + style_keys
 
 def get_legal_wildprompt_names():
     wildprompt_files = get_files_from_folder(wildprompts_path, ['.txt'])
-    return [os.path.splitext(file)[0] for file in wildprompt_files]
+    names = [os.path.splitext(file)[0].replace('\\', '/') for file in wildprompt_files]
+    return sorted(names, key=str.casefold)
 
 
 legal_wildprompt_names = get_legal_wildprompt_names()
@@ -71,8 +73,21 @@ def apply_style(style, positive):
     return p.replace('{prompt}', positive).splitlines(), n.splitlines(), '{prompt}' in p
 
 
+def _wildprompt_path(wildprompt_selection):
+    selection = str(wildprompt_selection or '').replace('\\', '/').strip('/')
+    parts = [part for part in selection.split('/') if part not in ['', '.']]
+    if len(parts) == 0 or any(part == '..' for part in parts):
+        raise ValueError('Invalid wildprompt name.')
+
+    root = os.path.abspath(wildprompts_path)
+    path = os.path.abspath(os.path.join(root, *parts)) + '.txt'
+    if os.path.commonpath([root, path]) != root:
+        raise ValueError('Wildprompt path escaped the wildprompts folder.')
+    return path
+
+
 def _load_wildprompt_lines(wildprompt_selection):
-    with open(os.path.join(wildprompts_path, f'{wildprompt_selection}.txt'), encoding='utf-8') as f:
+    with open(_wildprompt_path(wildprompt_selection), encoding='utf-8') as f:
         return [x for x in f.read().splitlines() if x.strip() != '']
 
 
@@ -103,22 +118,27 @@ def apply_wildprompts(wildprompt_selections, rng, wildprompt_line_selections=Non
 
 
 def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None, use_line_selections=True):
-    prompts = []
     wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
+    prompt_groups = []
 
-    if len(wildprompt_selections) != 1:
-        return prompts
+    for wildprompt_selection in wildprompt_selections:
+        try:
+            selected_lines = wildprompt_line_selections.get(wildprompt_selection, None) \
+                if use_line_selections else None
+            if isinstance(selected_lines, list) and len(selected_lines) == 0:
+                continue
+            lines = selected_lines if isinstance(selected_lines, list) else \
+                _load_wildprompt_lines(wildprompt_selection)
+            lines = [x.strip() for x in lines if isinstance(x, str) and x.strip() != '']
+            if len(lines) > 0:
+                prompt_groups.append(lines)
+        except Exception:
+            print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
 
-    try:
-        selected_lines = wildprompt_line_selections.get(wildprompt_selections[0], None) if use_line_selections else None
-        if isinstance(selected_lines, list) and len(selected_lines) == 0:
-            return prompts
-        prompts.extend(selected_lines if isinstance(selected_lines, list) else _load_wildprompt_lines(wildprompt_selections[0]))
-        prompts = [x for x in prompts if isinstance(x, str) and x.strip() != '']
-    except Exception:
-        print(f'[Wildprompts] Warning: {wildprompt_selections[0]}.txt missing or empty.')
+    if len(prompt_groups) == 0:
+        return []
 
-    return prompts
+    return [', '.join(parts) for parts in itertools.product(*prompt_groups)]
 
 
 def get_words(arrays, total_mult, index):

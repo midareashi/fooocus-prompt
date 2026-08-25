@@ -2,9 +2,9 @@
   "name": "Peyton",
   "enabled": true,
   "subject": "person",
-  "identity_strength": 1.15,
-  "face_weight": 1.1,
-  "face_weight_start": 0.2,
+  "identity_strength": 1.0,
+  "face_weight": 0.0,
+  "face_weight_start": 0.0,
   "image_count": 10,
   "image_files": [
     "20260825_142837_01.png",
