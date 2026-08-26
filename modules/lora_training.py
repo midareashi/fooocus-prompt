@@ -107,7 +107,8 @@ def _write_text(path, value):
 def _validate_trainer_root(trainer_root):
     trainer_root = Path(trainer_root).expanduser().resolve()
     required = [
-        trainer_root / '.venv' / 'Scripts' / 'accelerate.exe',
+        trainer_root / '.venv' / 'Scripts' / 'python.exe',
+        trainer_root / '.venv' / 'Lib' / 'site-packages' / 'accelerate' / '__init__.py',
         trainer_root / 'sd-scripts' / 'sdxl_train_network.py',
         trainer_root / 'models' / 'sdxl-base-1.0' / 'sd_xl_base_1.0.safetensors',
     ]
@@ -240,12 +241,12 @@ bucket_no_upscale = true
 
 
 def build_training_command(run):
-    accelerate = run.trainer_root / '.venv' / 'Scripts' / 'accelerate.exe'
+    trainer_python = run.trainer_root / '.venv' / 'Scripts' / 'python.exe'
     training_script = run.trainer_root / 'sd-scripts' / 'sdxl_train_network.py'
     model_path = run.trainer_root / 'models' / 'sdxl-base-1.0' / 'sd_xl_base_1.0.safetensors'
     alpha = max(1, run.rank // 2)
     return [
-        str(accelerate), 'launch',
+        str(trainer_python), '-m', 'accelerate.commands.launch',
         '--num_processes=1', '--num_machines=1', '--mixed_precision=fp16',
         '--dynamo_backend=no', '--num_cpu_threads_per_process=2',
         str(training_script),
@@ -458,6 +459,9 @@ def run_training_ui(source_dir, lora_name, trigger, trainer_root, epochs, rank):
         environment['HF_HOME'] = str(run.trainer_root / '.hf_cache')
         creation_flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0
         with run.log_file.open('wb') as log_handle:
+            command_text = subprocess.list2cmdline(command) if os.name == 'nt' else ' '.join(command)
+            log_handle.write(f'Fooocus LoRA training run: {run.run_id}\nCommand: {command_text}\n\n'.encode('utf-8'))
+            log_handle.flush()
             process = subprocess.Popen(
                 command,
                 cwd=str(run.trainer_root),
@@ -491,6 +495,8 @@ def run_training_ui(source_dir, lora_name, trigger, trainer_root, epochs, rank):
             )
             return
         if exit_code != 0:
+            if not log_text.strip():
+                log_text = f'The trainer exited with code {exit_code} before producing log output.'
             yield (
                 _status_markdown('Training failed', run, _progress_from_log(log_text), f'The trainer exited with code {exit_code}. See the log below.'),
                 log_text, samples, gr.update(interactive=True), gr.update(interactive=False),
@@ -509,9 +515,12 @@ def run_training_ui(source_dir, lora_name, trigger, trainer_root, epochs, rank):
             gr.update(interactive=False),
         )
     except Exception as exc:
+        error_text = f'{type(exc).__name__}: {exc}'
+        existing_log = _tail_log(run.log_file) if run is not None else ''
+        visible_log = f'{existing_log}\n\n{error_text}'.strip()
         yield (
             _status_markdown('Could not start LoRA training', run, detail=str(exc)),
-            _tail_log(run.log_file) if run is not None else '',
+            visible_log,
             _sync_sample_images(run) if run is not None else [],
             gr.update(interactive=True),
             gr.update(interactive=False),

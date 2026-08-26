@@ -947,19 +947,22 @@ function scheduleUiInstallers() {
     uiInstallerTimeout = setTimeout(runUiInstallers, 100);
 }
 
-function putImageGenerationTabFirst() {
+function orderGenerationModeTabs() {
     const tabNav = gradioApp().querySelector('#generation_mode_tabs > .tab-nav');
     if (!tabNav) return;
 
-    const imageGenerationTab = Array.from(tabNav.querySelectorAll('button'))
-        .find((button) => button.textContent.trim() === 'Image Generation');
+    const buttons = Array.from(tabNav.querySelectorAll('button'));
+    const desiredOrder = ['Image Generation', 'History', 'LoRA Training'];
+    const orderedTabs = desiredOrder
+        .map((label) => buttons.find((button) => button.textContent.trim() === label))
+        .filter(Boolean);
 
-    if (imageGenerationTab && tabNav.firstElementChild !== imageGenerationTab) {
-        tabNav.prepend(imageGenerationTab);
+    if (orderedTabs.length) {
+        tabNav.prepend(...orderedTabs);
     }
 }
 
-onUiLoaded(putImageGenerationTabFirst);
+onUiLoaded(orderGenerationModeTabs);
 
 document.addEventListener("DOMContentLoaded", function() {
     var mutationObserver = new MutationObserver(function(m) {

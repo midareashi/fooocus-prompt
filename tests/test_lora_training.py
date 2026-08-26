@@ -16,7 +16,8 @@ class TestLoraTraining(unittest.TestCase):
         self.previews = self.root / 'previews'
         self.source.mkdir()
         for required in [
-            self.trainer / '.venv' / 'Scripts' / 'accelerate.exe',
+            self.trainer / '.venv' / 'Scripts' / 'python.exe',
+            self.trainer / '.venv' / 'Lib' / 'site-packages' / 'accelerate' / '__init__.py',
             self.trainer / 'sd-scripts' / 'sdxl_train_network.py',
             self.trainer / 'models' / 'sdxl-base-1.0' / 'sd_xl_base_1.0.safetensors',
         ]:
@@ -76,7 +77,8 @@ class TestLoraTraining(unittest.TestCase):
         )
         command = lora_training.build_training_command(run)
 
-        self.assertEqual(str(self.trainer / '.venv' / 'Scripts' / 'accelerate.exe'), command[0])
+        self.assertEqual(str(self.trainer / '.venv' / 'Scripts' / 'python.exe'), command[0])
+        self.assertEqual(['-m', 'accelerate.commands.launch'], command[1:3])
         self.assertIn('--network_dim=16', command)
         self.assertIn('--learning_rate=6e-5', command)
         self.assertIn('--text_encoder_lr', command)
@@ -89,4 +91,3 @@ class TestLoraTraining(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
