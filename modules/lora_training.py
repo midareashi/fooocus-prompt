@@ -546,7 +546,7 @@ def build_lora_training_ui():
 
     with gr.Accordion(label='Advanced settings', open=False):
         trigger = gr.Textbox(
-            label='Trigger word', value='', placeholder='Automatic, for example person_luna',
+            label='Trigger word', value='girl_named_luna', placeholder='Automatic, for example person_luna',
             info='Leave blank to derive a unique trigger from the LoRA name. It is kept first in every caption.',
         )
         trainer_root = gr.Textbox(label='Trainer location', value=str(DEFAULT_TRAINER_ROOT))
