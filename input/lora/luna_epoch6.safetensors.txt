@@ -1,0 +1,4 @@
+Trigger: girl_named_luna
+Selected checkpoint: epoch 6
+Run: luna_20260826_002240_900ae1
+Reason: strongest sample face-likeness score

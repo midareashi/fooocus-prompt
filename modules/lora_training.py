@@ -208,11 +208,11 @@ bucket_no_upscale = true
     sample_prompts = config_dir / 'sample_prompts.txt'
     negative = 'low quality, blurry, distorted face, bad anatomy, text, watermark, logo, signature'
     _write_text(sample_prompts, '\n'.join([
-        f'{trigger}, close-up portrait, realistic photo, neutral background --n {negative} --w 1024 --h 1024 --d 24701 --l 6.5 --s 28',
-        f'{trigger}, casual candid portrait, sitting indoors, realistic photo --n {negative} --w 1024 --h 1024 --d 24702 --l 6.5 --s 28',
-        f'{trigger}, outdoor portrait, natural daylight, realistic photo --n {negative} --w 1024 --h 1024 --d 24703 --l 6.5 --s 28',
-        f'{trigger}, half body portrait, different outfit, soft indoor light, realistic photo --n {negative} --w 1024 --h 1280 --d 24704 --l 6.5 --s 28',
-        f'{trigger}, full body portrait, standing outdoors, natural daylight, realistic photo --n {negative} --w 832 --h 1216 --d 24705 --l 6.5 --s 28',
+        f'{trigger}, adult woman, close-up portrait, realistic photo, neutral background --n {negative} --w 1024 --h 1024 --d 24701 --l 6.5 --s 28',
+        f'{trigger}, adult woman, casual candid portrait, sitting indoors, realistic photo --n {negative} --w 1024 --h 1024 --d 24702 --l 6.5 --s 28',
+        f'{trigger}, adult woman, outdoor portrait, natural daylight, realistic photo --n {negative} --w 1024 --h 1024 --d 24703 --l 6.5 --s 28',
+        f'{trigger}, adult woman, half body portrait, different outfit, soft indoor light, realistic photo --n {negative} --w 1024 --h 1280 --d 24704 --l 6.5 --s 28',
+        f'{trigger}, adult woman, full body portrait, standing outdoors, natural daylight, realistic photo --n {negative} --w 832 --h 1216 --d 24705 --l 6.5 --s 28',
     ]))
 
     return PreparedTrainingRun(

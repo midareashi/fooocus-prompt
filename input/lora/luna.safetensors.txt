@@ -1,0 +1,3 @@
+Trigger: girl_named_luna
+Source: D:\Fooocus\Fooocus\datasets\Luna-LoRA-2026-08-25
+Run: luna_20260826_002240_900ae1
