@@ -217,6 +217,7 @@ def task_to_config(task):
         'training_mode': bool(getattr(task, 'training_mode', False)),
         'testing_mode': bool(getattr(task, 'testing_mode', False)),
         'testing_loras': str(getattr(task, 'testing_loras', []) or []),
+        'generation_tags': str(getattr(task, 'generation_tags', '') or ''),
     }
 
     for index, (name, weight) in enumerate(getattr(task, 'loras', []) or []):
@@ -270,7 +271,15 @@ def create_batch_from_task(task):
                 _json_dumps(config)
             )
         )
-        return cursor.lastrowid
+        batch_id = cursor.lastrowid
+        for tag_name in _normalize_tag_names(getattr(task, 'generation_tags', '')):
+            tag_id = _get_or_create_tag(conn, tag_name)
+            if tag_id is not None:
+                conn.execute(
+                    'INSERT OR IGNORE INTO batch_tags (batch_id, tag_id) VALUES (?, ?)',
+                    (batch_id, tag_id)
+                )
+        return batch_id
 
 
 def update_batch_status(batch_id, status):
@@ -348,6 +357,13 @@ def record_image(batch_id, image_path, metadata, task=None, loras=None, width=No
             row = conn.execute('SELECT id FROM images WHERE path = ?', (abs_path,)).fetchone()
             image_id = row['id'] if row else None
         if image_id is not None:
+            for tag_name in _normalize_tag_names(getattr(task, 'generation_tags', '') if task is not None else ''):
+                tag_id = _get_or_create_tag(conn, tag_name)
+                if tag_id is not None:
+                    conn.execute(
+                        'INSERT OR IGNORE INTO image_tags (image_id, tag_id) VALUES (?, ?)',
+                        (image_id, tag_id)
+                    )
             conn.execute('DELETE FROM image_loras WHERE image_id = ?', (image_id,))
             for position, (name, weight) in enumerate(loras or []):
                 if name == 'None':
@@ -1108,7 +1124,7 @@ def list_batches(limit=100, search='', favorite_only=False, review_status='', ta
     init_db()
     search = str(search or '').strip()
     review_status = str(review_status or '').strip()
-    tag = str(tag or '').strip()
+    tag_names = _normalize_tag_names(tag)
     params = []
     where_clauses = []
     if search:
@@ -1124,27 +1140,27 @@ def list_batches(limit=100, search='', favorite_only=False, review_status='', ta
             '(b.review_status = ? OR EXISTS (SELECT 1 FROM images si WHERE si.batch_id = b.id AND si.review_status = ?))'
         )
         params += [review_status, review_status]
-    if tag:
+    if tag_names:
         where_clauses.append(
-            """
+            f"""
             (
             EXISTS (
                 SELECT 1
                 FROM batch_tags btt
                 JOIN tags btag ON btag.id = btt.tag_id
-                WHERE btt.batch_id = b.id AND btag.name LIKE ?
+                WHERE btt.batch_id = b.id AND btag.name IN ({', '.join(['?'] * len(tag_names))})
             )
             OR EXISTS (
                 SELECT 1
                 FROM images ti
                 JOIN image_tags tit ON tit.image_id = ti.id
                 JOIN tags tt ON tt.id = tit.tag_id
-                WHERE ti.batch_id = b.id AND tt.name LIKE ?
+                WHERE ti.batch_id = b.id AND tt.name IN ({', '.join(['?'] * len(tag_names))})
             )
             )
             """
         )
-        params += [f'%{tag}%', f'%{tag}%']
+        params += tag_names + tag_names
     where = f"WHERE {' AND '.join(where_clauses)}" if len(where_clauses) > 0 else ''
     params.append(int(limit))
     with _connect() as conn:
@@ -1180,7 +1196,7 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
     except Exception:
         return []
     review_status = str(review_status or '').strip()
-    tag = str(tag or '').strip()
+    tag_names = _normalize_tag_names(tag)
     where_clauses = ['batch_id = ?']
     params = [batch_id]
     if favorite_only:
@@ -1188,18 +1204,15 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
     if review_status:
         where_clauses.append('review_status = ?')
         params.append(review_status)
-    if tag:
+    if tag_names:
         where_clauses.append(
-            """
-            EXISTS (
+            """EXISTS (
                 SELECT 1
                 FROM image_tags fit
                 JOIN tags ft ON ft.id = fit.tag_id
-                WHERE fit.image_id = images.id AND ft.name LIKE ?
-            )
-            """
+                WHERE fit.image_id = images.id AND ft.name IN (""" + ', '.join(['?'] * len(tag_names)) + ")\n            )"
         )
-        params.append(f'%{tag}%')
+        params += tag_names
     preview_mode = _preview_filter_mode(show_preview_images)
     if preview_mode == 'final':
         where_clauses.append(_preview_image_filter_clause())
@@ -1334,9 +1347,11 @@ def list_filter_values():
             ORDER BY name
             """
         ).fetchall()
+        tag_rows = conn.execute('SELECT name FROM tags WHERE name IS NOT NULL AND name != \'\' ORDER BY name').fetchall()
     return {
         'checkpoints': [row['checkpoint'] for row in checkpoint_rows],
-        'loras': [row['name'] for row in lora_rows]
+        'loras': [row['name'] for row in lora_rows],
+        'tags': [row['name'] for row in tag_rows]
     }
 
 
@@ -1381,7 +1396,7 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
                         thumbnail_visibility='visible'):
     search = str(search or '').strip()
     review_status = str(review_status or '').strip()
-    tag = str(tag or '').strip()
+    tag_names = _normalize_tag_names(tag)
     days = [str(day) for day in (days or []) if str(day or '').strip() != '']
     checkpoints = _normalize_filter_list(checkpoints)
     loras = _normalize_filter_list(loras)
@@ -1404,18 +1419,18 @@ def _image_filter_where(search='', favorite_only=False, review_status='', tag=''
     if review_status:
         where_clauses.append('images.review_status = ?')
         params.append(review_status)
-    if tag:
+    if tag_names:
         where_clauses.append(
-            """
+            f"""
             EXISTS (
                 SELECT 1
                 FROM image_tags fit
                 JOIN tags ft ON ft.id = fit.tag_id
-                WHERE fit.image_id = images.id AND ft.name LIKE ?
+                WHERE fit.image_id = images.id AND ft.name IN ({', '.join(['?'] * len(tag_names))})
             )
             """
         )
-        params.append(f'%{tag}%')
+        params += tag_names
     if len(days) > 0:
         day_clauses = []
         if '__all__' not in days:

@@ -1078,10 +1078,11 @@ with shared.gradio_root:
                                                              multiselect=True)
                     history_filter_loras = gr.Dropdown(label='LoRAs', choices=[], value=[],
                                                        multiselect=True)
+                    history_filter_tag = gr.Dropdown(label='Tags', choices=[], value=[], multiselect=True,
+                                                     elem_id='history_filter_tags')
                 history_seed_stack_selection = gr.Dropdown(label='Seed Group', choices=[], value=None,
                                                            visible=False)
                 history_seed_stack_prompt = gr.Textbox(value='', visible=False)
-                history_filter_tag = gr.State('')
                 history_filter_status = gr.State('')
                 history_batch_selection = gr.Dropdown(label='Generation Batch', choices=[], value='All Images',
                                                       visible=False)
@@ -1219,6 +1220,8 @@ with shared.gradio_root:
         
                         with gr.Column(scale=3, min_width=0):
                             generate_button = gr.Button(label="Generate", value="Generate", elem_classes='type_row', elem_id='generate_button', visible=True)
+                            generation_tags = gr.Textbox(show_label=False, lines=1, placeholder='Tags: LoRA Testing, ...',
+                                                          elem_id='generation_tags')
                             quick_preview_button = gr.Button(label="Quick Preview", value="Quick Preview", elem_classes='type_row', elem_id='quick_preview_button', visible=True)
                             load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
                     with gr.Row(elem_classes='advanced_check_row'):
@@ -3572,7 +3575,7 @@ with shared.gradio_root:
 
                 def empty_history_view(status):
                     return gr.update(choices=['All Images'], value='All Images'), gr.update(choices=[], value=[]), \
-                        gr.update(choices=[], value=[]), gr.update(choices=[], value=[]), \
+                        gr.update(choices=[], value=[]), gr.update(choices=[], value=[]), gr.update(choices=[], value=[]), \
                         gr.update(choices=[], value=None), '', [], gr.update(value=[]), [], [], '[]', gr.update(value=[]), \
                         gr.update(choices=[], value=None), gr.update(value=[]), False, 0, '', '', '', \
                         False, 0, '', '', '', '', status
@@ -3923,6 +3926,7 @@ with shared.gradio_root:
                             gr.update(choices=history_day_choices(days), value=selected_days),
                             gr.update(choices=filter_values['checkpoints'], value=checkpoints),
                             gr.update(choices=filter_values['loras'], value=loras),
+                            gr.update(choices=filter_values['tags'], value=tag),
                             gr.update(choices=stack_choices, value=stack_value), stack_prompt,
                             selected_days) + image_outputs
 
@@ -3980,6 +3984,7 @@ with shared.gradio_root:
                             gr.update(choices=history_day_choices(days), value=selected_days),
                             gr.update(choices=filter_values['checkpoints'], value=checkpoints),
                             gr.update(choices=filter_values['loras'], value=loras),
+                            gr.update(choices=filter_values['tags'], value=tag),
                             gr.update(choices=stack_choices, value=stack_value), stack_prompt,
                             selected_days) + image_outputs
 
@@ -4568,7 +4573,7 @@ with shared.gradio_root:
                 ]
                 history_refresh_outputs = [
                     history_batch_selection, history_day_selection, history_filter_checkpoints,
-                    history_filter_loras, history_seed_stack_selection, history_seed_stack_prompt,
+                    history_filter_loras, history_filter_tag, history_seed_stack_selection, history_seed_stack_prompt,
                     history_selected_days,
                     history_gallery, history_visible_image_ids,
                     history_selected_image_ids, history_selected_image_ids_json,
@@ -4613,7 +4618,7 @@ with shared.gradio_root:
                                                        history_status],
                                                queue=False, show_progress=False)
                 for history_filter in [history_search, history_filter_favorites,
-                                       history_filter_checkpoints, history_filter_loras,
+                                       history_filter_checkpoints, history_filter_loras, history_filter_tag,
                                        history_show_preview_images, history_thumbnail_visibility]:
                     history_filter.change(refresh_history, inputs=history_filter_inputs,
                                           outputs=history_refresh_outputs,
@@ -4972,6 +4977,7 @@ with shared.gradio_root:
                           enhance_input_image, enhance_checkbox, enhance_uov_method, enhance_uov_processing_order,
                           enhance_uov_prompt_type]
                 ctrls += enhance_ctrls
+                ctrls += [generation_tags]
 
                 wildprompt_line_selection_inputs = [wildprompt_selections] + wildprompt_line_selection_ctrls
                 wildprompt_line_selection_arg_index = ctrls.index(wildprompt_line_selection_json)

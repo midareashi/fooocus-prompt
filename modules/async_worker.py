@@ -269,6 +269,7 @@ class AsyncTask:
                     enhance_inpaint_erode_or_dilate,
                     enhance_mask_invert
                 ])
+        self.generation_tags = str(args.pop() or '').strip() if len(args) > 0 else ''
         self.should_enhance = self.enhance_checkbox and (self.enhance_uov_method != disabled.casefold() or len(self.enhance_ctrls) > 0)
         self.images_to_enhance_count = 0
         self.enhance_stats = {}
@@ -429,7 +430,8 @@ def get_task_summary(task):
         except Exception:
             pass
 
-    prompt = str(getattr(task, 'prompt', '') or '').splitlines()[0].strip()
+    prompt_lines = str(getattr(task, 'prompt', '') or '').splitlines()
+    prompt = next((line.strip() for line in prompt_lines if line.strip()), '')
     if len(prompt) > 96:
         prompt = prompt[:93] + '...'
 
@@ -772,6 +774,8 @@ def worker():
                     d.append((f'LoRA {li + 1}', f'lora_combined_{li + 1}', f'{n} : {w}'))
             if async_task.testing_lora_name is not None:
                 d.append(('Testing LoRA', 'testing_lora', async_task.testing_lora_name))
+            if async_task.generation_tags:
+                d.append(('Generation Tags', 'generation_tags', async_task.generation_tags))
 
             metadata_parser = None
             if async_task.save_metadata_to_images:

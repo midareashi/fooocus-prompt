@@ -957,12 +957,18 @@ function orderGenerationModeTabs() {
         .map((label) => buttons.find((button) => button.textContent.trim() === label))
         .filter(Boolean);
 
-    if (orderedTabs.length) {
-        tabNav.prepend(...orderedTabs);
-    }
+    if (orderedTabs.length !== desiredOrder.length) return;
+
+    const currentOrder = buttons
+        .filter((button) => desiredOrder.includes(button.textContent.trim()))
+        .map((button) => button.textContent.trim());
+    if (currentOrder.every((label, index) => label === desiredOrder[index])) return;
+
+    tabNav.prepend(...orderedTabs);
 }
 
 onUiLoaded(orderGenerationModeTabs);
+onAfterUiUpdate(orderGenerationModeTabs);
 
 document.addEventListener("DOMContentLoaded", function() {
     var mutationObserver = new MutationObserver(function(m) {
