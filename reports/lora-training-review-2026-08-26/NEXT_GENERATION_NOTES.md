@@ -4,7 +4,7 @@
 
 - Close-up and normal portrait likeness are good with both CyberRealistic XL Desire and Juggernaut XL Ragnarok.
 - Likeness falls off noticeably in head-to-knees and full-body compositions, especially when the camera is several meters away.
-- The curated V1 dataset contains 43 pairs, but its strongest identity coverage is concentrated in close-up and waist-up images.
+- The original curated V1 dataset contained 43 pairs, but its strongest identity coverage was concentrated in close-up and waist-up images.
 - Vanilla SDXL 1.0 training previews sometimes looked childlike even though the sample prompts specified `adult woman`. The same prompts stayed adult with Desire and Juggernaut, so judge the LoRA on the checkpoints used for production.
 - Desire has a stronger cleavage or unintended-nudity bias. Reject outputs that do not follow the requested wardrobe.
 
@@ -26,9 +26,11 @@ Run the grid on one close-up, one head-to-knees portrait, and one full-body port
 
 Use `Training/Luna Face LoRA Dataset v2` for the missing distance and body coverage. Generate 2-3 seeds per prompt and retain only one strong candidate from each prompt.
 
+Image #50 (`2026-08-26_10-18-31_9624.png`) is the first V2 expansion image added to the combined dataset. It provides a strong face match in a full-body rear three-quarter composition. The face is slightly soft at source resolution, so keep the original for now but replace it with a clearer same-seed regeneration or carefully enhanced version before final training if one preserves the same likeness and natural detail.
+
 ### Aspect-ratio coverage
 
-The current 43-image V1 dataset contains portrait-orientation images only. The trainer has aspect-ratio bucketing enabled with `bucket_no_upscale`, so landscape, portrait, and square source images can be included without forcing everything into a square crop.
+The original 43-image V1 baseline contains portrait-orientation images only. The trainer has aspect-ratio bucketing enabled with `bucket_no_upscale`, so landscape, portrait, and square source images can be included without forcing everything into a square crop.
 
 For the 8-12 accepted V2 additions, aim for approximately:
 

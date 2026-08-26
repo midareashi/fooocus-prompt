@@ -1213,6 +1213,8 @@ with shared.gradio_root:
                         with gr.Column(scale=17):
                             prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
                                                 autofocus=True, lines=3)
+                            generation_tags = gr.Textbox(show_label=False, lines=1, placeholder='Tags: LoRA Testing, ...',
+                                                          elem_id='generation_tags')
         
                             default_prompt = modules.config.default_prompt
                             if isinstance(default_prompt, str) and default_prompt != '':
@@ -1220,8 +1222,6 @@ with shared.gradio_root:
         
                         with gr.Column(scale=3, min_width=0):
                             generate_button = gr.Button(label="Generate", value="Generate", elem_classes='type_row', elem_id='generate_button', visible=True)
-                            generation_tags = gr.Textbox(show_label=False, lines=1, placeholder='Tags: LoRA Testing, ...',
-                                                          elem_id='generation_tags')
                             quick_preview_button = gr.Button(label="Quick Preview", value="Quick Preview", elem_classes='type_row', elem_id='quick_preview_button', visible=True)
                             load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
                     with gr.Row(elem_classes='advanced_check_row'):
