@@ -1,0 +1,389 @@
+{
+  "scale": {
+    "5": "Excellent: the requested subject, pose, framing, focal detail, and reveal are all clearly present.",
+    "4": "Strong: the main intent is clear with only one meaningful deviation.",
+    "3": "Partial: recognizable intent, but framing or a required detail is weak or missing.",
+    "2": "Weak: related composition, but most distinctive requirements were not followed.",
+    "1": "Failure: only a superficial keyword or generic sexual portrait remains.",
+    "0": "Complete failure or contradiction of the requested shot."
+  },
+  "image_count": 192,
+  "prompt_rankings": {
+    "Upskirt": [
+      {
+        "shot_prompt": "staged staircase upskirt-style fashion shot of an adult woman one step above the lens, looking back over her shoulder with underwear visible beneath the lifted skirt",
+        "image_count": 8,
+        "adherence_mean": 3.625,
+        "adherence_median": 4.0,
+        "strong_follow_count": 5,
+        "strong_follow_rate": 0.625,
+        "failure_count": 0,
+        "failure_rate": 0.0
+      },
+      {
+        "shot_prompt": "staged reclining upskirt-style photograph of an adult woman with knees bent and skirt gathered naturally at the thighs, underwear visible in soft flattering light",
+        "image_count": 8,
+        "adherence_mean": 3.0,
+        "adherence_median": 3.0,
+        "strong_follow_count": 2,
+        "strong_follow_rate": 0.25,
+        "failure_count": 0,
+        "failure_rate": 0.0
+      },
+      {
+        "shot_prompt": "playful upward camera angle capturing an adult woman twirling a tiny pleated skirt, moving fabric framing a brief clear glimpse of coordinated panties",
+        "image_count": 8,
+        "adherence_mean": 2.875,
+        "adherence_median": 3.0,
+        "strong_follow_count": 3,
+        "strong_follow_rate": 0.375,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "teasing low-angle portrait of an adult woman holding both sides of her short skirt hem above the camera, direct playful eye contact and matching panties visible",
+        "image_count": 8,
+        "adherence_mean": 2.75,
+        "adherence_median": 2.0,
+        "strong_follow_count": 3,
+        "strong_follow_rate": 0.375,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "carefully staged under-skirt viewpoint with an adult woman lifting the hem slightly for the camera, thighs symmetrically framed and coordinated panties clearly visible",
+        "image_count": 8,
+        "adherence_mean": 2.625,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 0,
+        "failure_rate": 0.0
+      },
+      {
+        "shot_prompt": "dramatic full-body fashion composition from below an adult woman in a short skirt, one leg forward, confident expression visible, and underwear deliberately revealed",
+        "image_count": 8,
+        "adherence_mean": 2.25,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 0,
+        "failure_rate": 0.0
+      },
+      {
+        "shot_prompt": "consensual seated low-angle shot of an adult woman near the edge of a chair, legs crossed loosely as the short skirt shifts to reveal matching underwear",
+        "image_count": 8,
+        "adherence_mean": 2.25,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "cinematic consensual upskirt-style composition of an adult woman posing above the lens beneath soft backlighting, skirt fabric glowing around a tasteful underwear reveal",
+        "image_count": 8,
+        "adherence_mean": 2.125,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "playful floor-level composition of an adult woman leaning toward the lens with direct eye contact, one hand holding the edge of her tiny skirt as underwear becomes visible",
+        "image_count": 8,
+        "adherence_mean": 2.0,
+        "adherence_median": 1.5,
+        "strong_follow_count": 2,
+        "strong_follow_rate": 0.25,
+        "failure_count": 4,
+        "failure_rate": 0.5
+      },
+      {
+        "shot_prompt": "consensual over-the-knee viewpoint of an adult woman deliberately posing close to the lens, skirt hem high in the foreground and underwear visible beyond her thighs",
+        "image_count": 8,
+        "adherence_mean": 2.0,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 3,
+        "failure_rate": 0.375
+      },
+      {
+        "shot_prompt": "consensual staged low-angle fashion photograph of an adult woman knowingly posing above the camera, short pleated skirt framing a clear teasing glimpse of matching underwear",
+        "image_count": 8,
+        "adherence_mean": 1.875,
+        "adherence_median": 2.0,
+        "strong_follow_count": 0,
+        "strong_follow_rate": 0.0,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "floor-level photograph beneath a short plaid skirt, with an adult woman aware of the camera, looking down with a teasing smile as her panties show",
+        "image_count": 8,
+        "adherence_mean": 1.875,
+        "adherence_median": 2.0,
+        "strong_follow_count": 0,
+        "strong_follow_rate": 0.0,
+        "failure_count": 3,
+        "failure_rate": 0.375
+      }
+    ],
+    "Feet": [
+      {
+        "shot_prompt": "top-down fashion composition centered on her bare feet against a richly textured rug, ankles close together and toes naturally relaxed",
+        "image_count": 8,
+        "adherence_mean": 3.25,
+        "adherence_median": 4.0,
+        "strong_follow_count": 6,
+        "strong_follow_rate": 0.75,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "symmetrical reclining composition with both bare soles nearest the lens, legs extending away from the camera, and her upper body centered in the distance",
+        "image_count": 8,
+        "adherence_mean": 3.125,
+        "adherence_median": 3.5,
+        "strong_follow_count": 4,
+        "strong_follow_rate": 0.5,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "intimate macro detail of polished toes curling gently against rumpled white linen, with shallow depth of field and soft warm highlights",
+        "image_count": 8,
+        "adherence_mean": 3.0,
+        "adherence_median": 4.0,
+        "strong_follow_count": 5,
+        "strong_follow_rate": 0.625,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "warm backlit full-body silhouette emphasizing elegant feet and ankles as she rises onto tiptoe, with a crisp rim of golden light around her figure",
+        "image_count": 8,
+        "adherence_mean": 3.0,
+        "adherence_median": 3.5,
+        "strong_follow_count": 4,
+        "strong_follow_rate": 0.5,
+        "failure_count": 1,
+        "failure_rate": 0.125
+      },
+      {
+        "shot_prompt": "close editorial detail of both feet inside ultra-sheer pantyhose, showing the fine fabric over polished toes while the rest of her pose falls into gentle bokeh",
+        "image_count": 8,
+        "adherence_mean": 3.0,
+        "adherence_median": 3.0,
+        "strong_follow_count": 3,
+        "strong_follow_rate": 0.375,
+        "failure_count": 1,
+        "failure_rate": 0.125
+      },
+      {
+        "shot_prompt": "playful forced-perspective portrait with one bare foot reaching toward the camera, toes nearest the lens and her amused expression visible beyond it",
+        "image_count": 8,
+        "adherence_mean": 2.875,
+        "adherence_median": 4.0,
+        "strong_follow_count": 5,
+        "strong_follow_rate": 0.625,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "close beauty shot of both stockinged feet resting together on velvet, capturing sheer fabric texture, delicate toe shapes, and a subtle polished sheen",
+        "image_count": 8,
+        "adherence_mean": 2.75,
+        "adherence_median": 3.0,
+        "strong_follow_count": 3,
+        "strong_follow_rate": 0.375,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "full-body low floor-level composition with her relaxed bare feet nearest the lens, neatly polished toes in sharp focus, and her face clearly visible farther back",
+        "image_count": 8,
+        "adherence_mean": 2.625,
+        "adherence_median": 3.0,
+        "strong_follow_count": 2,
+        "strong_follow_rate": 0.25,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "reclining sideways with one leg stretched toward the camera, using controlled wide-angle perspective so her bare foot and softly curled toes fill the foreground",
+        "image_count": 8,
+        "adherence_mean": 2.5,
+        "adherence_median": 2.5,
+        "strong_follow_count": 3,
+        "strong_follow_rate": 0.375,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "elegant side-profile close-up of one arched bare foot with pointed toes, clean ankle line, soft skin detail, and flattering diffused light",
+        "image_count": 8,
+        "adherence_mean": 2.5,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 1,
+        "failure_rate": 0.125
+      },
+      {
+        "shot_prompt": "lying on her stomach with ankles crossed and both feet kicked up behind her, bare soles facing the camera while she looks back with a teasing smile",
+        "image_count": 8,
+        "adherence_mean": 2.375,
+        "adherence_median": 2.0,
+        "strong_follow_count": 1,
+        "strong_follow_rate": 0.125,
+        "failure_count": 2,
+        "failure_rate": 0.25
+      },
+      {
+        "shot_prompt": "cinematic floor-level photograph timed during a slow barefoot step, with one lifted heel, natural toe movement, and the full figure balanced in the background",
+        "image_count": 8,
+        "adherence_mean": 2.125,
+        "adherence_median": 2.0,
+        "strong_follow_count": 0,
+        "strong_follow_rate": 0.0,
+        "failure_count": 1,
+        "failure_rate": 0.125
+      }
+    ]
+  },
+  "checkpoint_rankings_overall": [
+    {
+      "checkpoint": "lustifyNSFWCheckpoint_zenithV9",
+      "image_count": 48,
+      "adherence_mean": 3.0625,
+      "adherence_median": 3.0,
+      "strong_follow_count": 22,
+      "strong_follow_rate": 0.4583333333333333,
+      "failure_count": 5,
+      "failure_rate": 0.10416666666666667
+    },
+    {
+      "checkpoint": "cyberrealisticXL_v100",
+      "image_count": 48,
+      "adherence_mean": 3.0416666666666665,
+      "adherence_median": 3.0,
+      "strong_follow_count": 18,
+      "strong_follow_rate": 0.375,
+      "failure_count": 2,
+      "failure_rate": 0.041666666666666664
+    },
+    {
+      "checkpoint": "juggernautXL_ragnarok",
+      "image_count": 48,
+      "adherence_mean": 2.8125,
+      "adherence_median": 3.0,
+      "strong_follow_count": 13,
+      "strong_follow_rate": 0.2708333333333333,
+      "failure_count": 3,
+      "failure_rate": 0.0625
+    },
+    {
+      "checkpoint": "lifeIsGood_v1",
+      "image_count": 48,
+      "adherence_mean": 1.4791666666666667,
+      "adherence_median": 1.0,
+      "strong_follow_count": 4,
+      "strong_follow_rate": 0.08333333333333333,
+      "failure_count": 30,
+      "failure_rate": 0.625
+    }
+  ],
+  "checkpoint_rankings_by_category": [
+    {
+      "category": "Feet",
+      "checkpoint": "lustifyNSFWCheckpoint_zenithV9",
+      "image_count": 24,
+      "adherence_mean": 3.4583333333333335,
+      "adherence_median": 4.0,
+      "strong_follow_count": 14,
+      "strong_follow_rate": 0.5833333333333334,
+      "failure_count": 0,
+      "failure_rate": 0.0
+    },
+    {
+      "category": "Feet",
+      "checkpoint": "cyberrealisticXL_v100",
+      "image_count": 24,
+      "adherence_mean": 3.4166666666666665,
+      "adherence_median": 3.5,
+      "strong_follow_count": 12,
+      "strong_follow_rate": 0.5,
+      "failure_count": 0,
+      "failure_rate": 0.0
+    },
+    {
+      "category": "Feet",
+      "checkpoint": "juggernautXL_ragnarok",
+      "image_count": 24,
+      "adherence_mean": 3.2083333333333335,
+      "adherence_median": 3.0,
+      "strong_follow_count": 11,
+      "strong_follow_rate": 0.4583333333333333,
+      "failure_count": 0,
+      "failure_rate": 0.0
+    },
+    {
+      "category": "Upskirt",
+      "checkpoint": "lustifyNSFWCheckpoint_zenithV9",
+      "image_count": 24,
+      "adherence_mean": 2.6666666666666665,
+      "adherence_median": 2.0,
+      "strong_follow_count": 8,
+      "strong_follow_rate": 0.3333333333333333,
+      "failure_count": 5,
+      "failure_rate": 0.20833333333333334
+    },
+    {
+      "category": "Upskirt",
+      "checkpoint": "cyberrealisticXL_v100",
+      "image_count": 24,
+      "adherence_mean": 2.6666666666666665,
+      "adherence_median": 2.0,
+      "strong_follow_count": 6,
+      "strong_follow_rate": 0.25,
+      "failure_count": 2,
+      "failure_rate": 0.08333333333333333
+    },
+    {
+      "category": "Upskirt",
+      "checkpoint": "juggernautXL_ragnarok",
+      "image_count": 24,
+      "adherence_mean": 2.4166666666666665,
+      "adherence_median": 2.0,
+      "strong_follow_count": 2,
+      "strong_follow_rate": 0.08333333333333333,
+      "failure_count": 3,
+      "failure_rate": 0.125
+    },
+    {
+      "category": "Upskirt",
+      "checkpoint": "lifeIsGood_v1",
+      "image_count": 24,
+      "adherence_mean": 2.0,
+      "adherence_median": 2.0,
+      "strong_follow_count": 4,
+      "strong_follow_rate": 0.16666666666666666,
+      "failure_count": 10,
+      "failure_rate": 0.4166666666666667
+    },
+    {
+      "category": "Feet",
+      "checkpoint": "lifeIsGood_v1",
+      "image_count": 24,
+      "adherence_mean": 0.9583333333333334,
+      "adherence_median": 1.0,
+      "strong_follow_count": 0,
+      "strong_follow_rate": 0.0,
+      "failure_count": 20,
+      "failure_rate": 0.8333333333333334
+    }
+  ]
+}

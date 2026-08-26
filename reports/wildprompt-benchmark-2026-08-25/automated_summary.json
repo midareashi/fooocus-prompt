@@ -1,0 +1,278 @@
+{
+  "date": "2026-08-25",
+  "after": "17:30",
+  "image_count": 192,
+  "checkpoint_count": 4,
+  "shot_prompt_count": 24,
+  "reference_summary": {
+    "reference_paths": [
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_02.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_03.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_04.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_05.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_06.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_07.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_08.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_09.png"
+    ],
+    "reference_faces_detected": 9
+  },
+  "checkpoint_face_rankings": [
+    {
+      "checkpoint": "lifeIsGood_v1",
+      "image_count": 48,
+      "face_detected_count": 48,
+      "face_similarity_mean": 0.6764045680562655,
+      "face_similarity_median": 0.6815168857574463,
+      "face_similarity_min": 0.5243849158287048,
+      "face_similarity_max": 0.7464473843574524
+    },
+    {
+      "checkpoint": "cyberrealisticXL_v100",
+      "image_count": 48,
+      "face_detected_count": 48,
+      "face_similarity_mean": 0.6662924233824015,
+      "face_similarity_median": 0.6763163208961487,
+      "face_similarity_min": 0.45729634165763855,
+      "face_similarity_max": 0.7504175901412964
+    },
+    {
+      "checkpoint": "juggernautXL_ragnarok",
+      "image_count": 48,
+      "face_detected_count": 47,
+      "face_similarity_mean": 0.6569515035507527,
+      "face_similarity_median": 0.6802619099617004,
+      "face_similarity_min": 0.395168662071228,
+      "face_similarity_max": 0.7812231183052063
+    },
+    {
+      "checkpoint": "lustifyNSFWCheckpoint_zenithV9",
+      "image_count": 48,
+      "face_detected_count": 48,
+      "face_similarity_mean": 0.5366798552374045,
+      "face_similarity_median": 0.551568329334259,
+      "face_similarity_min": 0.21271046996116638,
+      "face_similarity_max": 0.6741567850112915
+    }
+  ],
+  "shot_prompt_face_rankings": [
+    {
+      "shot_prompt": "intimate macro detail of polished toes curling gently against rumpled white linen, with shallow depth of field and soft warm highlights",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.7100284844636917,
+      "face_similarity_median": 0.7108731269836426,
+      "face_similarity_min": 0.6373789310455322,
+      "face_similarity_max": 0.7722785472869873
+    },
+    {
+      "shot_prompt": "playful floor-level composition of an adult woman leaning toward the lens with direct eye contact, one hand holding the edge of her tiny skirt as underwear becomes visible",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6790609657764435,
+      "face_similarity_median": 0.710097998380661,
+      "face_similarity_min": 0.47633570432662964,
+      "face_similarity_max": 0.7812231183052063
+    },
+    {
+      "shot_prompt": "teasing low-angle portrait of an adult woman holding both sides of her short skirt hem above the camera, direct playful eye contact and matching panties visible",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6647571176290512,
+      "face_similarity_median": 0.6784520447254181,
+      "face_similarity_min": 0.5901628136634827,
+      "face_similarity_max": 0.7289971709251404
+    },
+    {
+      "shot_prompt": "close editorial detail of both feet inside ultra-sheer pantyhose, showing the fine fabric over polished toes while the rest of her pose falls into gentle bokeh",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6639232039451599,
+      "face_similarity_median": 0.6769548952579498,
+      "face_similarity_min": 0.5686528086662292,
+      "face_similarity_max": 0.7264649271965027
+    },
+    {
+      "shot_prompt": "top-down fashion composition centered on her bare feet against a richly textured rug, ankles close together and toes naturally relaxed",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6622493788599968,
+      "face_similarity_median": 0.6820639967918396,
+      "face_similarity_min": 0.539232611656189,
+      "face_similarity_max": 0.7291882038116455
+    },
+    {
+      "shot_prompt": "close beauty shot of both stockinged feet resting together on velvet, capturing sheer fabric texture, delicate toe shapes, and a subtle polished sheen",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6614574119448662,
+      "face_similarity_median": 0.6783964037895203,
+      "face_similarity_min": 0.5726369619369507,
+      "face_similarity_max": 0.704921543598175
+    },
+    {
+      "shot_prompt": "carefully staged under-skirt viewpoint with an adult woman lifting the hem slightly for the camera, thighs symmetrically framed and coordinated panties clearly visible",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6580360382795334,
+      "face_similarity_median": 0.6814112961292267,
+      "face_similarity_min": 0.5185977220535278,
+      "face_similarity_max": 0.7220001220703125
+    },
+    {
+      "shot_prompt": "symmetrical reclining composition with both bare soles nearest the lens, legs extending away from the camera, and her upper body centered in the distance",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6571003422141075,
+      "face_similarity_median": 0.697723388671875,
+      "face_similarity_min": 0.4346660375595093,
+      "face_similarity_max": 0.7504175901412964
+    },
+    {
+      "shot_prompt": "staged staircase upskirt-style fashion shot of an adult woman one step above the lens, looking back over her shoulder with underwear visible beneath the lifted skirt",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6554814651608467,
+      "face_similarity_median": 0.6656451225280762,
+      "face_similarity_min": 0.5513640642166138,
+      "face_similarity_max": 0.7255576848983765
+    },
+    {
+      "shot_prompt": "playful upward camera angle capturing an adult woman twirling a tiny pleated skirt, moving fabric framing a brief clear glimpse of coordinated panties",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6531910598278046,
+      "face_similarity_median": 0.6869073808193207,
+      "face_similarity_min": 0.5256354212760925,
+      "face_similarity_max": 0.7376003265380859
+    },
+    {
+      "shot_prompt": "consensual over-the-knee viewpoint of an adult woman deliberately posing close to the lens, skirt hem high in the foreground and underwear visible beyond her thighs",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6510180085897446,
+      "face_similarity_median": 0.6575497984886169,
+      "face_similarity_min": 0.5655544400215149,
+      "face_similarity_max": 0.7488746643066406
+    },
+    {
+      "shot_prompt": "consensual staged low-angle fashion photograph of an adult woman knowingly posing above the camera, short pleated skirt framing a clear teasing glimpse of matching underwear",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6493831425905228,
+      "face_similarity_median": 0.6714171469211578,
+      "face_similarity_min": 0.5419822335243225,
+      "face_similarity_max": 0.7159615755081177
+    },
+    {
+      "shot_prompt": "cinematic consensual upskirt-style composition of an adult woman posing above the lens beneath soft backlighting, skirt fabric glowing around a tasteful underwear reveal",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6484168097376823,
+      "face_similarity_median": 0.6618105471134186,
+      "face_similarity_min": 0.5416067838668823,
+      "face_similarity_max": 0.7212316989898682
+    },
+    {
+      "shot_prompt": "staged reclining upskirt-style photograph of an adult woman with knees bent and skirt gathered naturally at the thighs, underwear visible in soft flattering light",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6323604509234428,
+      "face_similarity_median": 0.6525824666023254,
+      "face_similarity_min": 0.5412613153457642,
+      "face_similarity_max": 0.7171770334243774
+    },
+    {
+      "shot_prompt": "lying on her stomach with ankles crossed and both feet kicked up behind her, bare soles facing the camera while she looks back with a teasing smile",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6310655549168587,
+      "face_similarity_median": 0.652594804763794,
+      "face_similarity_min": 0.3954886794090271,
+      "face_similarity_max": 0.7372441291809082
+    },
+    {
+      "shot_prompt": "cinematic floor-level photograph timed during a slow barefoot step, with one lifted heel, natural toe movement, and the full figure balanced in the background",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.6276240646839142,
+      "face_similarity_median": 0.6428641676902771,
+      "face_similarity_min": 0.4885437488555908,
+      "face_similarity_max": 0.736336350440979
+    },
+    {
+      "shot_prompt": "consensual seated low-angle shot of an adult woman near the edge of a chair, legs crossed loosely as the short skirt shifts to reveal matching underwear",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.625444196164608,
+      "face_similarity_median": 0.6327552199363708,
+      "face_similarity_min": 0.47957611083984375,
+      "face_similarity_max": 0.7466447353363037
+    },
+    {
+      "shot_prompt": "floor-level photograph beneath a short plaid skirt, with an adult woman aware of the camera, looking down with a teasing smile as her panties show",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.618414856493473,
+      "face_similarity_median": 0.6412353515625,
+      "face_similarity_min": 0.47836339473724365,
+      "face_similarity_max": 0.7047445774078369
+    },
+    {
+      "shot_prompt": "playful forced-perspective portrait with one bare foot reaching toward the camera, toes nearest the lens and her amused expression visible beyond it",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.5996353328227997,
+      "face_similarity_median": 0.6080617904663086,
+      "face_similarity_min": 0.4139760732650757,
+      "face_similarity_max": 0.7362047433853149
+    },
+    {
+      "shot_prompt": "full-body low floor-level composition with her relaxed bare feet nearest the lens, neatly polished toes in sharp focus, and her face clearly visible farther back",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.5990683846175671,
+      "face_similarity_median": 0.6491292417049408,
+      "face_similarity_min": 0.395168662071228,
+      "face_similarity_max": 0.6887178421020508
+    },
+    {
+      "shot_prompt": "reclining sideways with one leg stretched toward the camera, using controlled wide-angle perspective so her bare foot and softly curled toes fill the foreground",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.578666165471077,
+      "face_similarity_median": 0.6095447242259979,
+      "face_similarity_min": 0.3792608976364136,
+      "face_similarity_max": 0.6871946454048157
+    },
+    {
+      "shot_prompt": "warm backlit full-body silhouette emphasizing elegant feet and ankles as she rises onto tiptoe, with a crisp rim of golden light around her figure",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.5723748989403248,
+      "face_similarity_median": 0.6005363762378693,
+      "face_similarity_min": 0.3379836976528168,
+      "face_similarity_max": 0.6788697242736816
+    },
+    {
+      "shot_prompt": "elegant side-profile close-up of one arched bare foot with pointed toes, clean ankle line, soft skin detail, and flattering diffused light",
+      "image_count": 8,
+      "face_detected_count": 7,
+      "face_similarity_mean": 0.5659562306744712,
+      "face_similarity_median": 0.6668000221252441,
+      "face_similarity_min": 0.21271046996116638,
+      "face_similarity_max": 0.7359933853149414
+    },
+    {
+      "shot_prompt": "dramatic full-body fashion composition from below an adult woman in a short skirt, one leg forward, confident expression visible, and underwear deliberately revealed",
+      "image_count": 8,
+      "face_detected_count": 8,
+      "face_similarity_mean": 0.5418821275234222,
+      "face_similarity_median": 0.5163628160953522,
+      "face_similarity_min": 0.4292427599430084,
+      "face_similarity_max": 0.7003518342971802
+    }
+  ],
+  "contact_sheet_count": 24
+}
