@@ -5,7 +5,7 @@
   "identity_strength": 1.0,
   "face_weight": 0.0,
   "face_weight_start": 0.0,
-  "image_count": 14,
+  "image_count": 15,
   "image_files": [
     "20260821_133524_01.png",
     "20260821_133524_02.png",
@@ -20,6 +20,7 @@
     "20260825_benchmark_juggernaut_02.png",
     "20260825_benchmark_juggernaut_03.png",
     "20260825_benchmark_cyberrealistic_01.png",
-    "20260825_age_desire_01.png"
+    "20260825_age_desire_01.png",
+    "20260826_lora_sdxl_vaefix_01.png"
   ]
 }

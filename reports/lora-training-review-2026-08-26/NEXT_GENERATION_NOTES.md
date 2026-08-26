@@ -26,6 +26,18 @@ Run the grid on one close-up, one head-to-knees portrait, and one full-body port
 
 Use `Training/Luna Face LoRA Dataset v2` for the missing distance and body coverage. Generate 2-3 seeds per prompt and retain only one strong candidate from each prompt.
 
+### Aspect-ratio coverage
+
+The current 43-image V1 dataset contains portrait-orientation images only. The trainer has aspect-ratio bucketing enabled with `bucket_no_upscale`, so landscape, portrait, and square source images can be included without forcing everything into a square crop.
+
+For the 8-12 accepted V2 additions, aim for approximately:
+
+- 5-7 portrait images, primarily for head-to-knees and full-body coverage;
+- 2-3 square images with strong face or upper-body identity;
+- 1-2 landscape images for seated poses or wider environments where Luna still occupies a substantial part of the frame.
+
+Aspect-ratio variety helps prevent the LoRA from associating Luna only with vertical compositions, but it is secondary to face size and clarity. Do not keep a landscape image when distance makes the face tiny or soft. Prefer genuinely different images and poses rather than creating several crops of the same source image.
+
 For generating candidates with the existing LoRA, its current trigger remains `girl_named_luna`. For a clean retraining run, use a neutral unique trigger such as `luna_person` instead.
 
 Keep a candidate only when:
