@@ -23,6 +23,7 @@ import modules.sdxl_styles
 import modules.meta_parser
 import modules.prompt_config
 import modules.lora_notes
+import modules.lora_training
 import modules.history_db
 import args_manager
 import copy
@@ -1104,6 +1105,8 @@ with shared.gradio_root:
                     interactive=False,
                     wrap=True
                 )
+        with gr.Tab(label='LoRA Training', id='lora_training_tab'):
+            modules.lora_training.build_lora_training_ui()
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
             state_session_gallery = gr.State([])

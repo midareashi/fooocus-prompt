@@ -6,7 +6,7 @@
 - Kept in `outputs/2026-08-25`: 29 pairs
   - CyberRealistic XL Desire: 14
   - Juggernaut XL Ragnarok: 15
-- Moved to recoverable quarantine: 19 pairs
+- Permanently removed after review: 19 pairs
   - CyberRealistic XL Desire: 10
   - Juggernaut XL Ragnarok: 9
 - Every retained PNG still has its matching TXT caption.
@@ -15,7 +15,7 @@
   - Desire: 0.8022
   - Juggernaut: 0.7946
 
-The rejected files were moved rather than permanently deleted. They are under `rejected/Desire` and `rejected/Juggernaut`.
+The rejected image/caption pairs are permanently removed. Their filenames and rejection reasons remain below for audit history.
 
 ## Rejected Desire images
 
