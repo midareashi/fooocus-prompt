@@ -1,11 +1,17 @@
 // From A1111
 
+let modalGalleryRoot = null;
+let modalGalleryIndex = -1;
+
 function closeModal() {
     gradioApp().getElementById("lightboxModal").style.display = "none";
+    modalGalleryRoot = null;
+    modalGalleryIndex = -1;
 }
 
 function showModal(event) {
     const source = event.target || event.srcElement;
+    setModalGalleryContext(source);
     const modalImage = gradioApp().getElementById("modalImage");
     const lb = gradioApp().getElementById("lightboxModal");
     modalImage.src = source.src;
@@ -14,6 +20,7 @@ function showModal(event) {
     }
     lb.style.display = "flex";
     lb.focus();
+    updateModalNavigation();
 
     event.stopPropagation();
 }
@@ -25,10 +32,12 @@ function negmod(n, m) {
 function updateOnBackgroundChange() {
     const modalImage = gradioApp().getElementById("modalImage");
     if (modalImage && modalImage.offsetParent) {
-        let currentButton = selected_gallery_button();
+        const galleryButtons = all_gallery_buttons(modalGalleryRoot);
+        let currentButton = modalGalleryIndex >= 0 ? galleryButtons[modalGalleryIndex] : selected_gallery_button(galleryButtons);
 
-        if (currentButton?.children?.length > 0 && modalImage.src != currentButton.children[0].src) {
-            modalImage.src = currentButton.children[0].src;
+        const currentImage = currentButton?.querySelector('img');
+        if (currentImage && modalImage.src != currentImage.src) {
+            modalImage.src = currentImage.src;
             if (modalImage.style.display === 'none') {
                 const modal = gradioApp().getElementById("lightboxModal");
                 modal.style.setProperty('background-image', `url(${modalImage.src})`);
@@ -37,8 +46,9 @@ function updateOnBackgroundChange() {
     }
 }
 
-function all_gallery_buttons() {
-    var allGalleryButtons = gradioApp().querySelectorAll('.image_gallery .thumbnails > .thumbnail-item.thumbnail-small');
+function all_gallery_buttons(galleryRoot = null) {
+    const root = galleryRoot && galleryRoot.isConnected ? galleryRoot : gradioApp();
+    var allGalleryButtons = root.querySelectorAll('.thumbnails > .thumbnail-item');
     var visibleGalleryButtons = [];
     allGalleryButtons.forEach(function(elem) {
         if (elem.parentElement.offsetParent) {
@@ -48,33 +58,48 @@ function all_gallery_buttons() {
     return visibleGalleryButtons;
 }
 
-function selected_gallery_button() {
-    return all_gallery_buttons().find(elem => elem.classList.contains('selected')) ?? null;
+function selected_gallery_button(galleryButtons = all_gallery_buttons(modalGalleryRoot)) {
+    return galleryButtons.find(elem => elem.classList.contains('selected')) ?? null;
 }
 
-function selected_gallery_index() {
-    return all_gallery_buttons().findIndex(elem => elem.classList.contains('selected'));
+function selected_gallery_index(galleryButtons = all_gallery_buttons(modalGalleryRoot)) {
+    return galleryButtons.findIndex(elem => elem.classList.contains('selected'));
+}
+
+function setModalGalleryContext(source) {
+    modalGalleryRoot = source?.closest?.('.image_gallery') ?? null;
+    const galleryButtons = all_gallery_buttons(modalGalleryRoot);
+    const sourceButton = source?.closest?.('.thumbnail-item') ?? null;
+    modalGalleryIndex = sourceButton ? galleryButtons.indexOf(sourceButton) : selected_gallery_index(galleryButtons);
+}
+
+function updateModalNavigation() {
+    const hasMultipleImages = all_gallery_buttons(modalGalleryRoot).length > 1;
+    const modal = gradioApp().getElementById('lightboxModal');
+    modal?.querySelector('.modalPrev')?.classList.toggle('modal-navigation-hidden', !hasMultipleImages);
+    modal?.querySelector('.modalNext')?.classList.toggle('modal-navigation-hidden', !hasMultipleImages);
 }
 
 function modalImageSwitch(offset) {
-    var galleryButtons = all_gallery_buttons();
+    var galleryButtons = all_gallery_buttons(modalGalleryRoot);
 
     if (galleryButtons.length > 1) {
-        var currentButton = selected_gallery_button();
-
-        var result = -1;
-        galleryButtons.forEach(function(v, i) {
-            if (v == currentButton) {
-                result = i;
-            }
-        });
+        var result = modalGalleryIndex;
+        if (result < 0 || result >= galleryButtons.length) {
+            result = selected_gallery_index(galleryButtons);
+        }
 
         if (result != -1) {
             var nextButton = galleryButtons[negmod((result + offset), galleryButtons.length)];
-            nextButton.click();
+            modalGalleryIndex = galleryButtons.indexOf(nextButton);
+            if (modalGalleryRoot?.id !== 'history_selected_gallery') {
+                nextButton.click();
+            }
             const modalImage = gradioApp().getElementById("modalImage");
             const modal = gradioApp().getElementById("lightboxModal");
-            modalImage.src = nextButton.children[0].src;
+            const nextImage = nextButton.querySelector('img');
+            if (!nextImage) return;
+            modalImage.src = nextImage.src;
             if (modalImage.style.display === 'none') {
                 modal.style.setProperty('background-image', `url(${modalImage.src})`);
             }
@@ -151,6 +176,27 @@ function setupImageForLightbox(e) {
 
 }
 
+function setupHistorySelectedImageForLightbox(image) {
+    if (image.dataset.historyLightboxModded) return;
+
+    image.dataset.historyLightboxModded = true;
+    image.style.cursor = 'zoom-in';
+    image.style.userSelect = 'none';
+    image.addEventListener('click', function(evt) {
+        if (evt.button == 1) {
+            open(evt.target.src);
+            evt.preventDefault();
+            return;
+        }
+        if (evt.button != 0) return;
+
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+        modalZoomSet(gradioApp().getElementById('modalImage'), true);
+        showModal(evt);
+    }, true);
+}
+
 function modalZoomSet(modalImage, enable) {
     if (modalImage) modalImage.classList.toggle('modalImageFullscreen', !!enable);
 }
@@ -181,6 +227,8 @@ onAfterUiUpdate(function() {
     if (fullImg_preview != null) {
         fullImg_preview.forEach(setupImageForLightbox);
     }
+    gradioApp().querySelectorAll('#history_selected_gallery .thumbnail-item img')
+        .forEach(setupHistorySelectedImageForLightbox);
     updateOnBackgroundChange();
 });
 

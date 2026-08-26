@@ -1026,8 +1026,8 @@ with shared.gradio_root:
             history_save_curation_button = gr.Button(value='Save Curation',
                                                      elem_id='history_save_curation_button',
                                                      visible=False)
-            with gr.Row():
-                with gr.Column(scale=1, min_width=220):
+            with gr.Row(elem_id='history_gallery_row'):
+                with gr.Column(scale=1, min_width=220, elem_id='history_thumbnail_column'):
                     with gr.Row(elem_id='history_thumbnail_bulk_actions'):
                         history_bulk_delete_button = gr.Button(value='🗑', elem_id='history_bulk_delete_button',
                                                                 elem_classes='history-thumbnail-bulk-action')
@@ -1055,7 +1055,7 @@ with shared.gradio_root:
                                                                choices=['Finished only', 'Finished + previews', 'Previews only'],
                                                                value='Finished only',
                                                                elem_id='history_preview_visibility')
-                with gr.Column(scale=4):
+                with gr.Column(scale=4, elem_id='history_selected_column'):
                     history_selected_gallery = gr.Gallery(label='Selected Images', show_label=True,
                                                           object_fit='contain', columns=2,
                                                           height=820, preview=False, allow_preview=False,

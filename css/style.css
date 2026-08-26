@@ -465,13 +465,35 @@ div:has(> #positive_prompt) {
     overflow-y: auto !important;
 }
 
+#history_gallery_row {
+    align-items: flex-start;
+    overflow: visible;
+}
+
+#history_thumbnail_column,
+#history_selected_column {
+    align-self: flex-start;
+    min-width: 0;
+}
+
+#history_thumbnail_column {
+    gap: 0;
+}
+
 #history_thumbnail_bulk_actions {
+    position: sticky;
+    top: 8px;
+    z-index: 20;
     display: flex;
     justify-content: flex-end;
-    min-height: 38px;
+    height: 0;
+    min-height: 0;
     box-sizing: border-box;
-    padding: 4px 0;
+    overflow: visible;
+    padding: 0 8px;
+    margin: 0;
     gap: 6px;
+    pointer-events: none;
 }
 
 #history_thumbnail_bulk_actions .history-thumbnail-bulk-action,
@@ -489,6 +511,7 @@ div:has(> #positive_prompt) {
     font-size: 15px;
     line-height: 24px;
     cursor: pointer;
+    pointer-events: auto;
 }
 
 #history_thumbnail_bulk_actions .history-thumbnail-bulk-action:hover,
@@ -1002,6 +1025,10 @@ div:has(> #positive_prompt) {
 .modalPrev:hover,
 .modalNext:hover {
   background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-navigation-hidden {
+  display: none;
 }
 
 #imageARPreview {
