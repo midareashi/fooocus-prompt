@@ -199,6 +199,19 @@ def preprocess(img, ip_adapter_path):
     return ip_conds, ip_unconds
 
 
+def get_ip_adapter_effective_weight(task, current_step):
+    _, cn_stop, cn_weight = task[:3]
+    cn_start = task[3] if len(task) > 3 else 0.0
+    if not cn_start <= current_step < cn_stop:
+        return None
+
+    if len(task) > 4 and task[4]:
+        ramp = (current_step - cn_start) / max(cn_stop - cn_start, 1e-5)
+        return cn_weight * max(0.0, min(1.0, ramp))
+
+    return cn_weight
+
+
 @torch.no_grad()
 @torch.inference_mode()
 def patch_model(model, tasks):
@@ -217,12 +230,8 @@ def patch_model(model, tasks):
 
             for task in tasks:
                 (cs, ucs), cn_stop, cn_weight = task[:3]
-                cn_start = task[3] if len(task) > 3 else 0.0
-                if cn_start <= current_step < cn_stop:
-                    effective_weight = cn_weight
-                    if len(task) > 4 and task[4]:
-                        ramp = (current_step - cn_start) / max(cn_stop - cn_start, 1e-5)
-                        effective_weight = cn_weight * max(0.0, min(1.0, ramp))
+                effective_weight = get_ip_adapter_effective_weight(task, current_step)
+                if effective_weight is not None:
                     ip_k_c = cs[ip_index * 2].to(q)
                     ip_v_c = cs[ip_index * 2 + 1].to(q)
                     ip_k_uc = ucs[ip_index * 2].to(q)

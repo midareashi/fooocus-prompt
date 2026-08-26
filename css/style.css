@@ -420,6 +420,42 @@ div:has(> #positive_prompt) {
     border-radius: 6px;
 }
 
+/* One reusable backdrop for every grouped-seed thumbnail. The group's real
+   first image is layered on top by the browser, so no per-group stack image
+   needs to be rendered or cached on disk. */
+#history_thumbnail_gallery .thumbnail-item.history-seed-stack {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: transparent;
+}
+
+#history_thumbnail_gallery .thumbnail-item.history-seed-stack::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: center / 100% 100% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 176 176'%3E%3Cdefs%3E%3Cfilter id='s' x='-20%25' y='-20%25' width='150%25' height='150%25'%3E%3CfeDropShadow dx='3' dy='4' stdDeviation='3' flood-color='%23000' flood-opacity='.34'/%3E%3C/filter%3E%3ClinearGradient id='g1' x2='0' y2='1'%3E%3Cstop stop-color='%233c485c'/%3E%3Cstop offset='1' stop-color='%237e91a6'/%3E%3C/linearGradient%3E%3ClinearGradient id='g2' x2='0' y2='1'%3E%3Cstop stop-color='%23495269'/%3E%3Cstop offset='1' stop-color='%238e8070'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg filter='url(%23s)' stroke='%23dae2ea' stroke-width='2'%3E%3Crect x='27' y='9' width='140' height='140' rx='5' fill='url(%23g1)'/%3E%3Crect x='20' y='17' width='140' height='140' rx='5' fill='url(%23g2)'/%3E%3Crect x='12' y='26' width='140' height='140' rx='5' fill='%23f5f8fa'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+#history_thumbnail_gallery .thumbnail-item.history-seed-stack > img {
+    position: absolute;
+    left: 8%;
+    top: 16%;
+    z-index: 1;
+    width: 78%;
+    height: 78%;
+    object-fit: cover;
+    border: 2px solid #f5f8fa;
+    border-radius: 3px;
+    box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.34);
+}
+
+#history_thumbnail_gallery .thumbnail-item.history-seed-stack .caption,
+#history_thumbnail_gallery .thumbnail-item.history-seed-stack .thumbnail-label {
+    z-index: 2;
+}
+
 #history_thumbnail_view_controls {
     margin-top: 6px;
     gap: 6px;

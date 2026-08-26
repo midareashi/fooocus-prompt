@@ -529,6 +529,28 @@ def is_person_likeness_active(async_task):
     )
 
 
+def get_person_likeness_face_guidance(async_task):
+    if not is_person_likeness_active(async_task):
+        return None
+
+    try:
+        face_weight = max(
+            0.0,
+            min(
+                modules.config.default_person_likeness_face_weight_max,
+                float(async_task.person_likeness_face_weight)
+            )
+        )
+        face_start = max(0.0, min(0.95, float(async_task.person_likeness_face_start)))
+    except (TypeError, ValueError):
+        return None
+
+    if face_weight <= 0:
+        return None
+
+    return face_weight, face_start
+
+
 class EarlyReturnException(BaseException):
     pass
 
@@ -865,34 +887,27 @@ def worker():
             if async_task.debugging_cn_preprocessor:
                 yield_result(async_task, cn_img, current_progress, async_task.black_out_nsfw, do_not_show_finished_images=True)
         person_face_tasks = []
-        if is_person_likeness_active(async_task) and isinstance(ip_adapter_face_path, str):
-            face_weight = max(
-                0.0,
-                min(
-                    modules.config.default_person_likeness_face_weight_max,
-                    float(async_task.person_likeness_face_weight)
-                )
-            )
-            if face_weight > 0:
-                face_start = max(0.0, min(0.95, float(async_task.person_likeness_face_start)))
-                prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
-                ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
-                if ip_cache_key in person_likeness_ip_adapter_cache:
-                    print(f'[Person Likeness] Using cached FaceSwap embeddings for {len(prepared_images)} image(s).')
-                    cached_ip_tasks = person_likeness_ip_adapter_cache[ip_cache_key]
-                else:
-                    cached_ip_tasks = [
-                        ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
-                        for cn_img in prepared_images
-                    ]
-                    person_likeness_ip_adapter_cache[ip_cache_key] = cached_ip_tasks
-                    if len(person_likeness_ip_adapter_cache) > 12:
-                        oldest_key = next(iter(person_likeness_ip_adapter_cache))
-                        del person_likeness_ip_adapter_cache[oldest_key]
-                    print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+        face_guidance = get_person_likeness_face_guidance(async_task)
+        if face_guidance is not None and isinstance(ip_adapter_face_path, str):
+            face_weight, face_start = face_guidance
+            prepared_images = get_prepared_person_likeness_images(async_task, current_progress)
+            ip_cache_key = (async_task.person_likeness_cache_key, ip_adapter_face_path)
+            if ip_cache_key in person_likeness_ip_adapter_cache:
+                print(f'[Person Likeness] Using cached FaceSwap embeddings for {len(prepared_images)} image(s).')
+                cached_ip_tasks = person_likeness_ip_adapter_cache[ip_cache_key]
+            else:
+                cached_ip_tasks = [
+                    ip_adapter.preprocess(cn_img, ip_adapter_path=ip_adapter_face_path)
+                    for cn_img in prepared_images
+                ]
+                person_likeness_ip_adapter_cache[ip_cache_key] = cached_ip_tasks
+                if len(person_likeness_ip_adapter_cache) > 12:
+                    oldest_key = next(iter(person_likeness_ip_adapter_cache))
+                    del person_likeness_ip_adapter_cache[oldest_key]
+                print(f'[Person Likeness] Cached FaceSwap embeddings for {len(prepared_images)} image(s).')
 
-                for cached_ip_task in cached_ip_tasks:
-                    person_face_tasks.append([cached_ip_task, 0.95, face_weight, face_start, True])
+            for cached_ip_task in cached_ip_tasks:
+                person_face_tasks.append([cached_ip_task, 0.95, face_weight, face_start, True])
 
         all_ip_tasks = async_task.cn_tasks[flags.cn_ip] + async_task.cn_tasks[flags.cn_ip_face] + person_face_tasks
         if len(all_ip_tasks) > 0:
@@ -1480,7 +1495,6 @@ def worker():
                         async_task.prompt = async_task.inpaint_additional_prompt + '\n' + async_task.prompt
                 goals.append('inpaint')
         if async_task.current_tab == 'ip' or \
-                (is_person_likeness_active(async_task) and float(async_task.person_likeness_face_weight) > 0) or \
                 async_task.mixing_image_prompt_and_vary_upscale or \
                 async_task.mixing_image_prompt_and_inpaint:
             goals.append('cn')
@@ -1492,9 +1506,6 @@ def worker():
             if len(async_task.cn_tasks[flags.cn_ip]) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_path = modules.config.downloading_ip_adapters('ip')
             if len(async_task.cn_tasks[flags.cn_ip_face]) > 0:
-                clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
-                    'face')
-            if is_person_likeness_active(async_task) and float(async_task.person_likeness_face_weight) > 0:
                 clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters(
                     'face')
         if async_task.current_tab == 'enhance' and async_task.enhance_input_image is not None:
@@ -1718,6 +1729,15 @@ def worker():
                 async_task, base_model_additional_loras, clip_vision_path, controlnet_canny_path, controlnet_cpds_path,
                 goals, inpaint_head_model_path, inpaint_image, inpaint_mask, inpaint_parameterized, ip_adapter_face_path,
                 ip_adapter_path, ip_negative_path, skip_prompt_processing, use_synthetic_refiner)
+
+        face_guidance = get_person_likeness_face_guidance(async_task)
+        if face_guidance is not None:
+            if 'cn' not in goals:
+                goals.append('cn')
+            clip_vision_path, ip_negative_path, ip_adapter_face_path = modules.config.downloading_ip_adapters('face')
+            face_weight, face_start = face_guidance
+            print(f'[Person Likeness] Face guidance enabled: weight={face_weight:g}, '
+                  f'start={face_start:g}, stop=0.95.')
 
         # Load or unload CNs
         progressbar(async_task, current_progress, 'Loading control models ...')

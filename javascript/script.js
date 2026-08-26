@@ -670,6 +670,7 @@ function installHistoryThumbnailSelection() {
     const selectedIds = getHistorySelectedIds();
     const items = Array.from(gallery.querySelectorAll('.thumbnail-item'));
     items.forEach(function(item, index) {
+        item.classList.toggle('history-seed-stack', getHistorySelectionRefFromThumb(item).startsWith('stack:'));
         if (item.dataset.historySelectionInstalled !== 'true') {
             item.dataset.historySelectionInstalled = 'true';
             item.addEventListener('pointerdown', function(event) {

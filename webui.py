@@ -7,7 +7,6 @@ import ast
 import time
 import re
 import threading
-import hashlib
 from datetime import date, datetime, timedelta
 import shared
 import modules.config
@@ -3400,73 +3399,10 @@ with shared.gradio_root:
                     paths = [row['path'] for row in rows if row.get('file_exists') and os.path.exists(row.get('path', ''))]
                     if len(paths) == 0:
                         return None
-                    if len(paths) == 1:
-                        return paths[0]
-
-                    signature_parts = []
-                    for path in paths[:4]:
-                        try:
-                            signature_parts.append(f'{path}:{os.path.getmtime(path)}')
-                        except Exception:
-                            signature_parts.append(path)
-                    cache_key = hashlib.sha1(('minimal-v2|' + '|'.join(signature_parts)).encode('utf-8')).hexdigest()
-                    cache_dir = os.path.join(modules.config.path_outputs, 'history_stacks')
-                    os.makedirs(cache_dir, exist_ok=True)
-                    thumbnail_path = os.path.join(cache_dir, f'{cache_key}.png')
-                    if os.path.exists(thumbnail_path):
-                        return thumbnail_path
-
-                    from PIL import Image, ImageDraw, ImageOps
-
-                    canvas_size = 176
-                    card_size = 138
-                    border = 2
-                    canvas = Image.new('RGBA', (canvas_size, canvas_size), (0, 0, 0, 0))
-                    offsets = [(24, 14), (18, 20), (12, 26)]
-
-                    def make_placeholder(index):
-                        colors = [
-                            ((60, 72, 92), (126, 145, 166)),
-                            ((73, 82, 105), (142, 128, 112)),
-                        ]
-                        start, end = colors[index % len(colors)]
-                        image = Image.new('RGB', (card_size, card_size), start)
-                        draw = ImageDraw.Draw(image)
-                        for y in range(card_size):
-                            ratio = y / max(1, card_size - 1)
-                            color = tuple(int(start[channel] * (1 - ratio) + end[channel] * ratio) for channel in range(3))
-                            draw.line([(0, y), (card_size, y)], fill=color)
-                        draw.rectangle([12, card_size - 44, card_size - 16, card_size - 34], fill=(220, 226, 232))
-                        draw.rectangle([18, card_size - 28, card_size - 48, card_size - 20], fill=(178, 190, 204))
-                        return image
-
-                    def make_card(thumb):
-                        card = Image.new('RGBA', (card_size + border * 2, card_size + border * 2), (245, 248, 250, 255))
-                        card.paste(thumb, (border, border))
-                        draw = ImageDraw.Draw(card)
-                        draw.rectangle([0, 0, card.width - 1, card.height - 1], outline=(218, 226, 234, 255), width=1)
-                        return card
-
-                    for depth in range(min(len(paths), 3) - 1, 0, -1):
-                        card = make_card(make_placeholder(depth))
-                        x, y = offsets[min(depth, len(offsets) - 1)]
-                        shadow = Image.new('RGBA', card.size, (0, 0, 0, 40))
-                        canvas.alpha_composite(shadow, (x + 4, y + 5))
-                        canvas.alpha_composite(card, (x, y))
-
-                    try:
-                        with Image.open(paths[0]) as image:
-                            thumb = ImageOps.fit(image.convert('RGB'), (card_size, card_size), method=Image.Resampling.LANCZOS)
-                        card = make_card(thumb)
-                        shadow = Image.new('RGBA', card.size, (0, 0, 0, 50))
-                        x, y = offsets[0]
-                        canvas.alpha_composite(shadow, (x + 4, y + 5))
-                        canvas.alpha_composite(card, (x, y))
-                    except Exception:
-                        return None
-
-                    canvas.save(thumbnail_path)
-                    return thumbnail_path
+                    # The browser layers this real image over one shared stack
+                    # backdrop. Avoid creating a separate composite PNG for
+                    # every seed group.
+                    return paths[0]
 
                 def format_grouped_history_gallery_items(rows):
                     gallery_items = []
