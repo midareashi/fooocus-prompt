@@ -1518,42 +1518,6 @@ with shared.gradio_root:
                         ).then(
                             lambda: None, _js='()=>{refresh_wildprompt_localization();}')
 
-                        wildprompt_refresh = gr.Button(label='Refresh', value='Refresh All Wildprompts',
-                                                       variant='secondary', elem_classes='refresh_button')
-
-                        wildprompt_refresh.click(
-                            wildprompt_sorter.refresh_wildprompt_chip_browser,
-                            inputs=[wildprompt_selections, wildprompt_folder_chips, wildprompt_search_bar],
-                            outputs=[wildprompt_folder_chips, wildprompt_selections],
-                            queue=False,
-                            show_progress=False
-                        ).then(
-                            wildprompt_sorter.sync_wildprompt_generate_all_files,
-                            inputs=[wildprompt_selections, wildprompt_generate_all],
-                            outputs=wildprompt_generate_all,
-                            queue=False,
-                            show_progress=False
-                        ).then(
-                            wildprompt_sorter.update_wildprompt_line_sections,
-                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
-                            outputs=wildprompt_line_section_outputs,
-                            queue=False,
-                            show_progress=False
-                        ).then(
-                            wildprompt_sorter.encode_wildprompt_line_selections,
-                            inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
-                            outputs=wildprompt_line_selection_json,
-                            queue=False,
-                            show_progress=False
-                        ).then(
-                            wildprompt_sorter.build_wildprompt_combination_summary,
-                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
-                                    wildprompt_line_selection_json, wildprompt_generation_factors],
-                            outputs=wildprompt_combination_summary,
-                            queue=False,
-                            show_progress=False
-                        )
-
                     with gr.Accordion(label='Person Likeness', open=False):
                         person_likeness_ctrls = []
                         with gr.Row():
@@ -2497,6 +2461,13 @@ with shared.gradio_root:
                                             gr.update(choices=['None'] + modules.config.lora_filenames), gr.update()]
                             return results
 
+                        def refresh_saved_reference_choices(saved_person, saved_prompt_config):
+                            return (
+                                gr.update(choices=list_saved_people(), value=saved_person),
+                                gr.update(choices=modules.prompt_config.list_prompt_configs(),
+                                          value=saved_prompt_config),
+                            )
+
                         def clear_all_loras_clicked():
                             lora_updates = []
                             for _ in range(modules.config.default_max_lora_number):
@@ -2510,8 +2481,53 @@ with shared.gradio_root:
                         refresh_files_output = [base_model, multi_checkpoint_models, refiner_model, vae_name, testing_loras]
                         if not args_manager.args.disable_preset_selection:
                             refresh_files_output += [preset_selection]
-                        refresh_files.click(refresh_files_clicked, [], refresh_files_output + lora_ctrls,
-                                            queue=False, show_progress=False)
+                        refresh_files.click(
+                            refresh_files_clicked,
+                            [],
+                            refresh_files_output + lora_ctrls,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.refresh_wildprompt_chip_browser,
+                            inputs=[wildprompt_selections, wildprompt_folder_chips, wildprompt_search_bar],
+                            outputs=[wildprompt_folder_chips, wildprompt_selections],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.sync_wildprompt_generate_all_files,
+                            inputs=[wildprompt_selections, wildprompt_generate_all],
+                            outputs=wildprompt_generate_all,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.update_wildprompt_line_sections,
+                            inputs=[wildprompt_selections, wildprompt_line_selection_json],
+                            outputs=wildprompt_line_section_outputs,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.encode_wildprompt_line_selections,
+                            inputs=[wildprompt_selections] + wildprompt_line_selection_ctrls,
+                            outputs=wildprompt_line_selection_json,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
+                                    wildprompt_line_selection_json, wildprompt_generation_factors],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            refresh_saved_reference_choices,
+                            inputs=[saved_person_selection, prompt_config_selection],
+                            outputs=[saved_person_selection, prompt_config_selection],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            lambda: None,
+                            _js='()=>{refresh_wildprompt_localization();}'
+                        )
                         clear_all_loras.click(clear_all_loras_clicked, [],
                                               lora_ctrls + lora_prompt_ctrls + lora_note_buttons +
                                               lora_note_add_buttons + lora_note_editor_cols,
