@@ -270,6 +270,7 @@ class AsyncTask:
                     enhance_mask_invert
                 ])
         self.generation_tags = str(args.pop() or '').strip() if len(args) > 0 else ''
+        self.wildprompt_test_separately = bool(args.pop()) if len(args) > 0 else False
         self.should_enhance = self.enhance_checkbox and (self.enhance_uov_method != disabled.casefold() or len(self.enhance_ctrls) > 0)
         self.images_to_enhance_count = 0
         self.enhance_stats = {}
@@ -419,7 +420,16 @@ def get_task_summary(task):
             getattr(task, 'wildprompt_generate_all', False),
         )
     generate_all_files = generate_all_files or []
-    if len(generate_all_files) > 0 and len(wildprompt_selections) > 0:
+    if bool(getattr(task, 'wildprompt_test_separately', False)) and len(wildprompt_selections) > 0:
+        try:
+            from modules.sdxl_styles import get_wildprompt_separate_entries
+            total_images *= max(1, len(get_wildprompt_separate_entries(
+                wildprompt_selections,
+                getattr(task, 'wildprompt_line_selections', {})
+            )))
+        except Exception:
+            pass
+    elif len(generate_all_files) > 0 and len(wildprompt_selections) > 0:
         try:
             from modules.sdxl_styles import get_wildprompt_fixed_combinations
             total_images *= max(1, len(get_wildprompt_fixed_combinations(
@@ -586,7 +596,7 @@ def worker():
     from extras.censor import default_censor
     from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
                                      random_style_name, resolve_wildprompts,
-                                     get_wildprompt_fixed_combinations)
+                                     get_wildprompt_fixed_combinations, get_wildprompt_separate_entries)
     from modules.private_logger import log, write_training_caption
     from extras.expansion import safe_str
     from modules.util import (remove_empty_str, HWC3, resize_image, get_image_shape_ceil, set_image_shape_ceil,
@@ -742,6 +752,8 @@ def worker():
                  ('Generate All Wildprompts', 'wildprompt_generate_all', async_task.wildprompt_generate_all),
                  ('Generate All Wildprompt Files', 'wildprompt_generate_all_files',
                   str(async_task.wildprompt_generate_all_files)),
+                 ('Test Wildprompt Files Separately', 'wildprompt_test_separately',
+                  async_task.wildprompt_test_separately),
                  ('Wildprompt Line Selections', 'wildprompt_line_selections',
                   json.dumps(async_task.wildprompt_line_selections, ensure_ascii=False)),
                  ('Quick Preview', 'quick_preview', async_task.quick_preview),
@@ -1200,10 +1212,21 @@ def worker():
             current_progress += 1
         progressbar(async_task, current_progress, 'Processing prompts ...')
         tasks = []
-        raw_wildprompt_selections = copy.deepcopy(async_task.wildprompt_selections)
         use_wildprompt = len(async_task.wildprompt_selections) > 0
         wildprompt_combinations = []
-        if len(async_task.wildprompt_generate_all_files) > 0 and len(async_task.wildprompt_selections) > 0:
+        separate_wildprompt_entries = []
+        if async_task.wildprompt_test_separately and len(async_task.wildprompt_selections) > 0:
+            separate_wildprompt_entries = get_wildprompt_separate_entries(
+                async_task.wildprompt_selections,
+                async_task.wildprompt_line_selections,
+            )
+            wildprompt_combinations = [
+                {entry['name']: entry['prompt']}
+                for entry in separate_wildprompt_entries
+            ]
+            print(f'[Wildprompts] Separate test expanded {len(async_task.wildprompt_selections)} file(s) '
+                  f'to {len(separate_wildprompt_entries)} individual row(s).')
+        elif len(async_task.wildprompt_generate_all_files) > 0 and len(async_task.wildprompt_selections) > 0:
             wildprompt_combinations = get_wildprompt_fixed_combinations(
                 async_task.wildprompt_selections,
                 async_task.wildprompt_generate_all_files,
@@ -1225,8 +1248,10 @@ def worker():
             wildprompt_index = i // image_number
             fixed_wildprompt_lines = wildprompt_combinations[wildprompt_index] \
                 if len(wildprompt_combinations) > 0 else None
+            task_wildprompt_selections = [separate_wildprompt_entries[wildprompt_index]['name']] \
+                if len(separate_wildprompt_entries) > 0 else async_task.wildprompt_selections
             resolved_wildprompts = resolve_wildprompts(
-                async_task.wildprompt_selections,
+                task_wildprompt_selections,
                 task_rng,
                 async_task.wildprompt_line_selections,
                 fixed_wildprompt_lines,
@@ -1295,7 +1320,7 @@ def worker():
                 log_positive_prompt='\n'.join([task_prompt] + task_extra_positive_prompts),
                 log_negative_prompt='\n'.join([task_negative_prompt] + task_extra_negative_prompts),
                 styles=task_styles,
-                wildprompts=raw_wildprompt_selections,
+                wildprompts=task_wildprompt_selections,
                 resolved_wildprompts=resolved_wildprompts,
             ))
         if use_expansion:

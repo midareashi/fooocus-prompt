@@ -172,6 +172,24 @@ class TestWildprompts(unittest.TestCase):
         )
         self.assertEqual(['Clothes/Dress'], update['value'])
 
+    def test_separate_entries_flatten_selected_files_without_combining_them(self):
+        entries = sdxl_styles.get_wildprompt_separate_entries(
+            ['Clothes/Dress', 'Locations/Places'],
+            {
+                'Clothes/Dress': ['green dress'],
+                'Locations/Places': ['garden', 'rooftop'],
+            },
+        )
+
+        self.assertEqual(
+            [
+                {'name': 'Clothes/Dress', 'prompt': 'green dress'},
+                {'name': 'Locations/Places', 'prompt': 'garden'},
+                {'name': 'Locations/Places', 'prompt': 'rooftop'},
+            ],
+            entries,
+        )
+
     def test_selected_files_remain_in_alphabetical_folder_and_name_order(self):
         update = wildprompt_sorter.filter_wildprompts_by_folders(
             ['Poses/Poses', 'Clothes/Dress'],
@@ -207,6 +225,7 @@ class TestWildprompts(unittest.TestCase):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
             True,
+            False,
             '{}',
         )
 
@@ -217,6 +236,7 @@ class TestWildprompts(unittest.TestCase):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
             ['Poses/Poses'],
+            False,
             '{}',
             wildprompt_sorter.build_generation_factors(image_number=4),
         )
@@ -242,6 +262,7 @@ class TestWildprompts(unittest.TestCase):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Scenes/Three Prompts'],
             True,
+            False,
             '{}',
             factors,
         )
@@ -263,6 +284,7 @@ class TestWildprompts(unittest.TestCase):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Scenes/Three Prompts'],
             True,
+            False,
             '{}',
             factors,
         )
@@ -277,12 +299,27 @@ class TestWildprompts(unittest.TestCase):
         summary = wildprompt_sorter.build_wildprompt_combination_summary(
             ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
             False,
+            False,
             '{}',
             factors,
         )
 
         self.assertIn('4 total images', summary)
         self.assertIn('Random mix', summary)
+
+    def test_separate_test_summary_adds_rows_instead_of_multiplying_files(self):
+        factors = wildprompt_sorter.build_generation_factors(image_number=2)
+        summary = wildprompt_sorter.build_wildprompt_combination_summary(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            True,
+            True,
+            '{}',
+            factors,
+        )
+
+        self.assertIn('12 total images', summary)
+        self.assertIn('6 separate row(s) &times; 2 Image Number', summary)
+        self.assertIn('each image uses exactly one row from one file', summary)
 
     def test_explicit_empty_row_selection_survives_section_refresh(self):
         updates = wildprompt_sorter.update_wildprompt_line_sections(

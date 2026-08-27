@@ -1,0 +1,833 @@
+[
+  {
+    "name": "Clothes/Babydolls and Lace",
+    "sheet": "contact_sheets/Babydolls_and_Lace.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a sheer ivory lace babydoll with delicate floral embroidery, a matching lace thong, and white thigh-high stockings, barefoot",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-50-29_3602.png",
+            "filename": "2026-08-27_10-50-29_3602.png",
+            "created_at": "2026-08-27T14:50:30Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-50-50_4151.png",
+            "filename": "2026-08-27_10-50-50_4151.png",
+            "created_at": "2026-08-27T14:50:51Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a tiny blush-pink chiffon babydoll with satin bows, matching panties, and sheer nude stockings, barefoot",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-51-11_4970.png",
+            "filename": "2026-08-27_10-51-11_4970.png",
+            "created_at": "2026-08-27T14:51:12Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-51-31_3719.png",
+            "filename": "2026-08-27_10-51-31_3719.png",
+            "created_at": "2026-08-27T14:51:32Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a black lace babydoll with scalloped cups, a matching thong, and sheer black thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-51-52_6037.png",
+            "filename": "2026-08-27_10-51-52_6037.png",
+            "created_at": "2026-08-27T14:51:53Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-52-13_8269.png",
+            "filename": "2026-08-27_10-52-13_8269.png",
+            "created_at": "2026-08-27T14:52:14Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a deep burgundy mesh babydoll with embroidered lace panels, matching panties, and black seamed stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-52-35_2478.png",
+            "filename": "2026-08-27_10-52-35_2478.png",
+            "created_at": "2026-08-27T14:52:35Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-52-56_9902.png",
+            "filename": "2026-08-27_10-52-56_9902.png",
+            "created_at": "2026-08-27T14:52:57Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a powder-blue lace-trimmed babydoll with a satin ribbon under the bust, matching panties, and white stockings, barefoot",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-53-17_2146.png",
+            "filename": "2026-08-27_10-53-17_2146.png",
+            "created_at": "2026-08-27T14:53:18Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-53-39_2866.png",
+            "filename": "2026-08-27_10-53-39_2866.png",
+            "created_at": "2026-08-27T14:53:40Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Bikinis and Swimwear",
+    "sheet": "contact_sheets/Bikinis_and_Swimwear.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a glossy black string bikini with sliding triangle cups, slender halter ties, and minimal tie-side bottoms",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-10-28_7961.png",
+            "filename": "2026-08-27_11-10-28_7961.png",
+            "created_at": "2026-08-27T15:10:29Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-10-49_7668.png",
+            "filename": "2026-08-27_11-10-49_7668.png",
+            "created_at": "2026-08-27T15:10:50Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a red-and-white retro bikini with a structured sweetheart top and high-waisted bottoms finished with small buttons",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-11-09_8703.png",
+            "filename": "2026-08-27_11-11-09_8703.png",
+            "created_at": "2026-08-27T15:11:10Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-11-29_6229.png",
+            "filename": "2026-08-27_11-11-29_6229.png",
+            "created_at": "2026-08-27T15:11:30Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a white cutout one-piece swimsuit with a plunging neckline, open sides, and polished gold ring connectors",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-11-51_7839.png",
+            "filename": "2026-08-27_11-11-51_7839.png",
+            "created_at": "2026-08-27T15:11:52Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-12-12_9822.png",
+            "filename": "2026-08-27_11-12-12_9822.png",
+            "created_at": "2026-08-27T15:12:13Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a metallic gold thong bikini with a sculpted triangle top, fine chain details, and reflective fabric",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-12-33_9743.png",
+            "filename": "2026-08-27_11-12-33_9743.png",
+            "created_at": "2026-08-27T15:12:33Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-12-49_4970.png",
+            "filename": "2026-08-27_11-12-49_4970.png",
+            "created_at": "2026-08-27T15:12:50Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a black monokini with sheer mesh panels, slender crossing straps, and polished silver hardware at the hips",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-13-02_6209.png",
+            "filename": "2026-08-27_11-13-02_6209.png",
+            "created_at": "2026-08-27T15:13:02Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-13-14_9025.png",
+            "filename": "2026-08-27_11-13-14_9025.png",
+            "created_at": "2026-08-27T15:13:15Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Corsets and Bodysuits",
+    "sheet": "contact_sheets/Corsets_and_Bodysuits.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing an ivory satin corset bodysuit with lace cups, subtle garter straps, and sheer white thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-54-17_3985.png",
+            "filename": "2026-08-27_10-54-17_3985.png",
+            "created_at": "2026-08-27T14:54:18Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-54-40_5936.png",
+            "filename": "2026-08-27_10-54-40_5936.png",
+            "created_at": "2026-08-27T14:54:40Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a black lace long-sleeve bodysuit with a deep neckline, a narrow velvet waist belt, and sheer black stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-55-00_6682.png",
+            "filename": "2026-08-27_10-55-00_6682.png",
+            "created_at": "2026-08-27T14:55:01Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-55-22_6483.png",
+            "filename": "2026-08-27_10-55-22_6483.png",
+            "created_at": "2026-08-27T14:55:23Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a ruby-red satin corset with delicate black lace trim, matching high-waisted panties, and black seamed stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-55-42_6124.png",
+            "filename": "2026-08-27_10-55-42_6124.png",
+            "created_at": "2026-08-27T14:55:43Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-56-02_1893.png",
+            "filename": "2026-08-27_10-56-02_1893.png",
+            "created_at": "2026-08-27T14:56:03Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an emerald velvet bustier bodysuit with gold piping, delicate garters, and sheer black thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-56-22_1204.png",
+            "filename": "2026-08-27_10-56-22_1204.png",
+            "created_at": "2026-08-27T14:56:23Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-56-43_9479.png",
+            "filename": "2026-08-27_10-56-43_9479.png",
+            "created_at": "2026-08-27T14:56:43Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a midnight-blue embroidered corset bodysuit with off-the-shoulder straps and charcoal thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-57-03_2447.png",
+            "filename": "2026-08-27_10-57-03_2447.png",
+            "created_at": "2026-08-27T14:57:04Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-57-23_7272.png",
+            "filename": "2026-08-27_10-57-23_7272.png",
+            "created_at": "2026-08-27T14:57:24Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Dresses",
+    "sheet": "contact_sheets/Dresses.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a sleek black satin mini dress with a softly draped cowl neckline, slender straps, and a close body-skimming fit",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-13-36_5853.png",
+            "filename": "2026-08-27_11-13-36_5853.png",
+            "created_at": "2026-08-27T15:13:36Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-13-48_3024.png",
+            "filename": "2026-08-27_11-13-48_3024.png",
+            "created_at": "2026-08-27T15:13:48Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a fitted burgundy ribbed sweater dress with a wide off-the-shoulder neckline and a thigh-grazing hem",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-14-01_8856.png",
+            "filename": "2026-08-27_11-14-01_8856.png",
+            "created_at": "2026-08-27T15:14:02Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-14-17_6967.png",
+            "filename": "2026-08-27_11-14-17_6967.png",
+            "created_at": "2026-08-27T15:14:18Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an emerald velvet cocktail dress with a structured sweetheart bodice, fitted waist, and softly flared short skirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-14-30_5197.png",
+            "filename": "2026-08-27_11-14-30_5197.png",
+            "created_at": "2026-08-27T15:14:31Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-14-43_3598.png",
+            "filename": "2026-08-27_11-14-43_3598.png",
+            "created_at": "2026-08-27T15:14:44Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a white wraparound summer mini dress in lightweight linen, with flutter sleeves and a gently plunging neckline",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-14-57_1841.png",
+            "filename": "2026-08-27_11-14-57_1841.png",
+            "created_at": "2026-08-27T15:14:57Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-15-10_9644.png",
+            "filename": "2026-08-27_11-15-10_9644.png",
+            "created_at": "2026-08-27T15:15:10Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a floor-length black evening dress with a deep-v neckline, fitted silhouette, and a dramatic thigh-high side slit",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-15-23_7219.png",
+            "filename": "2026-08-27_11-15-23_7219.png",
+            "created_at": "2026-08-27T15:15:24Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-15-35_5694.png",
+            "filename": "2026-08-27_11-15-35_5694.png",
+            "created_at": "2026-08-27T15:15:36Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Emerald Green Qipao",
+    "sheet": "contact_sheets/Emerald_Green_Qipao.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a deep emerald modern qipao-inspired mini dress with subtle gold embroidery, sheer black tights, and black ankle-strap heels",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-01-44_1898.png",
+            "filename": "2026-08-27_11-01-44_1898.png",
+            "created_at": "2026-08-27T15:01:44Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-02-04_8800.png",
+            "filename": "2026-08-27_11-02-04_8800.png",
+            "created_at": "2026-08-27T15:02:05Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Legwear",
+    "sheet": "contact_sheets/Legwear.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing ultra-sheer black pantyhose with a smooth glossy finish, reinforced toes, and an even translucent weave",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-16-03_3046.png",
+            "filename": "2026-08-27_11-16-03_3046.png",
+            "created_at": "2026-08-27T15:16:03Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-16-17_9925.png",
+            "filename": "2026-08-27_11-16-17_9925.png",
+            "created_at": "2026-08-27T15:16:17Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing black lace-top thigh-high stockings with wide floral bands, sheer legs, and a delicate back seam",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-16-30_9487.png",
+            "filename": "2026-08-27_11-16-30_9487.png",
+            "created_at": "2026-08-27T15:16:30Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-16-42_9503.png",
+            "filename": "2026-08-27_11-16-42_9503.png",
+            "created_at": "2026-08-27T15:16:43Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing soft white opaque over-the-knee socks with a fine ribbed texture and neatly fitted cuffs",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-16-55_2575.png",
+            "filename": "2026-08-27_11-16-55_2575.png",
+            "created_at": "2026-08-27T15:16:56Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-17-08_6459.png",
+            "filename": "2026-08-27_11-17-08_6459.png",
+            "created_at": "2026-08-27T15:17:08Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing fine black fishnet tights with a uniform diamond pattern, high waist, and clean reinforced toes",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-17-21_8692.png",
+            "filename": "2026-08-27_11-17-21_8692.png",
+            "created_at": "2026-08-27T15:17:21Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-17-34_2887.png",
+            "filename": "2026-08-27_11-17-34_2887.png",
+            "created_at": "2026-08-27T15:17:34Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing ultra-fine nude mesh pantyhose with a barely visible weave, polished sheen, and sandalfoot toes",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-17-47_2647.png",
+            "filename": "2026-08-27_11-17-47_2647.png",
+            "created_at": "2026-08-27T15:17:47Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-17-59_3397.png",
+            "filename": "2026-08-27_11-17-59_3397.png",
+            "created_at": "2026-08-27T15:18:00Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Lingerie",
+    "sheet": "contact_sheets/Lingerie.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing an elegant black lace balconette bra with scalloped edging, matching high-cut panties, and fine satin bow details",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-58-05_4812.png",
+            "filename": "2026-08-27_10-58-05_4812.png",
+            "created_at": "2026-08-27T14:58:06Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-58-26_1275.png",
+            "filename": "2026-08-27_10-58-26_1275.png",
+            "created_at": "2026-08-27T14:58:27Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a sheer midnight-blue mesh bralette with delicate embroidered stars and a matching narrow-strap thong",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-58-46_4473.png",
+            "filename": "2026-08-27_10-58-46_4473.png",
+            "created_at": "2026-08-27T14:58:47Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-59-07_4674.png",
+            "filename": "2026-08-27_10-59-07_4674.png",
+            "created_at": "2026-08-27T14:59:08Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a deep red satin push-up bra with softly molded cups, matching cheeky briefs, and tiny gold hardware",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-59-28_3201.png",
+            "filename": "2026-08-27_10-59-28_3201.png",
+            "created_at": "2026-08-27T14:59:29Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_10-59-49_8503.png",
+            "filename": "2026-08-27_10-59-49_8503.png",
+            "created_at": "2026-08-27T14:59:50Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a white floral-lace teddy with a plunging neckline, sheer waist panels, and delicate ribbon ties at the hips",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-00-10_2313.png",
+            "filename": "2026-08-27_11-00-10_2313.png",
+            "created_at": "2026-08-27T15:00:11Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-00-31_8862.png",
+            "filename": "2026-08-27_11-00-31_8862.png",
+            "created_at": "2026-08-27T15:00:32Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a strappy black lingerie set with geometric elastic details, a matching garter belt, and sheer thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-00-51_2859.png",
+            "filename": "2026-08-27_11-00-51_2859.png",
+            "created_at": "2026-08-27T15:00:52Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-01-12_6149.png",
+            "filename": "2026-08-27_11-01-12_6149.png",
+            "created_at": "2026-08-27T15:01:13Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/School Uniforms",
+    "sheet": "contact_sheets/School_Uniforms.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing an adult cosplay sailor uniform with a fitted white top, navy-striped collar, red neckerchief, and short pleated navy skirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-18-25_3643.png",
+            "filename": "2026-08-27_11-18-25_3643.png",
+            "created_at": "2026-08-27T15:18:26Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-18-38_7716.png",
+            "filename": "2026-08-27_11-18-38_7716.png",
+            "created_at": "2026-08-27T15:18:39Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an adult academy cosplay outfit with a tailored charcoal blazer, crest patch, white blouse, striped tie, and plaid miniskirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-18-52_7905.png",
+            "filename": "2026-08-27_11-18-52_7905.png",
+            "created_at": "2026-08-27T15:18:52Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-19-05_6908.png",
+            "filename": "2026-08-27_11-19-05_6908.png",
+            "created_at": "2026-08-27T15:19:05Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an adult roleplay uniform with a crisp white blouse, loosely knotted burgundy tie, fitted vest, and high-waisted pleated skirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-19-17_2160.png",
+            "filename": "2026-08-27_11-19-17_2160.png",
+            "created_at": "2026-08-27T15:19:18Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-19-38_8585.png",
+            "filename": "2026-08-27_11-19-38_8585.png",
+            "created_at": "2026-08-27T15:19:39Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an adult collegiate cosplay look with a cream cardigan, ribbon bow, fitted shirt, and short red tartan skirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-19-59_1992.png",
+            "filename": "2026-08-27_11-19-59_1992.png",
+            "created_at": "2026-08-27T15:20:00Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-20-20_8966.png",
+            "filename": "2026-08-27_11-20-20_8966.png",
+            "created_at": "2026-08-27T15:20:21Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an adult summer academy cosplay outfit with a fitted short-sleeve blouse, blue ribbon bow, and lightweight plaid miniskirt",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-20-41_5121.png",
+            "filename": "2026-08-27_11-20-41_5121.png",
+            "created_at": "2026-08-27T15:20:42Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-21-02_7576.png",
+            "filename": "2026-08-27_11-21-02_7576.png",
+            "created_at": "2026-08-27T15:21:03Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Skirts",
+    "sheet": "contact_sheets/Skirts.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a crisp white pleated tennis miniskirt with dark piping, a fitted waistband, and sharp evenly spaced pleats",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-02-38_1678.png",
+            "filename": "2026-08-27_11-02-38_1678.png",
+            "created_at": "2026-08-27T15:02:39Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-03-00_1691.png",
+            "filename": "2026-08-27_11-03-00_1691.png",
+            "created_at": "2026-08-27T15:03:01Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a softly flared black skater skirt with a high waist, smooth matte fabric, and a short playful hem",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-03-22_7518.png",
+            "filename": "2026-08-27_11-03-22_7518.png",
+            "created_at": "2026-08-27T15:03:22Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-03-44_2829.png",
+            "filename": "2026-08-27_11-03-44_2829.png",
+            "created_at": "2026-08-27T15:03:45Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a tiny red tartan pleated skirt with a low-rise waistband, fine buckle detail, and a neatly pressed finish",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-04-05_9152.png",
+            "filename": "2026-08-27_11-04-05_9152.png",
+            "created_at": "2026-08-27T15:04:06Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-04-25_8828.png",
+            "filename": "2026-08-27_11-04-25_8828.png",
+            "created_at": "2026-08-27T15:04:26Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a faded blue button-front denim mini skirt with a raw-cut hem, fitted hips, and brushed silver hardware",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-04-46_6510.png",
+            "filename": "2026-08-27_11-04-46_6510.png",
+            "created_at": "2026-08-27T15:04:47Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-05-07_7977.png",
+            "filename": "2026-08-27_11-05-07_7977.png",
+            "created_at": "2026-08-27T15:05:08Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a black leather A-line mini skirt with a polished finish, high waist, and subtle exposed side zipper",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-05-28_5641.png",
+            "filename": "2026-08-27_11-05-28_5641.png",
+            "created_at": "2026-08-27T15:05:29Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-05-49_9362.png",
+            "filename": "2026-08-27_11-05-49_9362.png",
+            "created_at": "2026-08-27T15:05:50Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Tiny Dresses",
+    "sheet": "contact_sheets/Tiny_Dresses.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a tiny red satin slip dress with a draped neckline, delicate spaghetti straps, and sheer black pantyhose",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-21-42_1842.png",
+            "filename": "2026-08-27_11-21-42_1842.png",
+            "created_at": "2026-08-27T15:21:43Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-22-03_5212.png",
+            "filename": "2026-08-27_11-22-03_5212.png",
+            "created_at": "2026-08-27T15:22:04Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a short black velvet mini dress with an off-the-shoulder neckline, a high side slit, and sheer black stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-22-25_8900.png",
+            "filename": "2026-08-27_11-22-25_8900.png",
+            "created_at": "2026-08-27T15:22:26Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-22-47_9976.png",
+            "filename": "2026-08-27_11-22-47_9976.png",
+            "created_at": "2026-08-27T15:22:48Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a white lace halter mini dress with a low back, scalloped hem, and sheer white stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-23-09_4679.png",
+            "filename": "2026-08-27_11-23-09_4679.png",
+            "created_at": "2026-08-27T15:23:10Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-23-38_7905.png",
+            "filename": "2026-08-27_11-23-38_7905.png",
+            "created_at": "2026-08-27T15:23:39Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a midnight-blue satin wrap mini dress with a plunging neckline, slim waist tie, and black thigh-high stockings",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-24-05_8779.png",
+            "filename": "2026-08-27_11-24-05_8779.png",
+            "created_at": "2026-08-27T15:24:06Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-24-26_8974.png",
+            "filename": "2026-08-27_11-24-26_8974.png",
+            "created_at": "2026-08-27T15:24:27Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a shimmering silver backless mini dress with delicate straps, a softly draped skirt, and sheer charcoal pantyhose",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-24-47_1314.png",
+            "filename": "2026-08-27_11-24-47_1314.png",
+            "created_at": "2026-08-27T15:24:48Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-25-08_5438.png",
+            "filename": "2026-08-27_11-25-08_5438.png",
+            "created_at": "2026-08-27T15:25:09Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Clothes/Tops",
+    "sheet": "contact_sheets/Tops.jpg",
+    "prompts": [
+      {
+        "prompt": "wearing a cropped ivory silk camisole with a softly draped neckline, slender straps, and delicate lace edging",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-06-24_1569.png",
+            "filename": "2026-08-27_11-06-24_1569.png",
+            "created_at": "2026-08-27T15:06:25Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-06-47_1867.png",
+            "filename": "2026-08-27_11-06-47_1867.png",
+            "created_at": "2026-08-27T15:06:48Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a sheer black chiffon button-front blouse with a loose collar, fitted cuffs, and a visible lace bralette beneath",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-07-11_6593.png",
+            "filename": "2026-08-27_11-07-11_6593.png",
+            "created_at": "2026-08-27T15:07:11Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-07-36_8008.png",
+            "filename": "2026-08-27_11-07-36_8008.png",
+            "created_at": "2026-08-27T15:07:36Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an oversized white dress shirt in crisp cotton, loosely buttoned with rolled sleeves and a relaxed open neckline",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-07-58_9056.png",
+            "filename": "2026-08-27_11-07-58_9056.png",
+            "created_at": "2026-08-27T15:07:59Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-08-22_7081.png",
+            "filename": "2026-08-27_11-08-22_7081.png",
+            "created_at": "2026-08-27T15:08:23Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing an emerald satin halter crop top with a gathered neckline, open back, and a smooth fitted band beneath the bust",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-08-42_3852.png",
+            "filename": "2026-08-27_11-08-42_3852.png",
+            "created_at": "2026-08-27T15:08:43Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-09-03_9335.png",
+            "filename": "2026-08-27_11-09-03_9335.png",
+            "created_at": "2026-08-27T15:09:03Z"
+          }
+        ]
+      },
+      {
+        "prompt": "wearing a structured black satin bustier top with shaped cups, subtle boning, and a neat row of front hook closures",
+        "images": [
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-09-24_8741.png",
+            "filename": "2026-08-27_11-09-24_8741.png",
+            "created_at": "2026-08-27T15:09:25Z"
+          },
+          {
+            "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_11-09-45_9688.png",
+            "filename": "2026-08-27_11-09-45_9688.png",
+            "created_at": "2026-08-27T15:09:46Z"
+          }
+        ]
+      }
+    ]
+  }
+]

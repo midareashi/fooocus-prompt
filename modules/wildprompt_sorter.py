@@ -189,8 +189,8 @@ def build_generation_factors(image_number=1, multi_checkpoint_enabled=False, mul
     }
 
 
-def build_wildprompt_combination_summary(selected_files, generate_all=False, current_json='',
-                                         generation_factors=None):
+def build_wildprompt_combination_summary(selected_files, generate_all=False, test_separately=False,
+                                         current_json='', generation_factors=None):
     selected_files = [name for name in _as_list(selected_files) if name in all_wildprompts]
     generate_all_files = sdxl_styles.normalize_wildprompt_generate_all_files(
         selected_files,
@@ -212,11 +212,11 @@ def build_wildprompt_combination_summary(selected_files, generate_all=False, cur
         if len(selected_lines) > 0:
             groups.append((name, len(selected_lines)))
 
-    combination_count = 1
+    combination_count = sum(count for _, count in groups) if bool(test_separately) else 1
     combination_factors = []
     expanded_groups = [(name, count) for name, count in groups if name in generate_all_set]
     random_group_count = len(groups) - len(expanded_groups)
-    if len(expanded_groups) > 0:
+    if not bool(test_separately) and len(expanded_groups) > 0:
         for _, line_count in expanded_groups:
             combination_count *= line_count
             combination_factors.append(str(line_count))
@@ -225,10 +225,13 @@ def build_wildprompt_combination_summary(selected_files, generate_all=False, cur
     image_number = max(1, int(generation_factors.get('image_number', 1) or 1))
     checkpoint_count = max(1, int(generation_factors.get('checkpoint_count', 1) or 1))
     testing_lora_count = max(1, int(generation_factors.get('testing_lora_count', 1) or 1))
-    total_images = combination_count * image_number * checkpoint_count * testing_lora_count
+    queue_multiplier = combination_count if combination_count > 0 else 1
+    total_images = queue_multiplier * image_number * checkpoint_count * testing_lora_count
 
     formula_parts = []
-    if len(expanded_groups) > 0:
+    if bool(test_separately) and combination_count > 0:
+        formula_parts.append(f'{combination_count:,} separate row(s)')
+    elif len(expanded_groups) > 0:
         formula_parts.append(f'{combination_count:,} combination(s)')
     formula_parts.append(f'{image_number:,} Image Number')
     if checkpoint_count > 1:
@@ -250,6 +253,11 @@ def build_wildprompt_combination_summary(selected_files, generate_all=False, cur
     escaped_names = ', '.join(html.escape(name) for name, _ in groups)
     if len(groups) == 0:
         mode_summary = 'No active Wildprompt rows; Wildprompt adds no multiplier.'
+    elif bool(test_separately):
+        mode_summary = (
+            f'Separate test: {combination_count:,} selected row(s) across {len(groups)} file(s); '
+            'each image uses exactly one row from one file.'
+        )
     elif len(expanded_groups) > 0:
         row_factors = ' &times; '.join(combination_factors)
         expanded_names = ', '.join(html.escape(name) for name, _ in expanded_groups)

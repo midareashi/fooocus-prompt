@@ -33,6 +33,8 @@ def load_parameter_button_click(raw_metadata: dict | str, is_generating: bool, i
     get_list('styles', 'Styles', loaded_parameter_dict, results)
     wildprompts = get_list('wildprompts', 'Wildprompts', loaded_parameter_dict, results)
     get_wildprompt_generate_all_files(loaded_parameter_dict, results, wildprompts)
+    get_bool('wildprompt_test_separately', 'Test Wildprompt Files Separately', loaded_parameter_dict, results,
+             default=False)
     get_str('wildprompt_line_selections', 'Wildprompt Line Selections', loaded_parameter_dict, results, default='{}')
     performance = get_str('performance', 'Performance', loaded_parameter_dict, results)
     get_steps('steps', 'Steps', loaded_parameter_dict, results)

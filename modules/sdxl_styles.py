@@ -187,6 +187,29 @@ def get_wildprompt_fixed_combinations(wildprompt_selections, generate_all_files,
     return [dict(zip(names, parts)) for parts in itertools.product(*prompt_groups)]
 
 
+def get_wildprompt_separate_entries(wildprompt_selections, wildprompt_line_selections=None):
+    wildprompt_selections = wildprompt_selections if isinstance(wildprompt_selections, list) else []
+    wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
+    entries = []
+
+    for wildprompt_selection in wildprompt_selections:
+        try:
+            selected_lines = wildprompt_line_selections.get(wildprompt_selection, None)
+            if isinstance(selected_lines, list) and len(selected_lines) == 0:
+                continue
+            lines = selected_lines if isinstance(selected_lines, list) else \
+                _load_wildprompt_lines(wildprompt_selection)
+            lines = [x.strip() for x in lines if isinstance(x, str) and x.strip() != '']
+            entries.extend([
+                {'name': wildprompt_selection, 'prompt': line}
+                for line in lines
+            ])
+        except Exception:
+            print(f'[Wildprompts] Warning: {wildprompt_selection}.txt missing or empty.')
+
+    return entries
+
+
 def get_all_wildprompts(wildprompt_selections, wildprompt_line_selections=None, use_line_selections=True):
     wildprompt_line_selections = wildprompt_line_selections if isinstance(wildprompt_line_selections, dict) else {}
     prompt_groups = []

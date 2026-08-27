@@ -295,7 +295,7 @@ def load_person_likeness(name):
 
 
 def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_selections, wildprompt_generate_all,
-                        wildprompt_line_selections,
+                        wildprompt_test_separately, wildprompt_line_selections,
                         performance_selection, overwrite_step,
                         overwrite_switch, aspect_ratios_selection, overwrite_width, overwrite_height,
                         guidance_scale, sharpness, adm_scaler_positive, adm_scaler_negative, adm_scaler_end,
@@ -325,6 +325,7 @@ def build_prompt_config(prompt, negative_prompt, style_selections, wildprompt_se
         'wildprompts': str(wildprompt_selections or []),
         'wildprompt_generate_all': len(generate_all_files) > 0,
         'wildprompt_generate_all_files': str(generate_all_files),
+        'wildprompt_test_separately': bool(wildprompt_test_separately),
         'wildprompt_line_selections': wildprompt_line_selections if isinstance(wildprompt_line_selections, str) else '{}',
         'performance': performance_selection,
         'steps': int(overwrite_step),
@@ -1278,6 +1279,11 @@ with shared.gradio_root:
                             info='Checked files use every selected row. Other applied files choose a random row for each combination.',
                             elem_classes=['wildprompt-generate-all-files']
                         )
+                        wildprompt_test_separately = gr.Checkbox(
+                            label='Test selected files separately',
+                            value=False,
+                            info='Generate every selected row as its own image without combining files. This overrides Generate all rows for.'
+                        )
                         gradio_receiver_wildprompt_selections = gr.Textbox(
                             elem_id='gradio_receiver_wildprompt_selections',
                             visible=False
@@ -1289,7 +1295,7 @@ with shared.gradio_root:
                         )
                         wildprompt_combination_summary = gr.HTML(
                             value=wildprompt_sorter.build_wildprompt_combination_summary(
-                                modules.config.default_wildprompts, [], '{}',
+                                modules.config.default_wildprompts, [], False, '{}',
                                 wildprompt_sorter.build_generation_factors(modules.config.default_image_number)
                             ),
                             elem_id='wildprompt_combination_summary'
@@ -1346,7 +1352,7 @@ with shared.gradio_root:
                                 show_progress=False
                             ).then(
                                 wildprompt_sorter.build_wildprompt_combination_summary,
-                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                         wildprompt_line_selection_json, wildprompt_generation_factors],
                                 outputs=wildprompt_combination_summary,
                                 queue=False,
@@ -1365,7 +1371,7 @@ with shared.gradio_root:
                                 show_progress=False
                             ).then(
                                 wildprompt_sorter.build_wildprompt_combination_summary,
-                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                         wildprompt_line_selection_json, wildprompt_generation_factors],
                                 outputs=wildprompt_combination_summary,
                                 queue=False,
@@ -1420,7 +1426,7 @@ with shared.gradio_root:
                             show_progress=False
                         ).then(
                             wildprompt_sorter.build_wildprompt_combination_summary,
-                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                     wildprompt_line_selection_json, wildprompt_generation_factors],
                             outputs=wildprompt_combination_summary,
                             queue=False,
@@ -1436,7 +1442,7 @@ with shared.gradio_root:
                                 show_progress=False
                             ).then(
                                 wildprompt_sorter.build_wildprompt_combination_summary,
-                                inputs=[wildprompt_selections, wildprompt_generate_all,
+                                inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                         wildprompt_line_selection_json, wildprompt_generation_factors],
                                 outputs=wildprompt_combination_summary,
                                 queue=False,
@@ -1445,7 +1451,16 @@ with shared.gradio_root:
 
                         wildprompt_generate_all.change(
                             wildprompt_sorter.build_wildprompt_combination_summary,
-                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
+                                    wildprompt_line_selection_json, wildprompt_generation_factors],
+                            outputs=wildprompt_combination_summary,
+                            queue=False,
+                            show_progress=False
+                        )
+
+                        wildprompt_test_separately.change(
+                            wildprompt_sorter.build_wildprompt_combination_summary,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                     wildprompt_line_selection_json, wildprompt_generation_factors],
                             outputs=wildprompt_combination_summary,
                             queue=False,
@@ -1478,7 +1493,7 @@ with shared.gradio_root:
                             show_progress=False
                         ).then(
                             wildprompt_sorter.build_wildprompt_combination_summary,
-                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                     wildprompt_line_selection_json, wildprompt_generation_factors],
                             outputs=wildprompt_combination_summary,
                             queue=False,
@@ -1531,7 +1546,7 @@ with shared.gradio_root:
                             show_progress=False
                         ).then(
                             wildprompt_sorter.build_wildprompt_combination_summary,
-                            inputs=[wildprompt_selections, wildprompt_generate_all,
+                            inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                     wildprompt_line_selection_json, wildprompt_generation_factors],
                             outputs=wildprompt_combination_summary,
                             queue=False,
@@ -2199,7 +2214,7 @@ with shared.gradio_root:
                                     show_progress=False
                                 ).then(
                                     wildprompt_sorter.build_wildprompt_combination_summary,
-                                    inputs=[wildprompt_selections, wildprompt_generate_all,
+                                    inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
                                             wildprompt_line_selection_json, wildprompt_generation_factors],
                                     outputs=wildprompt_combination_summary,
                                     queue=False,
@@ -2501,7 +2516,8 @@ with shared.gradio_root:
                 state_queue_monitor = gr.State(False)
         
                 load_data_outputs = [advanced_checkbox, image_number, prompt, negative_prompt, style_selections,
-                                     wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json,
+                                     wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately,
+                                     wildprompt_line_selection_json,
                                      performance_selection, overwrite_step, overwrite_switch, aspect_ratios_selection,
                                      overwrite_width, overwrite_height, guidance_scale, sharpness, adm_scaler_positive,
                                      adm_scaler_negative, adm_scaler_end, refiner_swap_method, adaptive_cfg, clip_skip,
@@ -2512,7 +2528,7 @@ with shared.gradio_root:
         
                 prompt_config_inputs = [
                     prompt, negative_prompt, style_selections, wildprompt_selections, wildprompt_generate_all,
-                    wildprompt_line_selection_json,
+                    wildprompt_test_separately, wildprompt_line_selection_json,
                     performance_selection, overwrite_step, overwrite_switch,
                     aspect_ratios_selection, overwrite_width, overwrite_height, guidance_scale, sharpness,
                     adm_scaler_positive, adm_scaler_negative, adm_scaler_end, refiner_swap_method, adaptive_cfg, clip_skip,
@@ -2899,6 +2915,7 @@ with shared.gradio_root:
                     config_data['wildprompts'] = '[]'
                     config_data['wildprompt_generate_all'] = False
                     config_data['wildprompt_generate_all_files'] = '[]'
+                    config_data['wildprompt_test_separately'] = False
                     config_data['wildprompt_line_selections'] = '{}'
                     return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
 
@@ -2968,6 +2985,10 @@ with shared.gradio_root:
                             cast_bool_config(config_data.get('wildprompt_generate_all')),
                         )
                     set_if_present(8, 'wildprompt_line_selections', str)
+                    if 'wildprompt_test_separately' in config_data:
+                        args[wildprompt_test_separately_arg_index] = cast_bool_config(
+                            config_data.get('wildprompt_test_separately')
+                        )
                     args[9] = flags.Performance.QUALITY.value
                     args[11] = 1
                     set_if_present(13, 'seed', int)
@@ -3093,6 +3114,7 @@ with shared.gradio_root:
                     config_data['wildprompts'] = '[]'
                     config_data['wildprompt_generate_all'] = False
                     config_data['wildprompt_generate_all_files'] = '[]'
+                    config_data['wildprompt_test_separately'] = False
                     config_data['wildprompt_line_selections'] = '{}'
                     image_path = summary.get('path') or ''
                     return config_data, image_path, f'Regenerating one image from {os.path.basename(image_path)} at Quality, 60 steps.'
@@ -4675,7 +4697,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 history_toggle_favorite_button.click(toggle_history_image_favorite,
                                                      inputs=history_toggle_favorite_image_id,
@@ -4716,7 +4738,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 history_replace_prompt_button.click(replace_prompt_from_history,
                                                     inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
@@ -4742,7 +4764,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 replace_prompt_config_button.click(replace_prompt_from_config, inputs=[prompt_config_selection, prompt, state_is_generating, inpaint_mode],
                                                    outputs=load_prompt_config_outputs,
@@ -4771,7 +4793,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
                 clear_session_history_button.click(clear_session_history,
                                                    outputs=[gallery, state_session_gallery, state_selected_generation_index,
@@ -4836,7 +4858,7 @@ with shared.gradio_root:
                         .then(fn=style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                         .then(fn=wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                         .then(fn=wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                        .then(fn=wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                        .then(fn=wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                         .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}') \
                         .then(inpaint_engine_state_change, inputs=[inpaint_engine_state] + enhance_inpaint_mode_ctrls, outputs=enhance_inpaint_engine_ctrls, queue=False, show_progress=False)
         
@@ -4914,9 +4936,11 @@ with shared.gradio_root:
                           enhance_uov_prompt_type]
                 ctrls += enhance_ctrls
                 ctrls += [generation_tags]
+                ctrls += [wildprompt_test_separately]
 
                 wildprompt_line_selection_inputs = [wildprompt_selections] + wildprompt_line_selection_ctrls
                 wildprompt_line_selection_arg_index = ctrls.index(wildprompt_line_selection_json)
+                wildprompt_test_separately_arg_index = ctrls.index(wildprompt_test_separately)
 
                 def enqueue_generate_task_with_current_wildprompt_lines(*args):
                     row_input_count = len(wildprompt_line_selection_inputs)
@@ -4980,7 +5004,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
         
                 def trigger_metadata_import(file, state_is_generating):
@@ -4998,7 +5022,7 @@ with shared.gradio_root:
                     .then(style_sorter.sort_styles, inputs=style_selections, outputs=style_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.sort_wildprompts, inputs=wildprompt_selections, outputs=wildprompt_selections, queue=False, show_progress=False) \
                     .then(wildprompt_sorter.update_wildprompt_line_sections, inputs=[wildprompt_selections, wildprompt_line_selection_json], outputs=wildprompt_line_section_outputs, queue=False, show_progress=False) \
-                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
+                    .then(wildprompt_sorter.build_wildprompt_combination_summary, inputs=[wildprompt_selections, wildprompt_generate_all, wildprompt_test_separately, wildprompt_line_selection_json, wildprompt_generation_factors], outputs=wildprompt_combination_summary, queue=False, show_progress=False) \
                     .then(lambda: None, _js='()=>{refresh_style_localization();refresh_wildprompt_localization();}')
         
                 generate_button.click(fn=lambda: set_quick_preview_mode(False), outputs=quick_preview_mode,
