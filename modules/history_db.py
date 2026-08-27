@@ -175,6 +175,7 @@ def init_db():
             _ensure_column(conn, 'batches', 'favorite', 'INTEGER NOT NULL DEFAULT 0')
             _ensure_column(conn, 'batches', 'rating', 'INTEGER')
             _ensure_column(conn, 'batches', 'review_status', "TEXT NOT NULL DEFAULT ''")
+            _ensure_column(conn, 'batches', 'name', "TEXT NOT NULL DEFAULT ''")
             conn.execute('CREATE INDEX IF NOT EXISTS idx_images_favorite ON images(favorite)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_images_review_status ON images(review_status)')
             conn.execute('CREATE INDEX IF NOT EXISTS idx_images_thumbnail_hidden ON images(thumbnail_hidden)')
@@ -916,7 +917,7 @@ def get_batch_curation(batch_id):
         return {}
     with _connect() as conn:
         batch = conn.execute(
-            'SELECT id, favorite, rating, review_status FROM batches WHERE id = ?',
+            'SELECT id, name, favorite, rating, review_status FROM batches WHERE id = ?',
             (batch_id,)
         ).fetchone()
         if batch is None:
@@ -942,12 +943,25 @@ def get_batch_curation(batch_id):
             (batch_id,)
         ).fetchone()
     return {
+        'name': batch['name'] or '',
         'favorite': bool(batch['favorite']),
         'rating': batch['rating'] if batch['rating'] is not None else 0,
         'review_status': batch['review_status'] or '',
         'tags': ', '.join([row['name'] for row in tag_rows]),
         'note': note['body'] if note else ''
     }
+
+
+def rename_batch(batch_id, name=''):
+    init_db()
+    try:
+        batch_id = int(batch_id)
+    except Exception:
+        return False
+    name = str(name or '').strip()[:120]
+    with _lock, _connect() as conn:
+        cursor = conn.execute('UPDATE batches SET name = ? WHERE id = ?', (name, batch_id))
+    return cursor.rowcount is not None and cursor.rowcount > 0
 
 
 def update_batch_curation(batch_id, favorite=False, rating=0, review_status='', tags='', note=''):
@@ -1168,7 +1182,7 @@ def list_batches(limit=100, search='', favorite_only=False, review_status='', ta
         rows = conn.execute(
             f"""
             SELECT
-                b.id, b.created_at, b.status, b.total_images, b.performance,
+                b.id, b.name, b.created_at, b.status, b.total_images, b.performance,
                 b.testing_mode, b.prompt, b.favorite, b.rating, b.review_status,
                 (
                     SELECT GROUP_CONCAT(t.name, ', ')
@@ -1226,7 +1240,7 @@ def list_batch_images(batch_id, favorite_only=False, review_status='', tag='', s
     with _connect() as conn:
         rows = conn.execute(
             f"""
-            SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
+            SELECT id, batch_id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    {_preview_image_select_expr()},
                    (
@@ -1501,7 +1515,7 @@ def list_images(search='', favorite_only=False, review_status='', tag='', days=N
     with _connect() as conn:
         rows = conn.execute(
             f"""
-            SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
+            SELECT id, batch_id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    {_preview_image_select_expr()},
                    (
@@ -1596,7 +1610,7 @@ def list_seed_stack_images(seed, prompt, search='', favorite_only=False, review_
     with _connect() as conn:
         rows = conn.execute(
             f"""
-            SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
+            SELECT id, batch_id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status, thumbnail_hidden,
                    {_preview_image_select_expr()},
                    (
@@ -1650,7 +1664,7 @@ def get_image_summary(image_id):
     with _connect() as conn:
         row = conn.execute(
             f"""
-            SELECT id, path, filename, created_at, status, file_exists, seed, image_index,
+            SELECT id, batch_id, path, filename, created_at, status, file_exists, seed, image_index,
                    checkpoint, sampler, scheduler, prompt, favorite, rating, review_status,
                    thumbnail_hidden,
                    {_preview_image_select_expr()},

@@ -875,6 +875,23 @@ function installQueueButtons() {
     });
 }
 
+function mirrorHistoryGenerationStatus() {
+    const source = gradioApp().querySelector('#progress-bar');
+    const target = gradioApp().querySelector('#history_live_generation_status');
+    if (!source || !target) return;
+
+    const sourceStyle = window.getComputedStyle(source);
+    const sourceHidden = source.hidden
+        || source.classList.contains('hide')
+        || sourceStyle.display === 'none'
+        || sourceStyle.visibility === 'hidden';
+    const nextHtml = sourceHidden ? '' : source.innerHTML;
+    if (target.innerHTML !== nextHtml) target.innerHTML = nextHtml;
+
+    const nextDisplay = nextHtml.trim() === '' ? 'none' : '';
+    if (target.style.display !== nextDisplay) target.style.display = nextDisplay;
+}
+
 function isElementVisible(element) {
     if (!element) return false;
     const style = window.getComputedStyle(element);
@@ -932,6 +949,7 @@ function runUiInstallers() {
     installHistorySelectedMenuDismissal();
     installHistoryDaySelectionMode();
     installQueueButtons();
+    mirrorHistoryGenerationStatus();
 }
 
 function scheduleUiInstallers() {

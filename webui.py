@@ -960,6 +960,7 @@ shared.gradio_root = gr.Blocks(title=title).queue()
 with shared.gradio_root:
     with gr.Tabs(elem_id='generation_mode_tabs', selected='image_generation_tab'):
         with gr.Tab(label='History', id='history_tab'):
+            gr.HTML(elem_id='history_live_generation_status', elem_classes='progress-bar')
             history_visible_image_ids = gr.State([])
             history_selected_image_ids = gr.State([])
             history_selection_mode = gr.Textbox(value='single', elem_id='history_selection_mode',
@@ -1085,8 +1086,12 @@ with shared.gradio_root:
                                                            visible=False)
                 history_seed_stack_prompt = gr.Textbox(value='', visible=False)
                 history_filter_status = gr.State('')
-                history_batch_selection = gr.Dropdown(label='Generation Batch', choices=[], value='All Images',
-                                                      visible=False)
+                with gr.Row():
+                    history_batch_selection = gr.Dropdown(label='Generation Batch', choices=[], value='All Images',
+                                                          scale=3)
+                    history_batch_name = gr.Textbox(label='Batch Name', placeholder='Optional batch name', scale=2)
+                    history_rename_batch_button = gr.Button(value='Rename Batch', variant='secondary',
+                                                            scale=0, min_width=120)
             with gr.Accordion(label='Batch Details', open=False, visible=False):
                 history_batch_rating = gr.State(0)
                 with gr.Row():
@@ -2871,6 +2876,7 @@ with shared.gradio_root:
                     header = html_lib.escape(' | '.join(title_parts))
 
                     rows = [
+                        generation_detail_row('Batch', f"Batch #{summary.get('batch_id')}"),
                         generation_detail_row('Prompt', prompt_text, multiline=True, full=True),
                     ]
                     rows.extend(resolved_wildprompt_detail_rows(config_data, summary))
@@ -3276,6 +3282,7 @@ with shared.gradio_root:
                     loras = get_generation_lora_details(config_data, image_path)
 
                     rows = [
+                        generation_detail_row('Batch', f"Batch #{summary.get('batch_id')}"),
                         generation_detail_row('Prompt', prompt_text, multiline=True, full=True),
                     ]
                     rows.extend(resolved_wildprompt_detail_rows(config_data, summary))
@@ -3338,7 +3345,9 @@ with shared.gradio_root:
                     favorite = 'fav | ' if row.get('favorite') else ''
                     tags = str(row.get('tags') or '').strip()
                     tags_text = f'{tags} | ' if tags != '' else ''
-                    return f"{row['id']} | {favorite}{tags_text}{row['created_at']} | {row['status']} | {row.get('generated_images', 0)}/{row.get('total_images') or '?'} | {prompt_preview}"
+                    name = str(row.get('name') or '').strip()
+                    name_text = f' — {name}' if name != '' else ''
+                    return f"Batch #{row['id']}{name_text} | {favorite}{tags_text}{row['created_at']} | {row['status']} | {row.get('generated_images', 0)}/{row.get('total_images') or '?'} | {prompt_preview}"
 
                 def history_batch_choices(rows):
                     return ['All Images'] + [format_history_batch(row) for row in rows]
@@ -4010,6 +4019,15 @@ with shared.gradio_root:
                         curation.get('review_status', ''), curation.get('tags', ''), curation.get('note', ''), \
                         f'Loaded curation for history batch #{batch_id}.'
 
+                def load_history_batch_name(selection):
+                    batch_id = parse_history_id(selection)
+                    if batch_id is None:
+                        return '', gr.update()
+                    curation = modules.history_db.get_batch_curation(batch_id)
+                    if len(curation) == 0:
+                        return '', 'History batch was not found.'
+                    return curation.get('name', ''), gr.update()
+
                 def load_history_image_curation(selection):
                     history_debug('load_history_image_curation', 'selection=', selection)
                     image_id = parse_history_id(selection)
@@ -4499,6 +4517,25 @@ with shared.gradio_root:
                     selected_value = next((choice for choice in choices if parse_history_id(choice) == batch_id), None)
                     return gr.update(choices=choices, value=selected_value), f'Saved curation for history batch #{batch_id}.'
 
+                def rename_history_batch(selection, name, search, filter_favorite_only,
+                                         filter_review_status, filter_tag):
+                    batch_id = parse_history_id(selection)
+                    if batch_id is None:
+                        return gr.update(), gr.update(), 'Select a history batch first.'
+                    if not modules.history_db.rename_batch(batch_id, name):
+                        return gr.update(), gr.update(), 'History batch was not found.'
+                    batches = modules.history_db.list_batches(
+                        search=search,
+                        favorite_only=filter_favorite_only,
+                        review_status=filter_review_status,
+                        tag=filter_tag
+                    )
+                    choices = history_batch_choices(batches)
+                    selected_value = next((choice for choice in choices if parse_history_id(choice) == batch_id), None)
+                    saved_name = str(name or '').strip()[:120]
+                    label = f'Batch #{batch_id}' + (f' renamed to {saved_name}.' if saved_name else ' name cleared.')
+                    return gr.update(choices=choices, value=selected_value), saved_name, label
+
                 def load_history_image_config(selection, mode, current_prompt, is_generating, inpaint_mode):
                     image_id = parse_history_id(selection)
                     if image_id is None:
@@ -4595,7 +4632,13 @@ with shared.gradio_root:
                                                         history_review_status, history_tags, history_note,
                                                         history_image_details,
                                                        history_status],
-                                               queue=False, show_progress=False)
+                                               queue=False, show_progress=False).then(
+                    load_history_batch_name,
+                    inputs=history_batch_selection,
+                    outputs=[history_batch_name, history_status],
+                    queue=False,
+                    show_progress=False
+                )
                 for history_filter in [history_search, history_filter_favorites,
                                        history_filter_checkpoints, history_filter_loras, history_filter_tag,
                                        history_show_preview_images, history_thumbnail_visibility]:
@@ -4752,6 +4795,14 @@ with shared.gradio_root:
                                                                  history_filter_status, history_filter_tag],
                                                          outputs=[history_batch_selection, history_status],
                                                          queue=False, show_progress=False)
+                history_rename_batch_button.click(
+                    rename_history_batch,
+                    inputs=[history_batch_selection, history_batch_name, history_search,
+                            history_filter_favorites, history_filter_status, history_filter_tag],
+                    outputs=[history_batch_selection, history_batch_name, history_status],
+                    queue=False,
+                    show_progress=False
+                )
                 history_load_full_button.click(load_full_history_config,
                                                inputs=[history_config_action_image_id, prompt, state_is_generating, inpaint_mode],
                                                outputs=history_load_outputs,
