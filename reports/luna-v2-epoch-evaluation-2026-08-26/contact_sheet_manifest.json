@@ -1,0 +1,277 @@
+[
+  {
+    "sheet": "contact_sheets\\feet_01_fixed-preview-prompt-1.jpg",
+    "shot_name": "Preview 1",
+    "shot_prompt": "Fixed preview prompt 1",
+    "images": [
+      {
+        "position": 1,
+        "filename": "luna_v2_e000001_00_20260826200815_24701.png",
+        "checkpoint": "epoch 1",
+        "face_similarity_centroid": 0.6259534358978271
+      },
+      {
+        "position": 2,
+        "filename": "luna_v2_e000002_00_20260826201319_24701.png",
+        "checkpoint": "epoch 2",
+        "face_similarity_centroid": 0.7459838390350342
+      },
+      {
+        "position": 3,
+        "filename": "luna_v2_e000003_00_20260826201825_24701.png",
+        "checkpoint": "epoch 3",
+        "face_similarity_centroid": 0.6035051345825195
+      },
+      {
+        "position": 4,
+        "filename": "luna_v2_e000004_00_20260826202345_24701.png",
+        "checkpoint": "epoch 4",
+        "face_similarity_centroid": 0.7739261388778687
+      },
+      {
+        "position": 5,
+        "filename": "luna_v2_e000005_00_20260826202904_24701.png",
+        "checkpoint": "epoch 5",
+        "face_similarity_centroid": 0.7408195734024048
+      },
+      {
+        "position": 6,
+        "filename": "luna_v2_e000006_00_20260826203415_24701.png",
+        "checkpoint": "epoch 6",
+        "face_similarity_centroid": 0.7615607976913452
+      },
+      {
+        "position": 7,
+        "filename": "luna_v2_e000007_00_20260826203937_24701.png",
+        "checkpoint": "epoch 7",
+        "face_similarity_centroid": 0.7732012271881104
+      },
+      {
+        "position": 8,
+        "filename": "luna_v2_e000008_00_20260826204450_24701.png",
+        "checkpoint": "epoch 8",
+        "face_similarity_centroid": 0.7598598003387451
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_02_fixed-preview-prompt-2.jpg",
+    "shot_name": "Preview 2",
+    "shot_prompt": "Fixed preview prompt 2",
+    "images": [
+      {
+        "position": 1,
+        "filename": "luna_v2_e000001_01_20260826200821_24702.png",
+        "checkpoint": "epoch 1",
+        "face_similarity_centroid": 0.6622617244720459
+      },
+      {
+        "position": 2,
+        "filename": "luna_v2_e000002_01_20260826201325_24702.png",
+        "checkpoint": "epoch 2",
+        "face_similarity_centroid": 0.7485121488571167
+      },
+      {
+        "position": 3,
+        "filename": "luna_v2_e000003_01_20260826201831_24702.png",
+        "checkpoint": "epoch 3",
+        "face_similarity_centroid": 0.7292565107345581
+      },
+      {
+        "position": 4,
+        "filename": "luna_v2_e000004_01_20260826202351_24702.png",
+        "checkpoint": "epoch 4",
+        "face_similarity_centroid": 0.5795239210128784
+      },
+      {
+        "position": 5,
+        "filename": "luna_v2_e000005_01_20260826202910_24702.png",
+        "checkpoint": "epoch 5",
+        "face_similarity_centroid": 0.6990478038787842
+      },
+      {
+        "position": 6,
+        "filename": "luna_v2_e000006_01_20260826203420_24702.png",
+        "checkpoint": "epoch 6",
+        "face_similarity_centroid": 0.6911827325820923
+      },
+      {
+        "position": 7,
+        "filename": "luna_v2_e000007_01_20260826203944_24702.png",
+        "checkpoint": "epoch 7",
+        "face_similarity_centroid": 0.7000943422317505
+      },
+      {
+        "position": 8,
+        "filename": "luna_v2_e000008_01_20260826204456_24702.png",
+        "checkpoint": "epoch 8",
+        "face_similarity_centroid": 0.7342256307601929
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_03_fixed-preview-prompt-3.jpg",
+    "shot_name": "Preview 3",
+    "shot_prompt": "Fixed preview prompt 3",
+    "images": [
+      {
+        "position": 1,
+        "filename": "luna_v2_e000001_02_20260826200828_24703.png",
+        "checkpoint": "epoch 1",
+        "face_similarity_centroid": 0.5814542770385742
+      },
+      {
+        "position": 2,
+        "filename": "luna_v2_e000002_02_20260826201332_24703.png",
+        "checkpoint": "epoch 2",
+        "face_similarity_centroid": 0.6241894960403442
+      },
+      {
+        "position": 3,
+        "filename": "luna_v2_e000003_02_20260826201836_24703.png",
+        "checkpoint": "epoch 3",
+        "face_similarity_centroid": 0.6654953360557556
+      },
+      {
+        "position": 4,
+        "filename": "luna_v2_e000004_02_20260826202357_24703.png",
+        "checkpoint": "epoch 4",
+        "face_similarity_centroid": 0.6794117093086243
+      },
+      {
+        "position": 5,
+        "filename": "luna_v2_e000005_02_20260826202916_24703.png",
+        "checkpoint": "epoch 5",
+        "face_similarity_centroid": 0.6569713950157166
+      },
+      {
+        "position": 6,
+        "filename": "luna_v2_e000006_02_20260826203426_24703.png",
+        "checkpoint": "epoch 6",
+        "face_similarity_centroid": 0.7171528935432434
+      },
+      {
+        "position": 7,
+        "filename": "luna_v2_e000007_02_20260826203951_24703.png",
+        "checkpoint": "epoch 7",
+        "face_similarity_centroid": 0.6648554801940918
+      },
+      {
+        "position": 8,
+        "filename": "luna_v2_e000008_02_20260826204501_24703.png",
+        "checkpoint": "epoch 8",
+        "face_similarity_centroid": 0.6771670579910278
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_04_fixed-preview-prompt-4.jpg",
+    "shot_name": "Preview 4",
+    "shot_prompt": "Fixed preview prompt 4",
+    "images": [
+      {
+        "position": 1,
+        "filename": "luna_v2_e000001_03_20260826200835_24704.png",
+        "checkpoint": "epoch 1",
+        "face_similarity_centroid": 0.6620537042617798
+      },
+      {
+        "position": 2,
+        "filename": "luna_v2_e000002_03_20260826201339_24704.png",
+        "checkpoint": "epoch 2",
+        "face_similarity_centroid": 0.7220699787139893
+      },
+      {
+        "position": 3,
+        "filename": "luna_v2_e000003_03_20260826201843_24704.png",
+        "checkpoint": "epoch 3",
+        "face_similarity_centroid": 0.7820842266082764
+      },
+      {
+        "position": 4,
+        "filename": "luna_v2_e000004_03_20260826202404_24704.png",
+        "checkpoint": "epoch 4",
+        "face_similarity_centroid": 0.8003631830215454
+      },
+      {
+        "position": 5,
+        "filename": "luna_v2_e000005_03_20260826202923_24704.png",
+        "checkpoint": "epoch 5",
+        "face_similarity_centroid": 0.7978782653808594
+      },
+      {
+        "position": 6,
+        "filename": "luna_v2_e000006_03_20260826203433_24704.png",
+        "checkpoint": "epoch 6",
+        "face_similarity_centroid": 0.7708457112312317
+      },
+      {
+        "position": 7,
+        "filename": "luna_v2_e000007_03_20260826203958_24704.png",
+        "checkpoint": "epoch 7",
+        "face_similarity_centroid": 0.7951735258102417
+      },
+      {
+        "position": 8,
+        "filename": "luna_v2_e000008_03_20260826204508_24704.png",
+        "checkpoint": "epoch 8",
+        "face_similarity_centroid": 0.804871141910553
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_05_fixed-preview-prompt-5.jpg",
+    "shot_name": "Preview 5",
+    "shot_prompt": "Fixed preview prompt 5",
+    "images": [
+      {
+        "position": 1,
+        "filename": "luna_v2_e000001_04_20260826200840_24705.png",
+        "checkpoint": "epoch 1",
+        "face_similarity_centroid": 0.29889822006225586
+      },
+      {
+        "position": 2,
+        "filename": "luna_v2_e000002_04_20260826201346_24705.png",
+        "checkpoint": "epoch 2",
+        "face_similarity_centroid": 0.3937363028526306
+      },
+      {
+        "position": 3,
+        "filename": "luna_v2_e000003_04_20260826201848_24705.png",
+        "checkpoint": "epoch 3",
+        "face_similarity_centroid": 0.39091265201568604
+      },
+      {
+        "position": 4,
+        "filename": "luna_v2_e000004_04_20260826202409_24705.png",
+        "checkpoint": "epoch 4",
+        "face_similarity_centroid": 0.4168406128883362
+      },
+      {
+        "position": 5,
+        "filename": "luna_v2_e000005_04_20260826202929_24705.png",
+        "checkpoint": "epoch 5",
+        "face_similarity_centroid": 0.40509340167045593
+      },
+      {
+        "position": 6,
+        "filename": "luna_v2_e000006_04_20260826203438_24705.png",
+        "checkpoint": "epoch 6",
+        "face_similarity_centroid": 0.4084041714668274
+      },
+      {
+        "position": 7,
+        "filename": "luna_v2_e000007_04_20260826204003_24705.png",
+        "checkpoint": "epoch 7",
+        "face_similarity_centroid": 0.42517784237861633
+      },
+      {
+        "position": 8,
+        "filename": "luna_v2_e000008_04_20260826204514_24705.png",
+        "checkpoint": "epoch 8",
+        "face_similarity_centroid": 0.4310210943222046
+      }
+    ]
+  }
+]

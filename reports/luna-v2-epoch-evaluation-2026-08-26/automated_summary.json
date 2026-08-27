@@ -1,0 +1,91 @@
+{
+  "run": "luna_v2_20260826_200154_71a1ee",
+  "image_count": 40,
+  "reference_summary": {
+    "reference_paths": [
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_02.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_03.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_04.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_05.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_06.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_07.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_08.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_09.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_02.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_03.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_cyberrealistic_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_age_desire_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260826_lora_sdxl_vaefix_01.png"
+    ],
+    "reference_faces_detected": 15
+  },
+  "epoch_rankings": [
+    {
+      "epoch": 8,
+      "count": 5,
+      "mean": 0.6814289450645447,
+      "median": 0.7342256307601929,
+      "min": 0.4310210943222046,
+      "max": 0.804871141910553
+    },
+    {
+      "epoch": 7,
+      "count": 5,
+      "mean": 0.6717004835605621,
+      "median": 0.7000943422317505,
+      "min": 0.42517784237861633,
+      "max": 0.7951735258102417
+    },
+    {
+      "epoch": 6,
+      "count": 5,
+      "mean": 0.669829261302948,
+      "median": 0.7171528935432434,
+      "min": 0.4084041714668274,
+      "max": 0.7708457112312317
+    },
+    {
+      "epoch": 5,
+      "count": 5,
+      "mean": 0.6599620878696442,
+      "median": 0.6990478038787842,
+      "min": 0.40509340167045593,
+      "max": 0.7978782653808594
+    },
+    {
+      "epoch": 4,
+      "count": 5,
+      "mean": 0.6500131130218506,
+      "median": 0.6794117093086243,
+      "min": 0.4168406128883362,
+      "max": 0.8003631830215454
+    },
+    {
+      "epoch": 2,
+      "count": 5,
+      "mean": 0.646898353099823,
+      "median": 0.7220699787139893,
+      "min": 0.3937363028526306,
+      "max": 0.7485121488571167
+    },
+    {
+      "epoch": 3,
+      "count": 5,
+      "mean": 0.6342507719993591,
+      "median": 0.6654953360557556,
+      "min": 0.39091265201568604,
+      "max": 0.7820842266082764
+    },
+    {
+      "epoch": 1,
+      "count": 5,
+      "mean": 0.5661242723464965,
+      "median": 0.6259534358978271,
+      "min": 0.29889822006225586,
+      "max": 0.6622617244720459
+    }
+  ],
+  "contact_sheet_count": 5
+}
