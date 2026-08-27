@@ -159,7 +159,7 @@ class TestWildprompts(unittest.TestCase):
             update['choices'],
         )
 
-    def test_folder_chips_filter_the_single_list_and_keep_selections_visible(self):
+    def test_folder_chips_hide_selected_files_outside_the_filter(self):
         update = wildprompt_sorter.filter_wildprompts_by_folders(
             ['Clothes/Dress'],
             ['Locations', 'Poses'],
@@ -167,10 +167,23 @@ class TestWildprompts(unittest.TestCase):
         )
 
         self.assertEqual(
-            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses'],
+            ['Locations/Places', 'Poses/Poses'],
             update['choices'],
         )
         self.assertEqual(['Clothes/Dress'], update['value'])
+
+    def test_selected_files_remain_in_alphabetical_folder_and_name_order(self):
+        update = wildprompt_sorter.filter_wildprompts_by_folders(
+            ['Poses/Poses', 'Clothes/Dress'],
+            [],
+            '',
+        )
+
+        self.assertEqual(
+            ['Clothes/Dress', 'Locations/Places', 'Poses/Poses', 'Root Prompt'],
+            update['choices'],
+        )
+        self.assertEqual(['Poses/Poses', 'Clothes/Dress'], update['value'])
 
     def test_folder_chips_and_search_filter_together(self):
         update = wildprompt_sorter.filter_wildprompts_by_folders(

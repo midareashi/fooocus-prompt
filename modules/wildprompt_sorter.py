@@ -8,7 +8,6 @@ import modules.localization as localization
 import modules.sdxl_styles as sdxl_styles
 
 all_wildprompts = []
-sort_file = 'sorted_wildprompt.json'
 max_wildprompt_detail_sections = 24
 all_categories_label = 'All folders'
 uncategorized_label = 'Uncategorized'
@@ -21,18 +20,7 @@ def _as_list(value):
 def try_load_sorted_wildprompts():
     global all_wildprompts
 
-    legal_wildprompts = sdxl_styles.get_legal_wildprompt_names()
-    all_wildprompts = legal_wildprompts
-
-    try:
-        with open(sort_file, 'rt', encoding='utf-8') as fp:
-            sorted_wildprompts = json.load(fp)
-        sorted_wildprompts = _as_list(sorted_wildprompts)
-        selected = [x for x in sorted_wildprompts if x in legal_wildprompts]
-        unselected = [x for x in legal_wildprompts if x not in selected]
-        all_wildprompts = selected + unselected
-    except Exception:
-        pass
+    all_wildprompts = sdxl_styles.get_legal_wildprompt_names()
 
     return copy.deepcopy(all_wildprompts)
 
@@ -40,19 +28,9 @@ def try_load_sorted_wildprompts():
 def sort_wildprompts(selected):
     global all_wildprompts
 
+    all_wildprompts = sdxl_styles.get_legal_wildprompt_names()
     selected = [x for x in _as_list(selected) if x in all_wildprompts]
-    unselected = [y for y in all_wildprompts if y not in selected]
-    sorted_wildprompts = selected + unselected
-
-    try:
-        with open(sort_file, 'wt', encoding='utf-8') as fp:
-            json.dump(sorted_wildprompts, fp, indent=4)
-    except Exception as e:
-        print('Write wildprompt sorting failed.')
-        print(e)
-
-    all_wildprompts = sorted_wildprompts
-    return gr.update(choices=sorted_wildprompts)
+    return gr.update(choices=copy.deepcopy(all_wildprompts), value=selected)
 
 
 def localization_key(x):
@@ -78,12 +56,12 @@ def filter_wildprompts_by_folders(selected, folders=None, query=''):
     valid_folders = set(get_wildprompt_folder_names())
     folders = [name for name in _as_list(folders) if name in valid_folders]
     query = query.strip().casefold() if isinstance(query, str) else ''
-    unselected = [name for name in all_wildprompts if name not in selected]
-    if len(folders) > 0:
-        unselected = [name for name in unselected if get_wildprompt_category(name) in folders]
-    if query != '':
-        unselected = [name for name in unselected if query in localization_key(name).casefold()]
-    return gr.update(choices=selected + unselected, value=selected)
+    visible = [
+        name for name in all_wildprompts
+        if (len(folders) == 0 or get_wildprompt_category(name) in folders)
+        and (query == '' or query in localization_key(name).casefold())
+    ]
+    return gr.update(choices=visible, value=selected)
 
 
 def refresh_wildprompt_chip_browser(selected, folders=None, query=''):
@@ -117,12 +95,13 @@ def filter_wildprompts(selected, category=all_categories_label, query=''):
     selected = [x for x in _as_list(selected) if x in all_wildprompts]
     category = category if category in get_wildprompt_categories() else all_categories_label
     query = query if isinstance(query, str) else ''
-    unselected = [y for y in all_wildprompts if y not in selected]
-    if category != all_categories_label:
-        unselected = [name for name in unselected if get_wildprompt_category(name) == category]
-    if len(query.replace(' ', '')) > 0:
-        unselected = [name for name in unselected if query.casefold() in localization_key(name).casefold()]
-    return gr.update(choices=selected + unselected, value=selected)
+    query = query.casefold() if len(query.replace(' ', '')) > 0 else ''
+    visible = [
+        name for name in all_wildprompts
+        if (category == all_categories_label or get_wildprompt_category(name) == category)
+        and (query == '' or query in localization_key(name).casefold())
+    ]
+    return gr.update(choices=visible, value=selected)
 
 
 def search_wildprompts(selected, query):
