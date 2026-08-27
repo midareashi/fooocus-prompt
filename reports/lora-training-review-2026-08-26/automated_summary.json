@@ -1,0 +1,59 @@
+{
+  "date": "2026-08-26",
+  "after": "18:26",
+  "image_count": 96,
+  "checkpoint_count": 2,
+  "shot_prompt_count": 1,
+  "reference_summary": {
+    "reference_paths": [
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_02.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_03.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_04.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_05.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_06.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_07.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_08.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260821_133524_09.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_02.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_juggernaut_03.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_benchmark_cyberrealistic_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260825_age_desire_01.png",
+      "D:\\Fooocus\\Fooocus\\input\\people\\Luna\\20260826_lora_sdxl_vaefix_01.png"
+    ],
+    "reference_faces_detected": 15
+  },
+  "checkpoint_face_rankings": [
+    {
+      "checkpoint": "cyberrealisticXL_desireV30",
+      "image_count": 48,
+      "face_detected_count": 48,
+      "face_similarity_mean": 0.7936973373095194,
+      "face_similarity_median": 0.7935557663440704,
+      "face_similarity_min": 0.6772638559341431,
+      "face_similarity_max": 0.8544814586639404
+    },
+    {
+      "checkpoint": "juggernautXL_ragnarok",
+      "image_count": 48,
+      "face_detected_count": 48,
+      "face_similarity_mean": 0.78613539164265,
+      "face_similarity_median": 0.7881956100463867,
+      "face_similarity_min": 0.6836639642715454,
+      "face_similarity_max": 0.8552415370941162
+    }
+  ],
+  "shot_prompt_face_rankings": [
+    {
+      "shot_prompt": "",
+      "image_count": 96,
+      "face_detected_count": 96,
+      "face_similarity_mean": 0.7899163644760847,
+      "face_similarity_median": 0.7904481291770935,
+      "face_similarity_min": 0.6772638559341431,
+      "face_similarity_max": 0.8552415370941162
+    }
+  ],
+  "contact_sheet_count": 1
+}

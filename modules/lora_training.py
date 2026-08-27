@@ -208,11 +208,18 @@ bucket_no_upscale = true
     sample_prompts = config_dir / 'sample_prompts.txt'
     negative = 'low quality, blurry, distorted face, bad anatomy, text, watermark, logo, signature'
     _write_text(sample_prompts, '\n'.join([
-        f'{trigger}, adult woman, close-up portrait, realistic photo, neutral background --n {negative} --w 1024 --h 1024 --d 24701 --l 6.5 --s 28',
-        f'{trigger}, adult woman, casual candid portrait, sitting indoors, realistic photo --n {negative} --w 1024 --h 1024 --d 24702 --l 6.5 --s 28',
-        f'{trigger}, adult woman, outdoor portrait, natural daylight, realistic photo --n {negative} --w 1024 --h 1024 --d 24703 --l 6.5 --s 28',
-        f'{trigger}, adult woman, half body portrait, different outfit, soft indoor light, realistic photo --n {negative} --w 1024 --h 1280 --d 24704 --l 6.5 --s 28',
-        f'{trigger}, adult woman, full body portrait, standing outdoors, natural daylight, realistic photo --n {negative} --w 832 --h 1216 --d 24705 --l 6.5 --s 28',
+        f'{trigger}, adult woman, close-up neutral studio portrait, hair tied back, charcoal crew-neck top, calm direct gaze, broad softbox light, realistic photo --n {negative} --w 1024 --h 1024 --d 24701 --l 6.5 --s 28',
+        f'{trigger}, adult woman, close-up outdoor portrait, loose black hair, pale blue shirt, relaxed smile, overcast garden daylight, realistic photo --n {negative} --w 1024 --h 1024 --d 24702 --l 6.5 --s 28',
+        f'{trigger}, adult woman, close-up cafe portrait, side braid, cream sweater, warm pendant light and cool window light, realistic photo --n {negative} --w 1024 --h 1024 --d 24703 --l 6.5 --s 28',
+        f'{trigger}, adult woman, close three-quarter portrait beside a window, black turtleneck, composed expression, directional daylight, realistic photo --n {negative} --w 1024 --h 1024 --d 24704 --l 6.5 --s 28',
+        f'{trigger}, adult woman, waist-up portrait seated at a writing desk, olive blouse, shoulder-length hair, neutral studio light, realistic photo --n {negative} --w 1024 --h 1280 --d 24705 --l 6.5 --s 28',
+        f'{trigger}, adult woman, waist-up candid portrait at an outdoor market, denim jacket, high ponytail, bright natural daylight, realistic photo --n {negative} --w 1024 --h 1280 --d 24706 --l 6.5 --s 28',
+        f'{trigger}, adult woman, waist-up rooftop portrait at night, tailored gray blazer over a red top, city bokeh, mixed cool and warm light, realistic photo --n {negative} --w 1024 --h 1280 --d 24707 --l 6.5 --s 28',
+        f'{trigger}, adult woman, waist-up portrait cooking in a modern kitchen, striped shirt, chin-length bob, soft indoor daylight, realistic photo --n {negative} --w 1024 --h 1280 --d 24708 --l 6.5 --s 28',
+        f'{trigger}, adult woman, head-to-toe studio portrait standing in a tailored teal jumpsuit, both shoes visible, neutral seamless backdrop, realistic photo --n {negative} --w 832 --h 1216 --d 24709 --l 6.5 --s 28',
+        f'{trigger}, adult woman, head-to-toe portrait walking along a quiet beach, white linen shirt and tan trousers, natural daylight, realistic photo --n {negative} --w 832 --h 1216 --d 24710 --l 6.5 --s 28',
+        f'{trigger}, adult woman, head-to-toe hotel lobby portrait in a long emerald evening dress, warm lamps and cool window light, realistic photo --n {negative} --w 832 --h 1216 --d 24711 --l 6.5 --s 28',
+        f'{trigger}, adult woman, full-body portrait seated on broad stone steps, burgundy cardigan and dark jeans, hands and feet visible, soft overcast daylight, realistic photo --n {negative} --w 832 --h 1216 --d 24712 --l 6.5 --s 28',
     ]))
 
     return PreparedTrainingRun(

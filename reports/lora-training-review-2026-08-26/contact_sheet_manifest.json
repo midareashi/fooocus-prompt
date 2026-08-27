@@ -1,0 +1,662 @@
+[
+  {
+    "sheet": "contact_sheets\\feet_01_adult-chinese-woman-age-25-full-body-evening-portrait-standi.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, full-body evening portrait standing beside a velvet chair, tailored black blazer over an ivory camisole with a knee-length satin skirt, black hair in a precise French twist, one hand lightly touching the chair back, direct composed gaze, balanced blue-hour window light and warm interior fill preserving her complete face",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-36-37_4129.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7793013453483582
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-36-48_3380.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7834409475326538
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-37-00_6676.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8187015056610107
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-37-11_2232.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8336467742919922
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-44-01_3038.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7942134141921997
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-44-08_1819.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7972419261932373
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-44-16_6327.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8280755877494812
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-44-23_8406.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7504209876060486
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_02_adult-chinese-woman-age-25-full-body-outdoor-portrait-walkin.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, full-body outdoor portrait walking slowly toward the camera on a garden path, knee-length green wrap dress and low heels, black hair moving lightly in the breeze, alert direct gaze, face fully visible and sharply focused, soft overcast daylight and restrained foliage bokeh",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-30-02_5128.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7992295026779175
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-30-15_1317.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7536820769309998
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-30-27_9138.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7576533555984497
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-30-38_1297.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7755392789840698
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-39-44_4244.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7729072570800781
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-39-51_2969.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.793709933757782
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-39-59_7245.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7680732607841492
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-40-06_5721.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7627205848693848
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_03_adult-chinese-woman-age-25-full-body-poolside-fashion-portra.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, full-body poolside fashion portrait standing barefoot with feet close together, elegant cobalt one-piece swimsuit, wet-look black hair swept behind her shoulders, restrained confident smile, face fully visible and in focus, natural overcast daylight with soft water reflections",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-34-53_7516.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7930494546890259
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-35-04_4306.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8182069063186646
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-35-15_7190.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.824626624584198
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-35-27_2659.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7751376628875732
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-42-53_7154.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7679269313812256
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-43-00_3820.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8552415370941162
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-43-08_4686.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7755702137947083
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-43-15_6710.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7901707291603088
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_04_adult-chinese-woman-age-25-full-body-rear-three-quarter-port.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, full-body rear three-quarter portrait beside a plain studio wall, cream sweater and fitted dark trousers, black hair in a low ponytail, shoulders and complete face turned clearly back toward the camera, subtle closed-lip smile, simple pose and bright neutral lighting",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-30-49_7331.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7880539298057556
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-31-00_8968.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8520047664642334
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-31-11_3151.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7235022783279419
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-31-22_4586.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8195083141326904
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-40-14_2708.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7813740968704224
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-40-21_2878.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7913190126419067
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-40-29_8809.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8215779662132263
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-40-36_4433.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7962639331817627
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_05_adult-chinese-woman-age-25-full-body-studio-portrait-standin.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, full-body studio portrait standing naturally with weight on one hip, white fitted T-shirt, dark straight-leg jeans and simple heels, long black hair worn loose, friendly direct smile, camera close enough to preserve clear facial detail, neutral seamless backdrop and clean diffused light",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-29-11_3838.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7999435663223267
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-29-24_7835.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7904266119003296
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-29-37_9728.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7855752110481262
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-29-51_6751.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.781108021736145
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-39-14_9132.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7945959568023682
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-39-21_4473.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8051552772521973
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-39-29_8234.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7995854020118713
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-39-36_4309.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.755334734916687
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_06_adult-chinese-woman-age-25-head-to-knees-fashion-portrait-in.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, head-to-knees fashion portrait in a quiet hotel suite, simple navy knee-length dress, black hair in a low ponytail, body angled three-quarters while her face turns directly toward the camera, hands relaxed at her sides, warm even lamp light, crisp eyes and natural adult facial proportions",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-28-10_6713.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.831896185874939
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-28-28_3100.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8431349396705627
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-28-40_3885.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8338609933853149
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-28-59_1603.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8544814586639404
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-38-39_2252.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8169642686843872
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-38-48_9723.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8348163962364197
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-38-58_3007.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8111675381660461
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-39-06_8591.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8194273114204407
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_07_adult-chinese-woman-age-25-head-to-knees-portrait-leaning-li.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, head-to-knees portrait leaning lightly against a doorway, pale-blue blouse and tailored burgundy skirt, sleek chin-length black bob, ankles loosely crossed and arms relaxed, steady direct eye contact, soft window light with both eyes clearly visible",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-34-01_4428.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7649762630462646
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-34-15_1403.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7963701486587524
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-34-27_5398.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8245800733566284
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-34-42_4506.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.6772638559341431
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-42-19_6141.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.6836639642715454
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-42-28_3065.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7621300220489502
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-42-36_8313.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.769513726234436
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-42-45_2521.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.734870433807373
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_08_adult-chinese-woman-age-25-head-to-knees-seated-portrait-nea.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, head-to-knees seated portrait near the front of a simple chair, dark-red knee-length dress, polished braided updo, knees together and ankles angled slightly aside, hands resting naturally on her thighs, warm direct smile, evenly lit face and uncluttered cream background",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-31-37_7340.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.815954864025116
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-31-48_9715.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7810761332511902
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-32-03_9910.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.787135124206543
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-32-17_3821.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8388369679450989
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-40-45_6714.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.826241135597229
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-40-53_4461.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7877030372619629
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-41-03_2483.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7748457193374634
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-41-10_8512.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7820971012115479
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_09_adult-chinese-woman-age-25-head-to-knees-side-profile-portra.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, head-to-knees side-profile portrait beside a tall studio window, simple black mock-neck dress, long black hair falling behind her shoulder, chin level and hands relaxed below the waist, clean profile of forehead, nose, lips and jaw, neutral daylight and sharp facial detail",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-35-41_5625.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7585967779159546
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-35-57_6413.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7428632974624634
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-36-11_1586.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7698088884353638
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-36-26_2529.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8261999487876892
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-43-25_5519.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7704882621765137
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-43-34_2800.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7637728452682495
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-43-44_3629.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.765188992023468
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-43-53_1140.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7904696464538574
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_10_adult-chinese-woman-age-25-head-to-knees-studio-portrait-sta.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, head-to-knees studio portrait standing squarely toward the camera, fitted ivory crew-neck top and tailored black trousers, long straight black hair tucked behind both ears, relaxed direct eye contact, neutral warm-gray backdrop, broad softbox lighting, complete face unobstructed and sharply resolved",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-26-59_8534.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7909640073776245
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-27-15_9260.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7396217584609985
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-27-30_9321.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7799297571182251
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-27-50_1342.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.790374755859375
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-38-00_3202.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8096043467521667
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-38-10_8026.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.766562819480896
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-38-20_8956.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7716144323348999
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-38-29_9819.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7462539672851562
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_11_adult-chinese-woman-age-25-three-quarter-portrait-perched-on.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, three-quarter portrait perched on a waist-high counter with one leg relaxed downward, fitted navy blouse and high-waisted white shorts, black hair in a smooth high ponytail, hands braced beside her hips, face lifted directly toward the camera, bright loft daylight and crisp facial detail",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-32-28_7783.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7968130111694336
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-32-39_7989.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7997236251831055
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-32-51_1494.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8143084645271301
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-33-02_8843.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.808711051940918
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-41-17_8307.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7886881828308105
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-41-25_5000.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.814047634601593
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-41-32_9089.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.8239423036575317
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-41-40_4625.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7980658411979675
+      }
+    ]
+  },
+  {
+    "sheet": "contact_sheets\\feet_12_adult-chinese-woman-age-25-three-quarter-portrait-sitting-cr.jpg",
+    "shot_name": "Training/Luna Face LoRA Dataset v2",
+    "shot_prompt": "adult Chinese woman, age 25, three-quarter portrait sitting cross-legged on a pale studio floor, fitted charcoal long-sleeve top and cream trousers, long center-parted black hair, shoulders open and posture relaxed, spontaneous adult smile, broad diffused light and a clean background",
+    "images": [
+      {
+        "position": 1,
+        "filename": "2026-08-26_18-33-13_1278.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8020939230918884
+      },
+      {
+        "position": 2,
+        "filename": "2026-08-26_18-33-24_4531.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.7718071937561035
+      },
+      {
+        "position": 3,
+        "filename": "2026-08-26_18-33-35_8058.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.8096885085105896
+      },
+      {
+        "position": 4,
+        "filename": "2026-08-26_18-33-46_4243.png",
+        "checkpoint": "cyberrealisticXL_desireV30",
+        "face_similarity_centroid": 0.794062077999115
+      },
+      {
+        "position": 5,
+        "filename": "2026-08-26_18-41-47_6880.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7961850762367249
+      },
+      {
+        "position": 6,
+        "filename": "2026-08-26_18-41-55_6634.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.784008800983429
+      },
+      {
+        "position": 7,
+        "filename": "2026-08-26_18-42-02_2526.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7838940620422363
+      },
+      {
+        "position": 8,
+        "filename": "2026-08-26_18-42-10_2548.png",
+        "checkpoint": "juggernautXL_ragnarok",
+        "face_similarity_centroid": 0.7567921876907349
+      }
+    ]
+  }
+]

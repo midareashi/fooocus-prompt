@@ -65,6 +65,13 @@ class TestLoraTraining(unittest.TestCase):
         self.assertEqual(2, len(captions))
         self.assertTrue(all(path.read_text(encoding='utf-8').startswith('luna_test,') for path in captions))
         self.assertIn('keep_tokens = 1', run.dataset_config.read_text(encoding='utf-8'))
+        sample_prompts = run.sample_prompts.read_text(encoding='utf-8').splitlines()
+        self.assertEqual(12, len(sample_prompts))
+        self.assertEqual(4, sum('close-up' in prompt or 'close three-quarter' in prompt
+                                for prompt in sample_prompts))
+        self.assertEqual(4, sum('waist-up' in prompt for prompt in sample_prompts))
+        self.assertEqual(4, sum('head-to-toe' in prompt or 'full-body' in prompt
+                                for prompt in sample_prompts))
 
     def test_training_command_uses_isolated_trainer_and_safe_defaults(self):
         self._image('portrait.png')
