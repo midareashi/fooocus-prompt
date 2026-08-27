@@ -51,13 +51,13 @@ When rewriting, put the main concept first, use concrete visible language, remov
 
 ## Focused retest wildcard
 
-After modifying any Wildprompt rows, overwrite `wildcards/tests/audit.txt` with only the latest revised prompt lines. Do not append to the previous audit. This file is the reusable focused-retest queue, so every prompt-adherence review must replace its contents even when an older audit file already exists.
+After modifying any Wildprompt rows, overwrite both `wildprompts/Tests/Audit.txt` and `wildcards/tests/audit.txt` with only the latest revised prompt lines. Do not append to the previous audit. These files are the reusable focused-retest queue, so every prompt-adherence review must replace their contents even when older audit files already exist.
 
-- Add one complete revised prompt per line.
+- Keep both audit files identical, with one complete revised prompt per line.
 - Include only prompts changed during the latest review.
 - Keep the same row wording used in the source Wildprompt files.
-- If the review makes no prompt changes, overwrite the file with an empty file.
-- Generate two random-seed images for every row in `tests/audit` and score them with the same rubric before considering the revisions proven.
+- If the review makes no prompt changes, overwrite both files with empty files.
+- Select `Tests/Audit`, enable **Test selected files separately**, generate two random-seed images for every row, and score them with the same rubric before considering the revisions proven.
 
 ## Report
 
@@ -76,4 +76,4 @@ The final report must state:
 - Every rewritten or removed prompt and the visual evidence for the change.
 - Where the contact sheets or source images can be reviewed.
 
-After revisions, use `wildcards/tests/audit.txt` to run a focused two-image retest of each changed prompt before treating the rewrite as proven.
+After revisions, use `Tests/Audit` to run a focused two-image retest of each changed prompt before treating the rewrite as proven.
