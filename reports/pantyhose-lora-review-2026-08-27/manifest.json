@@ -1,0 +1,949 @@
+{
+  "batch_id": 119,
+  "images": [
+    {
+      "id": 388,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-23-07_9127.png",
+      "filename": "2026-08-27_15-23-07_9127.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 389,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-24-10_3684.png",
+      "filename": "2026-08-27_15-24-10_3684.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 390,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-25-12_9526.png",
+      "filename": "2026-08-27_15-25-12_9526.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 391,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-26-05_3697.png",
+      "filename": "2026-08-27_15-26-05_3697.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 392,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-26-56_4429.png",
+      "filename": "2026-08-27_15-26-56_4429.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 393,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-27-50_1806.png",
+      "filename": "2026-08-27_15-27-50_1806.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors"
+    },
+    {
+      "id": 394,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-29-03_8730.png",
+      "filename": "2026-08-27_15-29-03_8730.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 395,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-30-06_4437.png",
+      "filename": "2026-08-27_15-30-06_4437.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 396,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-30-56_2888.png",
+      "filename": "2026-08-27_15-30-56_2888.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 397,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-31-51_7967.png",
+      "filename": "2026-08-27_15-31-51_7967.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 398,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-32-51_4260.png",
+      "filename": "2026-08-27_15-32-51_4260.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 399,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-33-46_3771.png",
+      "filename": "2026-08-27_15-33-46_3771.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\GlossyPantyhose_XL.safetensors"
+    },
+    {
+      "id": 400,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-34-58_4510.png",
+      "filename": "2026-08-27_15-34-58_4510.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 401,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-35-48_6602.png",
+      "filename": "2026-08-27_15-35-48_6602.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 402,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-36-49_6321.png",
+      "filename": "2026-08-27_15-36-49_6321.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 403,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-37-48_9725.png",
+      "filename": "2026-08-27_15-37-48_9725.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 404,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-38-47_3870.png",
+      "filename": "2026-08-27_15-38-47_3870.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 405,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-39-45_7492.png",
+      "filename": "2026-08-27_15-39-45_7492.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\Lycra_Pantyhose.safetensors"
+    },
+    {
+      "id": 406,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-41-09_6538.png",
+      "filename": "2026-08-27_15-41-09_6538.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 407,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-42-14_2965.png",
+      "filename": "2026-08-27_15-42-14_2965.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 408,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-43-15_9575.png",
+      "filename": "2026-08-27_15-43-15_9575.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 409,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-44-12_7638.png",
+      "filename": "2026-08-27_15-44-12_7638.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 410,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-45-12_6166.png",
+      "filename": "2026-08-27_15-45-12_6166.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 411,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-46-09_9980.png",
+      "filename": "2026-08-27_15-46-09_9980.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\nude.safetensors"
+    },
+    {
+      "id": 412,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-47-16_8825.png",
+      "filename": "2026-08-27_15-47-16_8825.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 413,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-48-13_6026.png",
+      "filename": "2026-08-27_15-48-13_6026.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 414,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-49-06_5190.png",
+      "filename": "2026-08-27_15-49-06_5190.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 415,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-50-01_3233.png",
+      "filename": "2026-08-27_15-50-01_3233.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 416,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-50-54_6568.png",
+      "filename": "2026-08-27_15-50-54_6568.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 417,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-51-44_6330.png",
+      "filename": "2026-08-27_15-51-44_6330.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\Pantyhose-000009.safetensors"
+    },
+    {
+      "id": 418,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-52-48_1203.png",
+      "filename": "2026-08-27_15-52-48_1203.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 419,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-53-35_3663.png",
+      "filename": "2026-08-27_15-53-35_3663.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 420,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-54-19_3752.png",
+      "filename": "2026-08-27_15-54-19_3752.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 421,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-55-04_4772.png",
+      "filename": "2026-08-27_15-55-04_4772.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 422,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-55-54_5260.png",
+      "filename": "2026-08-27_15-55-54_5260.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 423,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-56-45_1911.png",
+      "filename": "2026-08-27_15-56-45_1911.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\Pantyhose_1.safetensors"
+    },
+    {
+      "id": 424,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-58-00_4733.png",
+      "filename": "2026-08-27_15-58-00_4733.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 425,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_15-59-01_5152.png",
+      "filename": "2026-08-27_15-59-01_5152.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 426,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-00-05_5611.png",
+      "filename": "2026-08-27_16-00-05_5611.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 427,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-01-27_3632.png",
+      "filename": "2026-08-27_16-01-27_3632.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 428,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-02-48_4134.png",
+      "filename": "2026-08-27_16-02-48_4134.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 429,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-04-03_3909.png",
+      "filename": "2026-08-27_16-04-03_3909.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\pantyhose_xl_v1.safetensors"
+    },
+    {
+      "id": 430,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-05-27_2706.png",
+      "filename": "2026-08-27_16-05-27_2706.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 431,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-06-45_1045.png",
+      "filename": "2026-08-27_16-06-45_1045.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 432,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-07-59_5445.png",
+      "filename": "2026-08-27_16-07-59_5445.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 433,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-09-11_7079.png",
+      "filename": "2026-08-27_16-09-11_7079.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 434,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-10-23_5812.png",
+      "filename": "2026-08-27_16-10-23_5812.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 435,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-11-43_7617.png",
+      "filename": "2026-08-27_16-11-43_7617.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\perfectpantyhose-a.safetensors"
+    },
+    {
+      "id": 436,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-13-08_9512.png",
+      "filename": "2026-08-27_16-13-08_9512.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 437,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-14-01_1762.png",
+      "filename": "2026-08-27_16-14-01_1762.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 438,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-15-05_8433.png",
+      "filename": "2026-08-27_16-15-05_8433.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 439,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-16-09_3626.png",
+      "filename": "2026-08-27_16-16-09_3626.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 440,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-17-00_7063.png",
+      "filename": "2026-08-27_16-17-00_7063.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 441,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-17-53_1609.png",
+      "filename": "2026-08-27_16-17-53_1609.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors"
+    },
+    {
+      "id": 442,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-19-03_1553.png",
+      "filename": "2026-08-27_16-19-03_1553.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 443,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-20-01_7644.png",
+      "filename": "2026-08-27_16-20-01_7644.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 444,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-20-57_8336.png",
+      "filename": "2026-08-27_16-20-57_8336.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 445,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-21-49_1666.png",
+      "filename": "2026-08-27_16-21-49_1666.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 446,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-22-45_7578.png",
+      "filename": "2026-08-27_16-22-45_7578.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 447,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-23-45_2225.png",
+      "filename": "2026-08-27_16-23-45_2225.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\RealPantyhose_XL.safetensors"
+    },
+    {
+      "id": 448,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-24-54_5664.png",
+      "filename": "2026-08-27_16-24-54_5664.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236017,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    },
+    {
+      "id": 449,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-25-43_7455.png",
+      "filename": "2026-08-27_16-25-43_7455.png",
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "seed": 9210643144470236018,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    },
+    {
+      "id": 450,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-26-35_6318.png",
+      "filename": "2026-08-27_16-26-35_6318.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236019,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    },
+    {
+      "id": 451,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-27-23_4029.png",
+      "filename": "2026-08-27_16-27-23_4029.png",
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "seed": 9210643144470236020,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    },
+    {
+      "id": 452,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-28-09_1396.png",
+      "filename": "2026-08-27_16-28-09_1396.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236021,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    },
+    {
+      "id": 453,
+      "path": "C:\\Drive\\ML\\Fooocus\\outputs\\2026-08-27\\2026-08-27_16-28-54_4021.png",
+      "filename": "2026-08-27_16-28-54_4021.png",
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "seed": 9210643144470236022,
+      "lora": "PH\\sheerpantyhose.safetensors"
+    }
+  ],
+  "contact_sheets": [
+    {
+      "prompt": "full-body studio photo, standing naturally, wearing a simple black mini dress and sheer black pantyhose, plain light-gray background",
+      "path": "contact_sheets\\prompt_1.jpg",
+      "entries": [
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 388,
+          "filename": "2026-08-27_15-23-07_9127.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 389,
+          "filename": "2026-08-27_15-24-10_3684.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 394,
+          "filename": "2026-08-27_15-29-03_8730.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 395,
+          "filename": "2026-08-27_15-30-06_4437.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 400,
+          "filename": "2026-08-27_15-34-58_4510.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 401,
+          "filename": "2026-08-27_15-35-48_6602.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 406,
+          "filename": "2026-08-27_15-41-09_6538.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 407,
+          "filename": "2026-08-27_15-42-14_2965.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 412,
+          "filename": "2026-08-27_15-47-16_8825.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 413,
+          "filename": "2026-08-27_15-48-13_6026.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 418,
+          "filename": "2026-08-27_15-52-48_1203.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 419,
+          "filename": "2026-08-27_15-53-35_3663.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 424,
+          "filename": "2026-08-27_15-58-00_4733.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 425,
+          "filename": "2026-08-27_15-59-01_5152.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 430,
+          "filename": "2026-08-27_16-05-27_2706.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 431,
+          "filename": "2026-08-27_16-06-45_1045.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 436,
+          "filename": "2026-08-27_16-13-08_9512.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 437,
+          "filename": "2026-08-27_16-14-01_1762.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 442,
+          "filename": "2026-08-27_16-19-03_1553.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 443,
+          "filename": "2026-08-27_16-20-01_7644.png",
+          "seed": 9210643144470236018
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 448,
+          "filename": "2026-08-27_16-24-54_5664.png",
+          "seed": 9210643144470236017
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 449,
+          "filename": "2026-08-27_16-25-43_7455.png",
+          "seed": 9210643144470236018
+        }
+      ]
+    },
+    {
+      "prompt": "full-body indoor photo, seated naturally on a plain chair, wearing a simple cream mini dress and sheer nude pantyhose, soft neutral lighting",
+      "path": "contact_sheets\\prompt_2.jpg",
+      "entries": [
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 390,
+          "filename": "2026-08-27_15-25-12_9526.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 391,
+          "filename": "2026-08-27_15-26-05_3697.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 396,
+          "filename": "2026-08-27_15-30-56_2888.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 397,
+          "filename": "2026-08-27_15-31-51_7967.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 402,
+          "filename": "2026-08-27_15-36-49_6321.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 403,
+          "filename": "2026-08-27_15-37-48_9725.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 408,
+          "filename": "2026-08-27_15-43-15_9575.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 409,
+          "filename": "2026-08-27_15-44-12_7638.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 414,
+          "filename": "2026-08-27_15-49-06_5190.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 415,
+          "filename": "2026-08-27_15-50-01_3233.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 420,
+          "filename": "2026-08-27_15-54-19_3752.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 421,
+          "filename": "2026-08-27_15-55-04_4772.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 426,
+          "filename": "2026-08-27_16-00-05_5611.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 427,
+          "filename": "2026-08-27_16-01-27_3632.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 432,
+          "filename": "2026-08-27_16-07-59_5445.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 433,
+          "filename": "2026-08-27_16-09-11_7079.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 438,
+          "filename": "2026-08-27_16-15-05_8433.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 439,
+          "filename": "2026-08-27_16-16-09_3626.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 444,
+          "filename": "2026-08-27_16-20-57_8336.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 445,
+          "filename": "2026-08-27_16-21-49_1666.png",
+          "seed": 9210643144470236020
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 450,
+          "filename": "2026-08-27_16-26-35_6318.png",
+          "seed": 9210643144470236019
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 451,
+          "filename": "2026-08-27_16-27-23_4029.png",
+          "seed": 9210643144470236020
+        }
+      ]
+    },
+    {
+      "prompt": "full-body studio photo, relaxed rear three-quarter pose and looking back, wearing a simple dark-blue mini dress and sheer charcoal pantyhose, plain warm-gray background",
+      "path": "contact_sheets\\prompt_3.jpg",
+      "entries": [
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 392,
+          "filename": "2026-08-27_15-26-56_4429.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\glossy_pantyhose_SDXL_epoch_15.safetensors",
+          "image_id": 393,
+          "filename": "2026-08-27_15-27-50_1806.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 398,
+          "filename": "2026-08-27_15-32-51_4260.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\GlossyPantyhose_XL.safetensors",
+          "image_id": 399,
+          "filename": "2026-08-27_15-33-46_3771.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 404,
+          "filename": "2026-08-27_15-38-47_3870.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\Lycra_Pantyhose.safetensors",
+          "image_id": 405,
+          "filename": "2026-08-27_15-39-45_7492.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 410,
+          "filename": "2026-08-27_15-45-12_6166.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\nude.safetensors",
+          "image_id": 411,
+          "filename": "2026-08-27_15-46-09_9980.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 416,
+          "filename": "2026-08-27_15-50-54_6568.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\Pantyhose-000009.safetensors",
+          "image_id": 417,
+          "filename": "2026-08-27_15-51-44_6330.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 422,
+          "filename": "2026-08-27_15-55-54_5260.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\Pantyhose_1.safetensors",
+          "image_id": 423,
+          "filename": "2026-08-27_15-56-45_1911.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 428,
+          "filename": "2026-08-27_16-02-48_4134.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\pantyhose_xl_v1.safetensors",
+          "image_id": 429,
+          "filename": "2026-08-27_16-04-03_3909.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 434,
+          "filename": "2026-08-27_16-10-23_5812.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\perfectpantyhose-a.safetensors",
+          "image_id": 435,
+          "filename": "2026-08-27_16-11-43_7617.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 440,
+          "filename": "2026-08-27_16-17-00_7063.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\phose_SDXL_v3.TA_trained.safetensors",
+          "image_id": 441,
+          "filename": "2026-08-27_16-17-53_1609.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 446,
+          "filename": "2026-08-27_16-22-45_7578.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\RealPantyhose_XL.safetensors",
+          "image_id": 447,
+          "filename": "2026-08-27_16-23-45_2225.png",
+          "seed": 9210643144470236022
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 452,
+          "filename": "2026-08-27_16-28-09_1396.png",
+          "seed": 9210643144470236021
+        },
+        {
+          "lora": "PH\\sheerpantyhose.safetensors",
+          "image_id": 453,
+          "filename": "2026-08-27_16-28-54_4021.png",
+          "seed": 9210643144470236022
+        }
+      ]
+    }
+  ]
+}
