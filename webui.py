@@ -149,7 +149,8 @@ def apply_person_likeness_preset(name):
 
 def clear_person_likeness_settings():
     strength, face_weight, face_start = apply_person_likeness_preset('Baseline')
-    return True, 'person', strength, face_weight, face_start, 'Baseline', 'Person likeness settings reset to Baseline.'
+    return '', gr.update(value=None), False, 'person', strength, face_weight, face_start, 'Baseline', \
+        '[]', [], gr.update(value=None), 'Person likeness cleared and settings reset to Baseline.'
 
 
 def list_saved_people():
@@ -1556,14 +1557,21 @@ with shared.gradio_root:
                     with gr.Accordion(label='Person Likeness', open=False):
                         person_likeness_ctrls = []
                         with gr.Row():
-                            saved_person_name = gr.Textbox(label='Name', placeholder='Person name')
+                            saved_person_name = gr.Textbox(label='Name', placeholder='Person name', scale=2)
                             saved_person_selection = gr.Dropdown(
                                 label='Saved People',
                                 choices=list_saved_people(),
-                                value=None
+                                value=None,
+                                scale=2
                             )
-                            save_person_button = gr.Button(value='Save Person', variant='secondary')
-                            load_person_button = gr.Button(value='Load Person', variant='secondary')
+                            save_person_button = gr.Button(value='Save Person', variant='secondary', scale=0, min_width=100)
+                            load_person_button = gr.Button(value='Load Person', variant='secondary', scale=0, min_width=100)
+                            clear_person_likeness_button = gr.Button(
+                                value='Clear Person',
+                                variant='secondary',
+                                scale=0,
+                                min_width=100
+                            )
                         saved_person_status = gr.HTML()
                         person_likeness_files = gr.File(
                             label='Drop Photos',
@@ -1579,11 +1587,11 @@ with shared.gradio_root:
                         )
                         person_likeness_gallery = gr.Gallery(
                             label='Selected Photos',
-                            show_label=True,
+                            show_label=False,
                             elem_id='person_likeness_gallery',
-                            columns=6,
+                            columns=8,
                             object_fit='cover',
-                            height=330,
+                            height=126,
                             allow_preview=False,
                             show_download_button=False
                         )
@@ -1621,16 +1629,11 @@ with shared.gradio_root:
                                 step=0.001,
                                 value=modules.config.default_person_likeness_face_start
                             )
-                        with gr.Row():
-                            person_likeness_preset = gr.Dropdown(
-                                label='Preset',
-                                choices=list(PERSON_LIKENESS_PRESETS.keys()),
-                                value=None
-                            )
-                            clear_person_likeness_button = gr.Button(
-                                value='Clear Settings',
-                                variant='secondary'
-                            )
+                        person_likeness_preset = gr.Dropdown(
+                            label='Preset',
+                            choices=list(PERSON_LIKENESS_PRESETS.keys()),
+                            value=None
+                        )
                         person_likeness_ctrls = [person_likeness_enabled, person_likeness_class,
                                                  person_likeness_strength,
                                                  person_likeness_face_weight,
@@ -1671,10 +1674,12 @@ with shared.gradio_root:
                         )
                         clear_person_likeness_button.click(
                             clear_person_likeness_settings,
-                            outputs=[person_likeness_enabled, person_likeness_class,
+                            outputs=[saved_person_name, saved_person_selection,
+                                     person_likeness_enabled, person_likeness_class,
                                      person_likeness_strength, person_likeness_face_weight,
                                      person_likeness_face_start, person_likeness_preset,
-                                     saved_person_status],
+                                     person_likeness_paths, person_likeness_gallery,
+                                     person_likeness_files, saved_person_status],
                             queue=False,
                             show_progress=False
                         )
@@ -1692,7 +1697,7 @@ with shared.gradio_root:
                             queue=False,
                             show_progress=False
                         )
-                        person_likeness_paths.change(
+                        person_likeness_paths.input(
                             preview_person_likeness_paths,
                             inputs=person_likeness_paths,
                             outputs=person_likeness_gallery,

@@ -102,13 +102,6 @@ function setPersonLikenessPaths(paths) {
         input.value = value;
     }
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-}
-
-function refreshPersonLikenessGallery() {
-    setTimeout(function() {
-        gradioApp().querySelector('#person_likeness_refresh_button')?.click();
-    }, 20);
 }
 
 function installPersonLikenessRemoveButtons() {
@@ -154,8 +147,6 @@ function installPersonLikenessRemoveButtons() {
                 return removePath ? path !== removePath : pathIndex !== index;
             });
             setPersonLikenessPaths(nextPaths);
-            item.remove();
-            refreshPersonLikenessGallery();
         };
     });
 }
