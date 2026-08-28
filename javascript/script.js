@@ -957,29 +957,6 @@ function scheduleUiInstallers() {
     uiInstallerTimeout = setTimeout(runUiInstallers, 100);
 }
 
-function orderGenerationModeTabs() {
-    const tabNav = gradioApp().querySelector('#generation_mode_tabs > .tab-nav');
-    if (!tabNav) return;
-
-    const buttons = Array.from(tabNav.querySelectorAll('button'));
-    const desiredOrder = ['Image Generation', 'History', 'LoRA Training'];
-    const orderedTabs = desiredOrder
-        .map((label) => buttons.find((button) => button.textContent.trim() === label))
-        .filter(Boolean);
-
-    if (orderedTabs.length !== desiredOrder.length) return;
-
-    const currentOrder = buttons
-        .filter((button) => desiredOrder.includes(button.textContent.trim()))
-        .map((button) => button.textContent.trim());
-    if (currentOrder.every((label, index) => label === desiredOrder[index])) return;
-
-    tabNav.prepend(...orderedTabs);
-}
-
-onUiLoaded(orderGenerationModeTabs);
-onAfterUiUpdate(orderGenerationModeTabs);
-
 document.addEventListener("DOMContentLoaded", function() {
     var mutationObserver = new MutationObserver(function(m) {
         if (!executedOnLoaded && gradioApp().querySelector('#generate_button')) {

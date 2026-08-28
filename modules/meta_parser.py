@@ -393,6 +393,7 @@ class A1111MetadataParser(MetadataParser):
         'refiner_model_hash': 'Refiner hash',
         'lora_hashes': 'Lora hashes',
         'lora_weights': 'Lora weights',
+        'image_prompts': 'Image prompts',
         'created_by': 'User',
         'version': 'Version'
     }
@@ -434,7 +435,13 @@ class A1111MetadataParser(MetadataParser):
                 if m is not None:
                     data['resolution'] = str((m.group(1), m.group(2)))
                 else:
-                    data[list(self.fooocus_to_a1111.keys())[list(self.fooocus_to_a1111.values()).index(k)]] = v
+                    data_key = list(self.fooocus_to_a1111.keys())[list(self.fooocus_to_a1111.values()).index(k)]
+                    if data_key == 'image_prompts':
+                        try:
+                            v = json.loads(v)
+                        except (TypeError, ValueError):
+                            pass
+                    data[data_key] = v
             except Exception:
                 print(f"Error parsing \"{k}: {v}\"")
 
@@ -544,6 +551,11 @@ class A1111MetadataParser(MetadataParser):
             lora_weights_string = ', '.join(lora_weights)
             generation_params[self.fooocus_to_a1111['lora_hashes']] = lora_hashes_string
             generation_params[self.fooocus_to_a1111['lora_weights']] = lora_weights_string
+
+        if 'image_prompts' in data:
+            generation_params[self.fooocus_to_a1111['image_prompts']] = json.dumps(
+                data['image_prompts'], separators=(',', ':')
+            )
 
         generation_params[self.fooocus_to_a1111['version']] = data['version']
 

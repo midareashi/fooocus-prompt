@@ -1123,6 +1123,21 @@ div:has(> #positive_prompt) {
   height: 100%;
 }
 
+/* Keep Gradio's native main-tab button/panel pairing intact. The components are
+   declared as History, Training, Generation because History controls must exist
+   before generation event wiring, so change only their visual flex order. */
+#generation_mode_tabs > .tab-nav > button:nth-child(1) {
+  order: 2;
+}
+
+#generation_mode_tabs > .tab-nav > button:nth-child(2) {
+  order: 3;
+}
+
+#generation_mode_tabs > .tab-nav > button:nth-child(3) {
+  order: 1;
+}
+
 .contain .tabs .tabitem.style_selections_tab {
   height: 100%;
 }

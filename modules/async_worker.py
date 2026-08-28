@@ -17,6 +17,7 @@ class AsyncTask:
         from modules.config import default_max_lora_number
         from PIL import Image
         import numpy as np
+        import hashlib
         import json
         import os
         import args_manager
@@ -216,12 +217,31 @@ class AsyncTask:
             args.pop()) if not args_manager.args.disable_metadata else MetadataScheme.FOOOCUS
 
         self.cn_tasks = {x: [] for x in ip_list}
-        for _ in range(modules.config.default_controlnet_image_count):
+        self.image_prompt_metadata = []
+        for slot_index in range(modules.config.default_controlnet_image_count):
             cn_img = args.pop()
             cn_stop = args.pop()
             cn_weight = args.pop()
             cn_type = args.pop()
             if cn_img is not None:
+                prompt_metadata = {
+                    'slot': slot_index + 1,
+                    'type': str(cn_type),
+                    'stop_at': float(cn_stop),
+                    'weight': float(cn_weight),
+                }
+                if isinstance(cn_img, np.ndarray):
+                    height, width = cn_img.shape[:2]
+                    prompt_metadata['width'] = int(width)
+                    prompt_metadata['height'] = int(height)
+                    prompt_metadata['image_sha256'] = hashlib.sha256(
+                        cn_img.tobytes(order='C')
+                    ).hexdigest()
+                else:
+                    image_path = get_uploaded_file_path(cn_img)
+                    if isinstance(image_path, str):
+                        prompt_metadata['filename'] = os.path.basename(image_path)
+                self.image_prompt_metadata.append(prompt_metadata)
                 self.cn_tasks[cn_type].append([cn_img, cn_stop, cn_weight])
 
         self.debugging_dino = args.pop()
@@ -810,6 +830,8 @@ def worker():
                 d.append(('Testing LoRA', 'testing_lora', async_task.testing_lora_name))
             if async_task.generation_tags:
                 d.append(('Generation Tags', 'generation_tags', async_task.generation_tags))
+            if async_task.image_prompt_metadata:
+                d.append(('Image Prompts', 'image_prompts', async_task.image_prompt_metadata))
 
             metadata_parser = None
             if async_task.save_metadata_to_images:
