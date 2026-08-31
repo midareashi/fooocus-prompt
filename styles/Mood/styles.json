@@ -1,0 +1,35 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Cozy",
+            "prompt": "cozy intimate atmosphere, relaxed warmth, inviting visual mood",
+            "negative_prompt": "cold hostile atmosphere"
+        },
+        {
+            "name": "Dreamy",
+            "prompt": "dreamy romantic atmosphere, soft visual poetry, gentle sense of wonder",
+            "negative_prompt": "clinical documentary mood"
+        },
+        {
+            "name": "Energetic",
+            "prompt": "energetic lively mood, dynamic visual rhythm",
+            "negative_prompt": "static lifeless mood"
+        },
+        {
+            "name": "Moody",
+            "prompt": "moody intimate atmosphere, rich shadows, restrained emotion",
+            "negative_prompt": "bright carefree cheerfulness"
+        },
+        {
+            "name": "Playful",
+            "prompt": "playful teasing mood, lively expression, mischievous energy",
+            "negative_prompt": "stern formal mood"
+        },
+        {
+            "name": "Romantic",
+            "prompt": "romantic intimate mood, tender visual atmosphere",
+            "negative_prompt": "cold detached mood"
+        }
+    ]
+}

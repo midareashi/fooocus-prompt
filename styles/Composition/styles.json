@@ -1,0 +1,30 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Candid",
+            "prompt": "candid spontaneous composition, naturally observed moment",
+            "negative_prompt": "stiff formal posing"
+        },
+        {
+            "name": "Centered",
+            "prompt": "strong centered composition, clear visual focus on the subject",
+            "negative_prompt": "awkward off-center crop"
+        },
+        {
+            "name": "Negative Space",
+            "prompt": "intentional negative space, clean breathing room around the subject",
+            "negative_prompt": "cluttered frame"
+        },
+        {
+            "name": "Rule of Thirds",
+            "prompt": "balanced rule-of-thirds composition",
+            "negative_prompt": "awkward accidental framing"
+        },
+        {
+            "name": "Symmetrical",
+            "prompt": "precise symmetrical composition, balanced visual geometry",
+            "negative_prompt": "uneven asymmetrical framing"
+        }
+    ]
+}

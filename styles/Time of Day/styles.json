@@ -1,0 +1,40 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Blue Hour",
+            "prompt": "blue hour just after sunset, cool ambient sky with emerging warm lights",
+            "negative_prompt": "harsh midday sun"
+        },
+        {
+            "name": "Dawn",
+            "prompt": "early dawn, delicate first light, quiet fresh atmosphere",
+            "negative_prompt": "midday, deep night"
+        },
+        {
+            "name": "Golden Hour",
+            "prompt": "golden hour, warm low-angle sunlight, long soft shadows",
+            "negative_prompt": "harsh overhead midday light"
+        },
+        {
+            "name": "Midday",
+            "prompt": "bright midday, clear overhead daylight, crisp natural visibility",
+            "negative_prompt": "sunset, nighttime"
+        },
+        {
+            "name": "Midnight",
+            "prompt": "deep midnight atmosphere, dark sky, sparse luminous highlights",
+            "negative_prompt": "daylight, sunrise"
+        },
+        {
+            "name": "Morning",
+            "prompt": "fresh morning light, soft clean daylight, gentle awakening atmosphere",
+            "negative_prompt": "nighttime darkness"
+        },
+        {
+            "name": "Night",
+            "prompt": "nighttime scene, controlled pools of artificial light, deep ambient shadows",
+            "negative_prompt": "bright daylight"
+        }
+    ]
+}

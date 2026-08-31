@@ -1,0 +1,50 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Cinematic Portrait",
+            "prompt": "cinematic portrait photography, beautiful motivated lighting, elegant composition, subtle filmic color grade",
+            "negative_prompt": "flat lighting, careless snapshot, oversaturated colors"
+        },
+        {
+            "name": "Dark Fantasy",
+            "prompt": "dark fantasy portrait, mysterious dramatic atmosphere, ornate shadowy detail, grim beauty",
+            "negative_prompt": "cheerful everyday snapshot, plain modern setting"
+        },
+        {
+            "name": "Fashion Editorial",
+            "prompt": "high-fashion editorial photography, confident styling, polished magazine composition, refined studio finish",
+            "negative_prompt": "casual amateur snapshot, dull styling"
+        },
+        {
+            "name": "Film Noir",
+            "prompt": "classic film-noir photography, sculpted black-and-white lighting, deep shadows, elegant cinematic tension",
+            "negative_prompt": "bright cheerful colors, flat lighting"
+        },
+        {
+            "name": "Glamour",
+            "prompt": "sensual glamour photography, flattering beauty lighting, luxurious styling, polished intimate portraiture",
+            "negative_prompt": "dull unflattering lighting, careless composition"
+        },
+        {
+            "name": "Kawaii Illustration",
+            "prompt": "adorable kawaii illustration, bright charming colors, expressive features, polished anime influence",
+            "negative_prompt": "photorealistic, grim horror, muted monochrome"
+        },
+        {
+            "name": "Luxurious Elegance",
+            "prompt": "luxurious elegant portrait, opulent designer setting, refined styling, lavish cinematic detail",
+            "negative_prompt": "cheap cluttered setting, plain utilitarian styling"
+        },
+        {
+            "name": "Neon Noir",
+            "prompt": "neon-noir portrait photography, vivid colored edge light, deep nighttime shadows, sleek cinematic atmosphere",
+            "negative_prompt": "plain daylight, flat neutral lighting"
+        },
+        {
+            "name": "Polaroid Nostalgia",
+            "prompt": "intimate vintage Polaroid photograph, faded warm color, soft imperfect exposure, candid nostalgic mood",
+            "negative_prompt": "sterile ultra-clean digital rendering"
+        }
+    ]
+}

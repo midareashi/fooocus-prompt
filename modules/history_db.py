@@ -219,7 +219,6 @@ def task_to_config(task):
         'training_mode': bool(getattr(task, 'training_mode', False)),
         'testing_mode': bool(getattr(task, 'testing_mode', False)),
         'testing_loras': str(getattr(task, 'testing_loras', []) or []),
-        'generation_tags': str(getattr(task, 'generation_tags', '') or ''),
     }
 
     for index, (name, weight) in enumerate(getattr(task, 'loras', []) or []):
@@ -274,13 +273,6 @@ def create_batch_from_task(task):
             )
         )
         batch_id = cursor.lastrowid
-        for tag_name in _normalize_tag_names(getattr(task, 'generation_tags', '')):
-            tag_id = _get_or_create_tag(conn, tag_name)
-            if tag_id is not None:
-                conn.execute(
-                    'INSERT OR IGNORE INTO batch_tags (batch_id, tag_id) VALUES (?, ?)',
-                    (batch_id, tag_id)
-                )
         return batch_id
 
 
@@ -359,13 +351,6 @@ def record_image(batch_id, image_path, metadata, task=None, loras=None, width=No
             row = conn.execute('SELECT id FROM images WHERE path = ?', (abs_path,)).fetchone()
             image_id = row['id'] if row else None
         if image_id is not None:
-            for tag_name in _normalize_tag_names(getattr(task, 'generation_tags', '') if task is not None else ''):
-                tag_id = _get_or_create_tag(conn, tag_name)
-                if tag_id is not None:
-                    conn.execute(
-                        'INSERT OR IGNORE INTO image_tags (image_id, tag_id) VALUES (?, ?)',
-                        (image_id, tag_id)
-                    )
             conn.execute('DELETE FROM image_loras WHERE image_id = ?', (image_id,))
             for position, (name, weight) in enumerate(loras or []):
                 if name == 'None':

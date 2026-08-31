@@ -1,0 +1,45 @@
+{
+    "selection_mode": "additive",
+    "styles": [
+        {
+            "name": "Backlit Glow",
+            "prompt": "soft backlighting, luminous edge glow, controlled highlights",
+            "negative_prompt": "flat frontal lighting"
+        },
+        {
+            "name": "Candlelight",
+            "prompt": "intimate warm candlelight, soft flickering highlights, gentle shadows",
+            "negative_prompt": "cold fluorescent lighting"
+        },
+        {
+            "name": "Dappled Sunlight",
+            "prompt": "dappled natural sunlight, delicate patterned highlights and shadows",
+            "negative_prompt": "flat even lighting"
+        },
+        {
+            "name": "Diffused Studio",
+            "prompt": "large diffused studio light, soft controlled shadows, clean skin highlights",
+            "negative_prompt": "harsh direct flash"
+        },
+        {
+            "name": "Neon",
+            "prompt": "vivid neon lighting, colored reflections, luminous nighttime atmosphere",
+            "negative_prompt": "plain neutral daylight"
+        },
+        {
+            "name": "Rim Light",
+            "prompt": "defined rim light tracing the subject, dimensional separation",
+            "negative_prompt": "flat silhouette edges"
+        },
+        {
+            "name": "Soft Window Light",
+            "prompt": "soft directional window light, natural gentle shadow falloff",
+            "negative_prompt": "harsh overhead lighting"
+        },
+        {
+            "name": "Softbox Beauty",
+            "prompt": "flattering beauty softbox lighting, bright eyes, smooth controlled highlights",
+            "negative_prompt": "hard unflattering shadows"
+        }
+    ]
+}

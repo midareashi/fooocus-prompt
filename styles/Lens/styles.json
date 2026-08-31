@@ -1,0 +1,35 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "24mm Wide Angle",
+            "prompt": "24mm wide-angle lens, expansive environmental perspective",
+            "negative_prompt": "telephoto compression"
+        },
+        {
+            "name": "35mm Environmental",
+            "prompt": "35mm lens, natural environmental portrait perspective",
+            "negative_prompt": "extreme wide-angle distortion"
+        },
+        {
+            "name": "50mm Natural",
+            "prompt": "50mm lens, natural human-eye perspective",
+            "negative_prompt": "extreme lens distortion"
+        },
+        {
+            "name": "85mm Portrait",
+            "prompt": "85mm portrait lens, flattering facial perspective, gentle compression",
+            "negative_prompt": "wide-angle facial distortion"
+        },
+        {
+            "name": "135mm Telephoto",
+            "prompt": "135mm telephoto portrait lens, elegant compression, isolated subject",
+            "negative_prompt": "wide-angle distortion"
+        },
+        {
+            "name": "Macro",
+            "prompt": "macro lens photography, intimate close detail, precise texture",
+            "negative_prompt": "distant wide view"
+        }
+    ]
+}

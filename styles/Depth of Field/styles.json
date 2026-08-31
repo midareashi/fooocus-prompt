@@ -1,0 +1,25 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Creamy Bokeh",
+            "prompt": "very shallow depth of field, creamy circular bokeh, crisp subject separation",
+            "negative_prompt": "busy sharp background"
+        },
+        {
+            "name": "Deep Focus",
+            "prompt": "deep focus photography, foreground and background clearly resolved",
+            "negative_prompt": "heavy background blur"
+        },
+        {
+            "name": "Natural Focus",
+            "prompt": "natural moderate depth of field, realistic focus falloff",
+            "negative_prompt": "artificial extreme blur"
+        },
+        {
+            "name": "Shallow Focus",
+            "prompt": "shallow depth of field, softly blurred background, sharp subject",
+            "negative_prompt": "everything equally sharp"
+        }
+    ]
+}

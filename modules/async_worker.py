@@ -73,6 +73,8 @@ class AsyncTask:
         self.prompt = args.pop()
         self.negative_prompt = args.pop()
         self.style_selections = args.pop()
+        from modules.sdxl_styles import normalize_style_layer_selections
+        self.style_selections = normalize_style_layer_selections(self.style_selections)
         self.wildprompt_selections = args.pop()
         if not isinstance(self.wildprompt_selections, list):
             self.wildprompt_selections = []
@@ -289,7 +291,6 @@ class AsyncTask:
                     enhance_inpaint_erode_or_dilate,
                     enhance_mask_invert
                 ])
-        self.generation_tags = str(args.pop() or '').strip() if len(args) > 0 else ''
         self.wildprompt_test_separately = bool(args.pop()) if len(args) > 0 else False
         self.should_enhance = self.enhance_checkbox and (self.enhance_uov_method != disabled.casefold() or len(self.enhance_ctrls) > 0)
         self.images_to_enhance_count = 0
@@ -828,8 +829,6 @@ def worker():
                     d.append((f'LoRA {li + 1}', f'lora_combined_{li + 1}', f'{n} : {w}'))
             if async_task.testing_lora_name is not None:
                 d.append(('Testing LoRA', 'testing_lora', async_task.testing_lora_name))
-            if async_task.generation_tags:
-                d.append(('Generation Tags', 'generation_tags', async_task.generation_tags))
             if async_task.image_prompt_metadata:
                 d.append(('Image Prompts', 'image_prompts', async_task.image_prompt_metadata))
 

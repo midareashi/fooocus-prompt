@@ -1,0 +1,35 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Dutch Angle",
+            "prompt": "dynamic Dutch-angle camera framing",
+            "negative_prompt": "level horizon"
+        },
+        {
+            "name": "Eye Level",
+            "prompt": "eye-level camera angle, natural perspective",
+            "negative_prompt": "extreme high angle, extreme low angle"
+        },
+        {
+            "name": "High Angle",
+            "prompt": "high-angle view looking gently downward",
+            "negative_prompt": "low-angle view"
+        },
+        {
+            "name": "Low Angle",
+            "prompt": "low-angle view looking upward, confident perspective",
+            "negative_prompt": "high-angle view"
+        },
+        {
+            "name": "Overhead",
+            "prompt": "direct overhead camera view, top-down composition",
+            "negative_prompt": "eye-level view"
+        },
+        {
+            "name": "Point of View",
+            "prompt": "intimate first-person point-of-view composition",
+            "negative_prompt": "detached surveillance view"
+        }
+    ]
+}

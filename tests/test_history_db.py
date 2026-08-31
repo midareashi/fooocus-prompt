@@ -102,6 +102,27 @@ class TestHistoryDb(unittest.TestCase):
         }.issubset(indexes))
         self.assertIn('thumbnail_hidden', image_columns)
 
+    def test_new_generation_config_has_no_batch_tag_input(self):
+        task = SimpleNamespace(
+            prompt='portrait',
+            negative_prompt='',
+            style_selections=['Fooocus V2'],
+            wildprompt_selections=[],
+            wildprompt_generate_all=False,
+            wildprompt_generate_all_files=[],
+            wildprompt_test_separately=False,
+            wildprompt_line_selections={},
+            performance_selection=SimpleNamespace(value='Quality'),
+            aspect_ratios_selection='1024 1024',
+            image_number=1,
+            testing_loras=[],
+            loras=[],
+        )
+
+        config = history_db.task_to_config(task)
+
+        self.assertNotIn('generation_tags', config)
+
     def test_reconcile_outputs_groups_new_images_and_keeps_existing_rows(self):
         output_folder = os.path.join(self.temp_dir, 'outputs')
         base_time = time.time() - 7200

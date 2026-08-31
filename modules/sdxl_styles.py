@@ -10,6 +10,7 @@ from random import Random
 
 # cannot use modules.config - validators causing circular imports
 styles_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sdxl_styles/'))
+style_layers_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../styles/'))
 wildprompts_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../wildprompts/'))
 
 
@@ -50,10 +51,96 @@ for styles_file in styles_files:
         print(str(e))
         print(f'Failed to load style file {styles_file}')
 
+legacy_style_keys = list(styles.keys())
+
+
+def load_style_layers(folder_path=None):
+    folder_path = os.path.abspath(folder_path or style_layers_path)
+    loaded_styles = {}
+    categories = {}
+    selection_modes = {}
+
+    if not os.path.isdir(folder_path):
+        return loaded_styles, categories, selection_modes
+
+    for relative_path in get_files_from_folder(folder_path, ['.json']):
+        normalized_path = relative_path.replace('\\', '/')
+        parts = normalized_path.split('/')
+        category = parts[0] if len(parts) > 1 else 'Uncategorized'
+        try:
+            with open(os.path.join(folder_path, relative_path), encoding='utf-8') as f:
+                data = json.load(f)
+            entries = data.get('styles', []) if isinstance(data, dict) else []
+            selection_mode = data.get('selection_mode', 'additive') if isinstance(data, dict) else 'additive'
+            selection_mode = selection_mode if selection_mode in ['single', 'additive'] else 'additive'
+            selection_modes[category] = selection_mode
+
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                name = str(entry.get('name', '') or '').strip()
+                prompt = str(entry.get('prompt', '') or '').strip()
+                negative_prompt = str(entry.get('negative_prompt', '') or '').strip()
+                if name == '' or prompt == '':
+                    continue
+                style_name = f'{category}/{name}'
+                loaded_styles[style_name] = (prompt, negative_prompt)
+                categories[style_name] = category
+        except Exception as e:
+            print(str(e))
+            print(f'Failed to load style layer file {relative_path}')
+
+    return loaded_styles, categories, selection_modes
+
+
+style_layers, style_layer_categories, style_layer_selection_modes = load_style_layers()
+styles.update(style_layers)
 style_keys = list(styles.keys())
 fooocus_expansion = 'Fooocus V2'
 random_style_name = 'Random Style'
 legal_style_names = [fooocus_expansion, random_style_name] + style_keys
+
+foundation_style_names = [
+    fooocus_expansion,
+    'Fooocus Negative',
+    'Fooocus Photograph',
+]
+style_layer_categories[fooocus_expansion] = 'Foundation'
+style_layer_categories['Fooocus Negative'] = 'Foundation'
+style_layer_categories['Fooocus Photograph'] = 'Aesthetic'
+style_layer_selection_modes['Foundation'] = 'additive'
+
+
+def get_legal_style_layer_names():
+    names = [name for name in foundation_style_names if name in legal_style_names]
+    names += list(style_layers.keys())
+    return sorted(names, key=str.casefold)
+
+
+def get_style_layer_category(style_name):
+    return style_layer_categories.get(style_name, 'Legacy')
+
+
+def get_style_layer_selection_mode(style_name):
+    category = get_style_layer_category(style_name)
+    return style_layer_selection_modes.get(category, 'additive')
+
+
+def normalize_style_layer_selections(selected):
+    selected = selected if isinstance(selected, list) else []
+    selected = [name for name in selected if name in legal_style_names]
+    selected = list(dict.fromkeys(selected))
+    last_single_index = {}
+
+    for index, name in enumerate(selected):
+        if get_style_layer_selection_mode(name) == 'single':
+            last_single_index[get_style_layer_category(name)] = index
+
+    return [
+        name for index, name in enumerate(selected)
+        if get_style_layer_selection_mode(name) != 'single'
+        or last_single_index.get(get_style_layer_category(name)) == index
+    ]
 
 
 def get_legal_wildprompt_names():
@@ -66,7 +153,7 @@ legal_wildprompt_names = get_legal_wildprompt_names()
 
 
 def get_random_style(rng: Random) -> str:
-    return rng.choice(list(styles.items()))[0]
+    return rng.choice(legacy_style_keys)
 
 
 def apply_style(style, positive):

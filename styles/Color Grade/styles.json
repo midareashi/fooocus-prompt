@@ -1,0 +1,35 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Cool",
+            "prompt": "cool blue color grade, crisp restrained tones",
+            "negative_prompt": "warm orange cast"
+        },
+        {
+            "name": "Monochrome",
+            "prompt": "elegant monochrome color treatment, rich tonal range",
+            "negative_prompt": "bright multicolored palette"
+        },
+        {
+            "name": "Muted",
+            "prompt": "muted sophisticated color palette, restrained saturation",
+            "negative_prompt": "oversaturated colors"
+        },
+        {
+            "name": "Pastel",
+            "prompt": "soft pastel color palette, delicate airy tones",
+            "negative_prompt": "harsh dark colors"
+        },
+        {
+            "name": "Vibrant",
+            "prompt": "vibrant rich color palette, confident saturation",
+            "negative_prompt": "washed-out colors"
+        },
+        {
+            "name": "Warm",
+            "prompt": "warm flattering color grade, gentle amber tones",
+            "negative_prompt": "cold blue cast"
+        }
+    ]
+}

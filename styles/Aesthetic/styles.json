@@ -1,0 +1,40 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Anime",
+            "prompt": "anime illustration, clean linework, expressive features, detailed cel shading",
+            "negative_prompt": "photorealistic, live action"
+        },
+        {
+            "name": "Art Nouveau",
+            "prompt": "art nouveau illustration, elegant organic curves, flowing ornamental lines, botanical motifs",
+            "negative_prompt": "industrial, mechanical, minimalist"
+        },
+        {
+            "name": "Comic Book",
+            "prompt": "polished adult comic-book illustration, expressive linework, detailed coloring, dramatic panel art",
+            "negative_prompt": "photorealistic, flat unfinished sketch"
+        },
+        {
+            "name": "Digital Painting",
+            "prompt": "detailed digital painting, painterly rendering, refined brushwork",
+            "negative_prompt": "photograph, low-detail sketch"
+        },
+        {
+            "name": "Dreamy Fantasy",
+            "prompt": "ethereal fantasy art, celestial atmosphere, magical painterly detail",
+            "negative_prompt": "mundane documentary photography"
+        },
+        {
+            "name": "Neonpunk",
+            "prompt": "neonpunk aesthetic, sleek futuristic design, magenta and cyan accents, dark luminous atmosphere",
+            "negative_prompt": "rustic, muted naturalism"
+        },
+        {
+            "name": "Watercolor",
+            "prompt": "watercolor illustration, translucent washes, soft pigment blooms, visible paper texture",
+            "negative_prompt": "photorealistic, hard-edged digital render"
+        }
+    ]
+}

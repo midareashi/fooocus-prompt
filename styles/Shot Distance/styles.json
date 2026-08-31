@@ -1,0 +1,40 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Close-Up",
+            "prompt": "close-up portrait framing, face and upper shoulders prominent",
+            "negative_prompt": "full-body framing, distant subject"
+        },
+        {
+            "name": "Extreme Close-Up",
+            "prompt": "extreme close-up framing, intimate facial detail fills the frame",
+            "negative_prompt": "wide shot, full body"
+        },
+        {
+            "name": "Full Body",
+            "prompt": "full-body composition, entire figure visible from head to feet",
+            "negative_prompt": "cropped feet, cropped head, close-up"
+        },
+        {
+            "name": "Head and Shoulders",
+            "prompt": "head-and-shoulders portrait framing",
+            "negative_prompt": "full-body view, distant subject"
+        },
+        {
+            "name": "Head to Knees",
+            "prompt": "head-to-knees portrait composition, knees clearly included",
+            "negative_prompt": "cropped above the knees, distant wide shot"
+        },
+        {
+            "name": "Waist-Up",
+            "prompt": "waist-up medium portrait framing",
+            "negative_prompt": "full-body view, extreme close-up"
+        },
+        {
+            "name": "Wide Shot",
+            "prompt": "wide environmental shot, subject shown clearly within the surroundings",
+            "negative_prompt": "tight portrait crop"
+        }
+    ]
+}

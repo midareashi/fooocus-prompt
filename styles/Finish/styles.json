@@ -1,0 +1,35 @@
+{
+    "selection_mode": "additive",
+    "styles": [
+        {
+            "name": "Analog Film",
+            "prompt": "shot on analog film, subtle halation, organic color response",
+            "negative_prompt": "sterile digital rendering"
+        },
+        {
+            "name": "Cinematic Grade",
+            "prompt": "cinematic color grading, polished highlight rolloff, rich shadow detail",
+            "negative_prompt": "flat ungraded image"
+        },
+        {
+            "name": "Clean Digital",
+            "prompt": "clean modern digital photography, crisp natural detail",
+            "negative_prompt": "heavy film damage, excessive grain"
+        },
+        {
+            "name": "Fine Film Grain",
+            "prompt": "fine natural film grain, tactile photographic texture",
+            "negative_prompt": "coarse digital noise"
+        },
+        {
+            "name": "Glossy Editorial",
+            "prompt": "glossy high-fashion editorial finish, polished magazine photography",
+            "negative_prompt": "dull amateur snapshot"
+        },
+        {
+            "name": "Polaroid",
+            "prompt": "instant Polaroid photograph, soft vintage color, subtle imperfect exposure",
+            "negative_prompt": "ultra-clean modern digital finish"
+        }
+    ]
+}

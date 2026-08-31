@@ -29,7 +29,6 @@ import copy
 import launch
 from extras.inpaint_mask import SAMOptions
 
-from modules.sdxl_styles import legal_style_names
 from modules.private_logger import get_current_html_path
 from modules.ui_gradio_extensions import reload_javascript
 from modules.auth import auth_enabled, check_auth
@@ -1219,8 +1218,6 @@ with shared.gradio_root:
                         with gr.Column(scale=17):
                             prompt = gr.Textbox(show_label=False, placeholder="Type prompt here or paste parameters.", elem_id='positive_prompt',
                                                 autofocus=True, lines=3)
-                            generation_tags = gr.Textbox(show_label=False, lines=1, placeholder='Tags: LoRA Testing, ...',
-                                                          elem_id='generation_tags')
         
                             default_prompt = modules.config.default_prompt
                             if isinstance(default_prompt, str) and default_prompt != '':
@@ -1246,6 +1243,102 @@ with shared.gradio_root:
                             replace_prompt_config_button = gr.Button(value='Replace Prompt', variant='secondary')
                             append_prompt_config_button = gr.Button(value='Append Prompt', variant='secondary')
                         prompt_config_status = gr.HTML()
+                    with gr.Accordion(label='Styles', open=False, elem_classes=['style_layers_panel']):
+                        default_style_selections = style_sorter.try_load_sorted_styles(
+                            default_selected=modules.config.default_styles
+                        )
+                        style_folder_chips = gr.CheckboxGroup(
+                            label='Folders (clear to show all)',
+                            choices=style_sorter.get_style_categories(),
+                            value=[],
+                            elem_classes=['style-folder-chips']
+                        )
+                        with gr.Row():
+                            style_search_bar = gr.Textbox(
+                                label='Search',
+                                placeholder='Find a style ...',
+                                value='',
+                                scale=4
+                            )
+                            style_reset = gr.Button(
+                                value='Reset',
+                                variant='secondary',
+                                scale=1,
+                                min_width=100
+                            )
+                        style_selections = gr.CheckboxGroup(
+                            show_label=False,
+                            container=False,
+                            choices=copy.deepcopy(style_sorter.all_styles),
+                            value=copy.deepcopy(default_style_selections),
+                            label='Selected Styles',
+                            elem_classes=['style_selections']
+                        )
+                        gradio_receiver_style_selections = gr.Textbox(
+                            elem_id='gradio_receiver_style_selections',
+                            visible=False
+                        )
+
+                        shared.gradio_root.load(
+                            style_sorter.refresh_style_browser,
+                            inputs=[style_selections, style_folder_chips, style_search_bar],
+                            outputs=[style_folder_chips, style_selections],
+                            queue=False,
+                            show_progress=False
+                        )
+
+                        style_search_bar.change(
+                            style_sorter.filter_styles_by_folders,
+                            inputs=[style_selections, style_folder_chips, style_search_bar],
+                            outputs=style_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            lambda: None, _js='()=>{refresh_style_localization();}'
+                        )
+
+                        style_folder_chips.change(
+                            style_sorter.filter_styles_by_folders,
+                            inputs=[style_selections, style_folder_chips, style_search_bar],
+                            outputs=style_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            lambda: None, _js='()=>{refresh_style_localization();}'
+                        )
+
+                        style_selections.input(
+                            style_sorter.enforce_style_selection_rules,
+                            inputs=[style_selections, style_folder_chips, style_search_bar],
+                            outputs=style_selections,
+                            queue=False,
+                            show_progress=False
+                        )
+
+                        style_reset.click(
+                            style_sorter.reset_style_browser,
+                            outputs=[style_folder_chips, style_search_bar, style_selections],
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            lambda: None, _js='()=>{refresh_style_localization();}'
+                        )
+
+                        gradio_receiver_style_selections.input(
+                            style_sorter.sort_styles,
+                            inputs=style_selections,
+                            outputs=style_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            style_sorter.filter_styles_by_folders,
+                            inputs=[style_selections, style_folder_chips, style_search_bar],
+                            outputs=style_selections,
+                            queue=False,
+                            show_progress=False
+                        ).then(
+                            lambda: None, _js='()=>{refresh_style_localization();}'
+                        )
                     with gr.Accordion(label='Wildprompt', open=False, elem_classes=['wildprompt_selections_tab']):
                         wildprompt_sorter.try_load_sorted_wildprompts()
                         wildprompt_generation_factors = gr.State(
@@ -2103,39 +2196,6 @@ with shared.gradio_root:
 
                         shared.gradio_root.load(update_history_link, outputs=history_link, queue=False, show_progress=False)
         
-                    with gr.Tab(label='Styles', elem_classes=['style_selections_tab']):
-                        style_sorter.try_load_sorted_styles(
-                            style_names=legal_style_names,
-                            default_selected=modules.config.default_styles)
-        
-                        style_search_bar = gr.Textbox(show_label=False, container=False,
-                                                      placeholder="\U0001F50E Type here to search styles ...",
-                                                      value="",
-                                                      label='Search Styles')
-                        style_selections = gr.CheckboxGroup(show_label=False, container=False,
-                                                            choices=copy.deepcopy(style_sorter.all_styles),
-                                                            value=copy.deepcopy(modules.config.default_styles),
-                                                            label='Selected Styles',
-                                                            elem_classes=['style_selections'])
-                        gradio_receiver_style_selections = gr.Textbox(elem_id='gradio_receiver_style_selections', visible=False)
-        
-                        shared.gradio_root.load(lambda: gr.update(choices=copy.deepcopy(style_sorter.all_styles)),
-                                                outputs=style_selections)
-        
-                        style_search_bar.change(style_sorter.search_styles,
-                                                inputs=[style_selections, style_search_bar],
-                                                outputs=style_selections,
-                                                queue=False,
-                                                show_progress=False).then(
-                            lambda: None, _js='()=>{refresh_style_localization();}')
-        
-                        gradio_receiver_style_selections.input(style_sorter.sort_styles,
-                                                               inputs=style_selections,
-                                                               outputs=style_selections,
-                                                               queue=False,
-                                                               show_progress=False).then(
-                            lambda: None, _js='()=>{refresh_style_localization();}')
-
                     with gr.Tab(label='Models'):
                         with gr.Group():
                             with gr.Row():
@@ -5007,7 +5067,6 @@ with shared.gradio_root:
                           enhance_input_image, enhance_checkbox, enhance_uov_method, enhance_uov_processing_order,
                           enhance_uov_prompt_type]
                 ctrls += enhance_ctrls
-                ctrls += [generation_tags]
                 ctrls += [wildprompt_test_separately]
 
                 wildprompt_line_selection_inputs = [wildprompt_selections] + wildprompt_line_selection_ctrls
@@ -5186,22 +5245,22 @@ with shared.gradio_root:
         
                 def trigger_describe(modes, img, apply_styles):
                     describe_prompts = []
-                    styles = set()
+                    styles = []
         
                     if flags.describe_type_photo in modes:
                         from extras.interrogate import default_interrogator as default_interrogator_photo
                         describe_prompts.append(default_interrogator_photo(img))
-                        styles.update(["Fooocus V2", "Fooocus Enhance", "Fooocus Sharp"])
+                        styles.extend(["Fooocus V2", "Fooocus Photograph", "Finish/Clean Digital"])
         
                     if flags.describe_type_anime in modes:
                         from extras.wd14tagger import default_interrogator as default_interrogator_anime
                         describe_prompts.append(default_interrogator_anime(img))
-                        styles.update(["Fooocus V2", "Fooocus Masterpiece"])
+                        styles.extend(["Fooocus V2", "Aesthetic/Anime"])
         
                     if len(styles) == 0 or not apply_styles:
                         styles = gr.update()
                     else:
-                        styles = list(styles)
+                        styles = modules.sdxl_styles.normalize_style_layer_selections(styles)
         
                     if len(describe_prompts) == 0:
                         describe_prompt = gr.update()

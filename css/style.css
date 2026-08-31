@@ -1138,53 +1138,35 @@ div:has(> #positive_prompt) {
   order: 1;
 }
 
-.contain .tabs .tabitem.style_selections_tab {
-  height: 100%;
-}
-
-.contain .tabs .tabitem.style_selections_tab > div:first-child {
-  height: 100%;
-}
-
-.contain .tabs .tabitem.style_selections_tab .style_selections {
-  min-height: 200px;
-  height: 100%;
-}
-
-.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] {
-  position: absolute; /* remove this to disable scrolling within the checkbox-group */
-  overflow: auto;
-  padding-right: 2px;
-  max-height: 100%;
-}
-
-.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label,
+.style_layers_panel .style_selections .wrap[data-testid="checkbox-group"] label,
 .wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label {
-  /* max-width: calc(35% - 15px) !important; */ /* add this to enable 3 columns layout */
   flex: calc(50% - 5px) !important;
 }
 
-.contain .tabs .tabitem.style_selections_tab .style_selections .wrap[data-testid="checkbox-group"] label span,
+.style_layers_panel .style_selections .wrap[data-testid="checkbox-group"] label span,
 .wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] label span {
-  /* white-space:nowrap; */ /* add this to disable text wrapping (better choice for 3 columns layout) */
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.style_layers_panel .style_selections,
 .wildprompt_selections_tab .wildprompt_selections {
   min-height: 180px;
 }
 
+.style_layers_panel .style_selections .wrap[data-testid="checkbox-group"],
 .wildprompt_selections_tab .wildprompt_selections .wrap[data-testid="checkbox-group"] {
   overflow: auto;
   max-height: 260px;
   padding-right: 2px;
 }
 
+.style_layers_panel .style-folder-chips .wrap[data-testid="checkbox-group"],
 .wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] {
   gap: 6px;
 }
 
+.style_layers_panel .style-folder-chips .wrap[data-testid="checkbox-group"] label,
 .wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label {
   flex: 0 0 auto !important;
   width: auto !important;
@@ -1195,12 +1177,14 @@ div:has(> #positive_prompt) {
   background: var(--background-fill-secondary);
 }
 
+.style_layers_panel .style-folder-chips .wrap[data-testid="checkbox-group"] label.selected,
 .wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label.selected {
   border-color: var(--checkbox-border-color-selected);
   background: var(--checkbox-label-background-fill-selected);
   color: var(--checkbox-label-text-color-selected);
 }
 
+.style_layers_panel .style-folder-chips .wrap[data-testid="checkbox-group"] label input,
 .wildprompt_selections_tab .wildprompt-folder-chips .wrap[data-testid="checkbox-group"] label input {
   display: none;
 }
