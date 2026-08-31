@@ -1,0 +1,14 @@
+{
+  "name": "Wendy",
+  "enabled": true,
+  "subject": "woman",
+  "identity_strength": 1.0,
+  "face_weight": 0.0,
+  "face_weight_start": 0.0,
+  "image_count": 3,
+  "image_files": [
+    "20260825_082550_01.png",
+    "20260825_082550_02.png",
+    "20260825_082550_03.png"
+  ]
+}

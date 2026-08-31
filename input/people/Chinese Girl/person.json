@@ -5,15 +5,12 @@
   "identity_strength": 1.0,
   "face_weight": 0.0,
   "face_weight_start": 0.0,
-  "image_count": 8,
+  "image_count": 5,
   "image_files": [
     "20260824_124420_01.png",
     "20260824_124420_02.png",
     "20260824_124420_03.png",
     "20260824_124420_04.png",
-    "20260824_124420_05.png",
-    "20260830_reference_front.jpg",
-    "20260830_reference_profile.jpg",
-    "video2_face_hd_01_0.850s.png"
+    "20260824_124420_05.png"
   ]
 }
