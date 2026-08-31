@@ -5,7 +5,7 @@
   "identity_strength": 1.0,
   "face_weight": 0.0,
   "face_weight_start": 0.0,
-  "image_count": 17,
+  "image_count": 8,
   "image_files": [
     "20260824_124420_01.png",
     "20260824_124420_02.png",
@@ -14,15 +14,6 @@
     "20260824_124420_05.png",
     "20260830_reference_front.jpg",
     "20260830_reference_profile.jpg",
-    "video_headshot_01_10.333s.jpg",
-    "video_headshot_02_12.833s.jpg",
-    "video_headshot_03_11.833s.jpg",
-    "video_headshot_04_11.167s.jpg",
-    "video_headshot_05_1.833s.jpg",
-    "video_headshot_06_3.167s.jpg",
-    "video_headshot_07_7.667s.jpg",
-    "video_headshot_08_3.833s.jpg",
-    "video2_face_hd_01_0.850s.png",
-    "video2_face_hd_02_2.200s.png"
+    "video2_face_hd_01_0.850s.png"
   ]
 }
