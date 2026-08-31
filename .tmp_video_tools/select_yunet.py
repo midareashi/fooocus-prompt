@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 sample_dir = Path(sys.argv[1])
 report_dir = Path(sys.argv[2])
 model_path = Path(sys.argv[3])
+sample_fps = float(sys.argv[4]) if len(sys.argv) > 4 else 6.0
 report_dir.mkdir(parents=True, exist_ok=True)
 
 detector = cv2.FaceDetectorYN.create(str(model_path), "", (320, 320), 0.72, 0.3, 5000)
@@ -58,7 +59,7 @@ records.sort(key=lambda row: row["score"], reverse=True)
 chosen = []
 for row in records:
     index = int(row["frame"].split("_")[-1])
-    if any(abs(index - int(k["frame"].split("_")[-1])) < 4 for k in chosen):
+    if any(abs(index - int(k["frame"].split("_")[-1])) < max(2, int(sample_fps * 0.5)) for k in chosen):
         continue
     chosen.append(row)
     if len(chosen) >= 24:
@@ -71,7 +72,7 @@ with (report_dir / "yunet_candidates.csv").open("w", newline="", encoding="utf-8
     for rank, row in enumerate(chosen, 1):
         idx = int(row["frame"].split("_")[-1])
         writer.writerow({
-            "rank": rank, "frame": row["frame"], "timestamp_s": f"{(idx - 1) / 6:.3f}",
+            "rank": rank, "frame": row["frame"], "timestamp_s": f"{(idx - 1) / sample_fps:.3f}",
             "score": f"{row['score']:.3f}", "confidence": f"{row['confidence']:.4f}",
             "sharpness": f"{row['sharpness']:.2f}", "brightness": f"{row['brightness']:.2f}",
             "face_ratio": f"{row['face_ratio']:.5f}", "x": row["x"], "y": row["y"],
@@ -95,7 +96,7 @@ for rank, row in enumerate(chosen, 1):
     oy = line * tile_h + (tile_h - 32 - crop.height) // 2
     sheet.paste(crop, (ox, oy))
     idx = int(row["frame"].split("_")[-1])
-    draw.text((col * tile_w + 6, line * tile_h + tile_h - 25), f"#{rank} {row['frame']} {(idx-1)/6:.2f}s", fill="white", font=font)
+    draw.text((col * tile_w + 6, line * tile_h + tile_h - 25), f"#{rank} {row['frame']} {(idx-1)/sample_fps:.2f}s", fill="white", font=font)
 
 sheet.save(report_dir / "yunet_contact_sheet.jpg", quality=94)
 print(f"detected={len(records)} chosen={len(chosen)}")
