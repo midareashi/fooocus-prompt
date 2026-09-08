@@ -22,7 +22,6 @@ import modules.sdxl_styles
 import modules.meta_parser
 import modules.prompt_config
 import modules.lora_notes
-import modules.lora_training
 import modules.history_db
 import args_manager
 import copy
@@ -1111,8 +1110,6 @@ with shared.gradio_root:
                     interactive=False,
                     wrap=True
                 )
-        with gr.Tab(label='LoRA Training', id='lora_training_tab'):
-            modules.lora_training.build_lora_training_ui()
         with gr.Tab(label='Image Generation', id='image_generation_tab'):
             currentTask = gr.State(worker.AsyncTask(args=[]))
             state_session_gallery = gr.State([])
@@ -2155,9 +2152,6 @@ with shared.gradio_root:
                                                      value=modules.config.default_prompt_negative)
                         seed_random = gr.Checkbox(label='Random', value=True)
                         image_seed = gr.Textbox(label='Seed', value=0, max_lines=1, visible=False) # workaround for https://github.com/gradio-app/gradio/issues/5354
-                        training_mode = gr.Checkbox(label='Training Mode',
-                                                    value=modules.config.default_training_mode,
-                                                    info='Creates a LoRA training .txt caption file next to each generated image.')
                         testing_mode = gr.Checkbox(label='Testing Mode',
                                                    value=modules.config.default_testing_mode,
                                                    info='Generates Image Number images for each selected testing LoRA using the same seed.')
@@ -5054,7 +5048,7 @@ with shared.gradio_root:
                 ctrls += [refiner_swap_method, controlnet_softness]
                 ctrls += freeu_ctrls
                 ctrls += inpaint_ctrls
-                ctrls += [training_mode, testing_mode, testing_loras]
+                ctrls += [testing_mode, testing_loras]
         
                 if not args_manager.args.disable_image_log:
                     ctrls += [save_final_enhanced_image_only]

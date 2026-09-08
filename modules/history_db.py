@@ -77,7 +77,6 @@ def init_db():
                     performance TEXT,
                     quick_preview INTEGER NOT NULL DEFAULT 0,
                     testing_mode INTEGER NOT NULL DEFAULT 0,
-                    training_mode INTEGER NOT NULL DEFAULT 0,
                     config_json TEXT NOT NULL,
                     favorite INTEGER NOT NULL DEFAULT 0,
                     rating INTEGER,
@@ -216,7 +215,6 @@ def task_to_config(task):
         'seed': str(getattr(task, 'seed', 0)),
         'resolution': str(_resolution_from_task(task)),
         'quick_preview': bool(getattr(task, 'quick_preview', False)),
-        'training_mode': bool(getattr(task, 'training_mode', False)),
         'testing_mode': bool(getattr(task, 'testing_mode', False)),
         'testing_loras': str(getattr(task, 'testing_loras', []) or []),
     }
@@ -253,9 +251,9 @@ def create_batch_from_task(task):
             """
             INSERT INTO batches (
                 batch_uid, created_at, status, prompt, negative_prompt, image_number,
-                total_images, performance, quick_preview, testing_mode, training_mode, config_json
+                total_images, performance, quick_preview, testing_mode, config_json
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 batch_uid,
@@ -268,7 +266,6 @@ def create_batch_from_task(task):
                 getattr(getattr(task, 'performance_selection', None), 'value', ''),
                 1 if getattr(task, 'quick_preview', False) else 0,
                 1 if getattr(task, 'testing_mode', False) else 0,
-                1 if getattr(task, 'training_mode', False) else 0,
                 _json_dumps(config)
             )
         )
@@ -726,10 +723,9 @@ def _create_import_batch(conn, output_folder, group):
         """
         INSERT INTO batches (
             batch_uid, created_at, completed_at, status, prompt, negative_prompt,
-            image_number, total_images, performance, quick_preview, testing_mode,
-            training_mode, config_json
+            image_number, total_images, performance, quick_preview, testing_mode, config_json
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             uuid.uuid4().hex,
@@ -743,7 +739,6 @@ def _create_import_batch(conn, output_folder, group):
             str(config.get('performance', '') or ''),
             0,
             1 if str(config.get('testing_mode', '') or '').casefold() in ['true', '1', 'yes', 'on'] else 0,
-            1 if str(config.get('training_mode', '') or '').casefold() in ['true', '1', 'yes', 'on'] else 0,
             _json_dumps(batch_config)
         )
     )
