@@ -1,0 +1,16 @@
+{
+  "name": "CG",
+  "enabled": false,
+  "subject": "woman",
+  "identity_strength": 1.0,
+  "face_weight": 0.0,
+  "face_weight_start": 0.0,
+  "image_count": 5,
+  "image_files": [
+    "20260907_075151_01.png",
+    "20260907_075151_02.png",
+    "20260907_075151_03.png",
+    "20260907_075151_04.png",
+    "20260907_075151_05.png"
+  ]
+}
