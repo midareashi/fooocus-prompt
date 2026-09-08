@@ -201,7 +201,6 @@ class AsyncTask:
         self.inpaint_advanced_masking_checkbox = args.pop()
         self.invert_mask_checkbox = args.pop()
         self.inpaint_erode_or_dilate = args.pop()
-        self.training_mode = args.pop()
         self.testing_mode = bool(args.pop())
         self.testing_loras = args.pop()
         if not isinstance(self.testing_loras, list):
@@ -618,7 +617,7 @@ def worker():
     from modules.sdxl_styles import (apply_style, get_random_style, fooocus_expansion, apply_arrays,
                                      random_style_name, resolve_wildprompts,
                                      get_wildprompt_fixed_combinations, get_wildprompt_separate_entries)
-    from modules.private_logger import log, write_training_caption
+    from modules.private_logger import log
     from extras.expansion import safe_str
     from modules.util import (remove_empty_str, HWC3, resize_image, get_image_shape_ceil, set_image_shape_ceil,
                                get_shape_ceil, resample_image, erode_or_dilate, parse_lora_references_from_prompt,
@@ -841,11 +840,8 @@ def worker():
                                          loras, async_task.vae_name)
             d.append(('Metadata Scheme', 'metadata_scheme',
                       async_task.metadata_scheme.value if async_task.save_metadata_to_images else async_task.save_metadata_to_images))
-            d.append(('Training Mode', 'training_mode', async_task.training_mode))
             d.append(('Version', 'version', 'Fooocus v' + fooocus_version.version))
             image_path = log(x, d, metadata_parser, async_task.output_format, task, persist_image)
-            if async_task.training_mode:
-                write_training_caption(image_path, d)
             register_generated_image_config(image_path, {key: value for _, key, value in d})
             try:
                 modules.history_db.record_image(

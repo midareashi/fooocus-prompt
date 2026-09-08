@@ -22,6 +22,7 @@ user_path_config-deprecated.txt
 /repositories
 /fooocus_env
 /venv
+/models
 /tmp
 /ui-config.json
 /outputs

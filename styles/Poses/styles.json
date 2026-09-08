@@ -1,0 +1,25 @@
+{
+    "selection_mode": "single",
+    "styles": [
+        {
+            "name": "Feet Focus",
+            "prompt": "adult woman seated comfortably with her shoes set aside, both bare feet naturally visible in the foreground, relaxed full-body fashion composition",
+            "negative_prompt": "cropped feet, extra toes, malformed feet, distorted anatomy"
+        },
+        {
+            "name": "Standing Underbun",
+            "prompt": "adult woman standing in a playful over-the-shoulder pose, short skirt and outfit styled for an editorial fashion photograph, confident posture",
+            "negative_prompt": "explicit nudity, accidental exposure, distorted anatomy"
+        },
+        {
+            "name": "Bending Skirt Pose",
+            "prompt": "adult woman bending slightly at the waist in a playful editorial fashion pose, one hand resting on a chair, looking back over her shoulder, outfit remains tastefully covered",
+            "negative_prompt": "explicit nudity, accidental exposure, distorted anatomy"
+        },
+        {
+            "name": "Leaning Forward",
+            "prompt": "adult woman leaning forward gently toward the camera with hands resting on her knees, relaxed eye contact, softly draped neckline, tasteful editorial fashion portrait",
+            "negative_prompt": "explicit nudity, distorted anatomy, unnatural posture"
+        }
+    ]
+}
