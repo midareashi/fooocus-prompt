@@ -52,6 +52,7 @@ user_path_config-deprecated.txt
 /package-lock.json
 /.coverage*
 /auth.json
+/prompt-assistant.env
 .DS_Store
 models/loras/.tmp*
 outputs-bk

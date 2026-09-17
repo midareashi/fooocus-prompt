@@ -21,6 +21,7 @@ import modules.wildprompt_sorter as wildprompt_sorter
 import modules.sdxl_styles
 import modules.meta_parser
 import modules.prompt_config
+import modules.prompt_assistant
 import modules.lora_notes
 import modules.history_db
 import args_manager
@@ -1224,6 +1225,18 @@ with shared.gradio_root:
                             generate_button = gr.Button(label="Generate", value="Generate", elem_classes='type_row', elem_id='generate_button', visible=True)
                             quick_preview_button = gr.Button(label="Quick Preview", value="Quick Preview", elem_classes='type_row', elem_id='quick_preview_button', visible=True)
                             load_parameter_button = gr.Button(label="Load Parameters", value="Load Parameters", elem_classes='type_row', elem_id='load_parameter_button', visible=False)
+                    with gr.Accordion(label='AI Prompt Director', open=False):
+                        gr.Markdown(
+                            'Uses your Codex desktop sign-in. Sends the description, installed checkpoint/LoRA '
+                            'filenames, and saved LoRA notes to Codex. Model files and images are not uploaded.'
+                        )
+                        prompt_director_idea = gr.Textbox(
+                            label='Describe the image',
+                            placeholder='Describe the subject, mood, setting, pose, clothing, lighting, and framing you want.',
+                            lines=3,
+                        )
+                        prompt_director_button = gr.Button(value='Choose Models and Build Prompt', variant='primary')
+                        prompt_director_status = gr.Textbox(label='Director Notes', interactive=False, lines=2)
                     with gr.Row(elem_classes='advanced_check_row'):
                         input_image_checkbox = gr.Checkbox(label='Input Image', value=modules.config.default_image_prompt_checkbox, container=False, elem_classes='min_check')
                         enhance_checkbox = gr.Checkbox(label='Enhance', value=modules.config.default_enhance_checkbox, container=False, elem_classes='min_check')
@@ -2591,6 +2604,66 @@ with shared.gradio_root:
                                               lora_ctrls + lora_prompt_ctrls + lora_note_buttons +
                                               lora_note_add_buttons + lora_note_editor_cols,
                                               queue=False, show_progress=False)
+
+                        def run_prompt_director(idea, current_prompt, current_checkpoint):
+                            unchanged_count = 6 + len(lora_ctrls) + len(lora_prompt_ctrls) + \
+                                len(lora_note_buttons) + len(lora_note_add_buttons)
+                            try:
+                                plan = modules.prompt_assistant.create_prompt_plan(
+                                    idea=idea,
+                                    checkpoints=modules.config.model_filenames,
+                                    loras=modules.config.lora_filenames,
+                                    max_loras=modules.config.default_max_lora_number,
+                                    min_weight=modules.config.default_loras_min_weight,
+                                    max_weight=modules.config.default_loras_max_weight,
+                                    current_prompt=current_prompt,
+                                    current_checkpoint=current_checkpoint,
+                                )
+                            except modules.prompt_assistant.PromptAssistantError as e:
+                                return [gr.update()] * unchanged_count + [f'Prompt Director: {e}']
+
+                            updates = [
+                                plan['prompt'],
+                                plan['negative_prompt'],
+                                gr.update(value=plan['checkpoint'], visible=True),
+                                False,
+                                gr.update(value=[plan['checkpoint']], visible=False),
+                                gr.update(value='None'),
+                            ]
+                            note_values = []
+                            note_button_values = []
+                            note_add_button_values = []
+                            for index in range(modules.config.default_max_lora_number):
+                                if index < len(plan['loras']):
+                                    selection = plan['loras'][index]
+                                    filename = selection['filename']
+                                    note = modules.lora_notes.load_lora_note(filename)
+                                    updates += [True, filename, selection['weight']]
+                                    note_values.append(note)
+                                    note_button_values.append(gr.update(visible=True))
+                                    note_add_button_values.append(gr.update(visible=note != ''))
+                                else:
+                                    updates += [False, 'None', 1.0]
+                                    note_values.append('')
+                                    note_button_values.append(gr.update(visible=False))
+                                    note_add_button_values.append(gr.update(visible=False))
+                            return updates + note_values + note_button_values + note_add_button_values + [
+                                plan['summary'] or 'Prompt, checkpoint, and LoRAs selected.'
+                            ]
+
+                        prompt_director_outputs = [
+                            prompt, negative_prompt, base_model, multi_checkpoint_enabled,
+                            multi_checkpoint_models, refiner_model,
+                        ] + lora_ctrls + lora_prompt_ctrls + lora_note_buttons + lora_note_add_buttons + [
+                            prompt_director_status
+                        ]
+                        prompt_director_button.click(
+                            run_prompt_director,
+                            inputs=[prompt_director_idea, prompt, base_model],
+                            outputs=prompt_director_outputs,
+                            queue=True,
+                            show_progress=True,
+                        )
 
                 state_is_generating = gr.State(False)
                 state_queue_monitor = gr.State(False)

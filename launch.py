@@ -149,6 +149,10 @@ if config.temp_path_cleanup_on_launch:
 def download_models(default_model, previous_default_models, checkpoint_downloads, embeddings_downloads, lora_downloads, vae_downloads):
     from modules.util import get_file_from_folder_list
 
+    if args.disable_preset_download:
+        print('Skipped model downloads.')
+        return default_model, checkpoint_downloads
+
     for file_name, url in vae_approx_filenames:
         load_file_from_url(url=url, model_dir=config.path_vae_approx, file_name=file_name)
 
@@ -157,10 +161,6 @@ def download_models(default_model, previous_default_models, checkpoint_downloads
         model_dir=config.path_fooocus_expansion,
         file_name='pytorch_model.bin'
     )
-
-    if args.disable_preset_download:
-        print('Skipped model download.')
-        return default_model, checkpoint_downloads
 
     if not args.always_download_new_model:
         if not os.path.isfile(get_file_from_folder_list(default_model, config.paths_checkpoints)):
